@@ -15,7 +15,7 @@ see the repository for more info of what can be observed.
 
 ## Local prototype
 
-1. Start `o-sfu` on the host with the normal HTTP listener on `:8080`.
+1. Start `o-sfu` on the host with the normal HTTP listener on `:8070`.
 2. From this repository root, run `docker compose up`.
 3. Open Grafana on `http://localhost:3000`, Prometheus on `http://localhost:9090`, and Alertmanager on `http://localhost:9093`.
 4. Confirm the `o-sfu` target is up, the `o-sfu-noop` probe succeeds, and Grafana auto-loads the default vuews

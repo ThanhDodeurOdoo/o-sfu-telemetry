@@ -16,7 +16,7 @@ scrape_configs:
     metrics_path: /metrics
     static_configs:
       - targets:
-          - host.docker.internal:8080
+          - host.docker.internal:8070
 
   - job_name: o-sfu-noop
     metrics_path: /probe
@@ -24,7 +24,7 @@ scrape_configs:
       module:
         - http_2xx
       target:
-        - http://host.docker.internal:8080/v1/noop
+        - http://host.docker.internal:8070/v1/noop
     static_configs:
       - targets:
           - blackbox-exporter:9115
