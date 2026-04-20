@@ -1,0 +1,56 @@
+groups:
+  - name: o-sfu-phase-2
+    rules:
+      - alert: OSFUInstanceDown
+        expr: up{job="o-sfu"} == 0
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: "o-sfu metrics endpoint is unavailable"
+          description: "Prometheus cannot scrape /metrics on the o-sfu target."
+
+      - alert: OSFUNoopProbeFailed
+        expr: probe_success{job="o-sfu-noop"} == 0
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: "o-sfu noop probe is failing"
+          description: "The blackbox probe cannot complete GET /v1/noop successfully."
+
+      - alert: OSFUHandshakeRejectionSpike
+        expr: sum(rate(osfu_ws_handshake_rejections_total[5m])) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "websocket handshake rejections are elevated"
+          description: "Handshake rejections have stayed above 1 per second for 10 minutes."
+
+      - alert: OSFUDisconnectChurn
+        expr: sum(rate(osfu_transport_health_transitions_total{from="connected",to="disconnected"}[5m])) > 0.1
+        for: 10m
+        labels:
+          severity: page
+        annotations:
+          summary: "transport disconnect churn is elevated"
+          description: "Connected transports are transitioning to disconnected faster than the canary baseline."
+
+      - alert: OSFURelayOverloadDrops
+        expr: sum(rate(osfu_rtp_relay_overload_drops_total[5m])) > 0
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: "relay overload drops detected"
+          description: "Relay fan-out is dropping packets because the bounded relay mailboxes are overloaded."
+
+      - alert: OSFURoutingPressure
+        expr: sum(rate(osfu_rtc_datagram_fallback_scans_total[5m])) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "datagram fallback scans are elevated"
+          description: "Indexed datagram routing is missing often enough to trigger sustained fallback scans."
