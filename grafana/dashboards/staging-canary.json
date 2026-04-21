@@ -5,6 +5,23 @@
   "editable": false,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "links": [
+    {
+      "title": "Operations",
+      "type": "link",
+      "url": "/d/osfu-operations/o-sfu-operations?orgId=1&from=${__from}&to=${__to}"
+    },
+    {
+      "title": "Transport Lifecycle",
+      "type": "link",
+      "url": "/d/osfu-transport-lifecycle/o-sfu-transport-lifecycle?orgId=1&from=${__from}&to=${__to}"
+    },
+    {
+      "title": "Media Path",
+      "type": "link",
+      "url": "/d/osfu-media-path/o-sfu-media-path?orgId=1&from=${__from}&to=${__to}"
+    }
+  ],
   "panels": [
     {
       "datasource": "Prometheus",
@@ -45,8 +62,20 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Recent join success ratio. This card stays empty when there were no accepted joins in the last five minutes.",
       "fieldConfig": {
         "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No recent joins"
+                }
+              },
+              "type": "special"
+            }
+          ],
           "unit": "percentunit"
         },
         "overrides": []
@@ -73,7 +102,7 @@
       },
       "targets": [
         {
-          "expr": "osfu:ws_join_success_ratio_5m",
+          "expr": "osfu:ws_join_success_ratio_active_5m",
           "refId": "A"
         }
       ],
@@ -119,8 +148,20 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Recent local forwarding efficiency. This card stays empty when there was no RTP ingress in the last five minutes.",
       "fieldConfig": {
         "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No recent ingress"
+                }
+              },
+              "type": "special"
+            }
+          ],
           "unit": "percentunit"
         },
         "overrides": []
@@ -147,7 +188,7 @@
       },
       "targets": [
         {
-          "expr": "osfu:local_forwarding_efficiency_ratio_5m",
+          "expr": "osfu:local_forwarding_efficiency_active_5m",
           "refId": "A"
         }
       ],
@@ -298,6 +339,21 @@
       ],
       "title": "Routing Pressure",
       "type": "timeseries"
+    },
+    {
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 10,
+      "options": {
+        "content": "[Open o-sfu Operations](/d/osfu-operations/o-sfu-operations?orgId=1&from=${__from}&to=${__to}) | [Control Plane](/d/osfu-control-plane/o-sfu-control-plane?orgId=1&from=${__from}&to=${__to}) | [Transport Lifecycle](/d/osfu-transport-lifecycle/o-sfu-transport-lifecycle?orgId=1&from=${__from}&to=${__to}) | [Media Path](/d/osfu-media-path/o-sfu-media-path?orgId=1&from=${__from}&to=${__to})",
+        "mode": "markdown"
+      },
+      "title": "Navigation",
+      "type": "text"
     }
   ],
   "refresh": "15s",

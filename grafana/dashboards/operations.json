@@ -1,0 +1,592 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [
+    {
+      "title": "Staging Canary",
+      "type": "link",
+      "url": "/d/osfu-staging-canary/o-sfu-staging-canary?orgId=1&from=${__from}&to=${__to}"
+    },
+    {
+      "title": "Control Plane",
+      "type": "link",
+      "url": "/d/osfu-control-plane/o-sfu-control-plane?orgId=1&from=${__from}&to=${__to}"
+    },
+    {
+      "title": "Transport Lifecycle",
+      "type": "link",
+      "url": "/d/osfu-transport-lifecycle/o-sfu-transport-lifecycle?orgId=1&from=${__from}&to=${__to}"
+    },
+    {
+      "title": "Media Path",
+      "type": "link",
+      "url": "/d/osfu-media-path/o-sfu-media-path?orgId=1&from=${__from}&to=${__to}"
+    }
+  ],
+  "panels": [
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.5
+              },
+              {
+                "color": "red",
+                "value": 1.5
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "name"
+      },
+      "targets": [
+        {
+          "expr": "topk(1, label_replace(vector(2 * scalar(clamp_max(max(ALERTS{alertname=~\"OSFU.*\",alertstate=\"firing\",severity=\"page\"} or vector(0)), 1))), \"state\", \"Page\", \"\", \"\") or label_replace(vector(1 * scalar(clamp_max(max(ALERTS{alertname=~\"OSFU.*\",alertstate=\"firing\",severity=\"warning\"} or vector(0)), 1))), \"state\", \"Warning\", \"\", \"\") or label_replace(vector(0), \"state\", \"Healthy\", \"\", \"\"))",
+          "instant": true,
+          "legendFormat": "{{state}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Incident Now",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "blue",
+                "value": 0.5
+              },
+              {
+                "color": "yellow",
+                "value": 1.5
+              },
+              {
+                "color": "orange",
+                "value": 3.5
+              },
+              {
+                "color": "red",
+                "value": 5.5
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 4,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "name"
+      },
+      "targets": [
+        {
+          "expr": "topk(1, label_replace(vector(7 * scalar(osfu:operator_boundary_routing)), \"boundary\", \"Routing\", \"\", \"\") or label_replace(vector(6 * scalar(osfu:operator_boundary_churn)), \"boundary\", \"Churn\", \"\", \"\") or label_replace(vector(5 * scalar(osfu:operator_boundary_forwarding)), \"boundary\", \"Forwarding\", \"\", \"\") or label_replace(vector(4 * scalar(osfu:operator_boundary_publisher_media)), \"boundary\", \"Publisher Media\", \"\", \"\") or label_replace(vector(3 * scalar(osfu:operator_boundary_ice_dtls)), \"boundary\", \"ICE/DTLS\", \"\", \"\") or label_replace(vector(2 * scalar(osfu:operator_boundary_admission)), \"boundary\", \"Admission\", \"\", \"\") or label_replace(vector(1 * scalar(osfu:operator_boundary_no_recent_traffic)), \"boundary\", \"No Recent Traffic\", \"\", \"\") or label_replace(vector(0), \"boundary\", \"Healthy\", \"\", \"\"))",
+          "instant": true,
+          "legendFormat": "{{boundary}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Primary Failure Boundary",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Estimated recent sessions that reached joined signaling without matching DTLS growth in the last 15 minutes.",
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 3
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 10,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "expr": "osfu:joined_minus_dtls_15m",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Affected Sessions",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Five-minute accepted websocket join rate. Zero means the dashboard should be read as an idle window unless another boundary is red.",
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0.05
+              }
+            ]
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 14,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "expr": "osfu:ws_join_attempts_rate_5m",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Recent Join Attempts/s",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Current pending or firing OSFU alerts from Prometheus.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Value"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "expr": "ALERTS{alertname=~\"OSFU.*\",alertstate=~\"pending|firing\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Alert State",
+      "type": "table"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Operator funnel signals. The first six bars are recent stage counts over 15 minutes. The last two are recent packet rates, kept here to show where media disappears after transport establishment.",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 7
+      },
+      "id": 6,
+      "options": {
+        "displayMode": "basic",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": false,
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(osfu_ws_connections_total{stage=\"accepted\"}[15m]))",
+          "instant": true,
+          "legendFormat": "Accepted (15m)",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(increase(osfu_ws_connections_total{stage=\"credentials_received\"}[15m]))",
+          "instant": true,
+          "legendFormat": "Credentials (15m)",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(increase(osfu_ws_connections_total{stage=\"joined\"}[15m]))",
+          "instant": true,
+          "legendFormat": "Joined (15m)",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(increase(osfu_transport_ice_state_changes_total{state=\"checking\"}[15m]))",
+          "instant": true,
+          "legendFormat": "ICE checking (15m)",
+          "refId": "D"
+        },
+        {
+          "expr": "sum(increase(osfu_transport_ice_state_changes_total{state=\"completed\"}[15m]))",
+          "instant": true,
+          "legendFormat": "ICE completed (15m)",
+          "refId": "E"
+        },
+        {
+          "expr": "sum(increase(osfu_transport_dtls_connected_total[15m]))",
+          "instant": true,
+          "legendFormat": "DTLS connected (15m)",
+          "refId": "F"
+        },
+        {
+          "expr": "osfu:rtp_ingress_packets_rate_5m",
+          "instant": true,
+          "legendFormat": "RTP ingress packets/s",
+          "refId": "G"
+        },
+        {
+          "expr": "osfu:rtp_local_forward_packets_rate_5m",
+          "instant": true,
+          "legendFormat": "local_rtc forwarding packets/s",
+          "refId": "H"
+        }
+      ],
+      "title": "Funnel Signals",
+      "type": "bargauge"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Drop-off percentages between successive stages. Empty bars mean the predecessor stage did not happen in the recent window.",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.6
+              },
+              {
+                "color": "green",
+                "value": 0.9
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 7
+      },
+      "id": 7,
+      "options": {
+        "displayMode": "basic",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": false,
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "expr": "osfu:ws_credentials_after_accept_ratio_5m and (osfu:recent_join_traffic_5m > 0)",
+          "instant": true,
+          "legendFormat": "Credentials / accepted",
+          "refId": "A"
+        },
+        {
+          "expr": "osfu:ws_join_after_credentials_ratio_5m and (osfu:ws_credentials_rate_5m > 0.05)",
+          "instant": true,
+          "legendFormat": "Joined / credentials",
+          "refId": "B"
+        },
+        {
+          "expr": "osfu:ice_check_after_join_ratio_5m and (osfu:ws_joined_rate_5m > 0.05)",
+          "instant": true,
+          "legendFormat": "ICE checking / joined",
+          "refId": "C"
+        },
+        {
+          "expr": "osfu:transport_establishment_ratio_active_5m",
+          "instant": true,
+          "legendFormat": "ICE completed / checking",
+          "refId": "D"
+        },
+        {
+          "expr": "osfu:dtls_after_ice_completion_ratio_5m and (osfu:transport_ice_completed_rate_5m > 0.05)",
+          "instant": true,
+          "legendFormat": "DTLS / ICE completed",
+          "refId": "E"
+        },
+        {
+          "expr": "osfu:publisher_media_after_dtls_ratio_5m and (osfu:transport_dtls_connected_rate_5m > 0.05)",
+          "instant": true,
+          "legendFormat": "Ingress after DTLS",
+          "refId": "F"
+        },
+        {
+          "expr": "osfu:local_forwarding_efficiency_active_5m",
+          "instant": true,
+          "legendFormat": "local_rtc / ingress",
+          "refId": "G"
+        }
+      ],
+      "title": "Funnel Drop-off Ratios",
+      "type": "bargauge"
+    },
+    {
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 17
+      },
+      "id": 8,
+      "options": {
+        "content": "<p>Use this when websocket joins fail before steady-state.</p><ul><li><code>osfu:ws_join_success_ratio_active_5m</code></li><li><code>osfu:ws_startup_failures_rate_5m</code></li><li><code>osfu:ws_handshake_rejections_rate_5m</code></li></ul><p><a href=\"/d/osfu-control-plane/o-sfu-control-plane?orgId=1&from=${__from}&to=${__to}\">Open control-plane dashboard</a></p>",
+        "mode": "html"
+      },
+      "title": "Admission",
+      "type": "text"
+    },
+    {
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 17
+      },
+      "id": 9,
+      "options": {
+        "content": "<p>Use this when signaling succeeds but transport establishment lags.</p><ul><li><code>osfu:ws_joined_rate_5m</code></li><li><code>osfu:transport_establishment_ratio_active_5m</code></li><li><code>osfu:dtls_after_join_ratio_5m</code></li></ul><p><a href=\"/d/osfu-transport-lifecycle/o-sfu-transport-lifecycle?orgId=1&from=${__from}&to=${__to}\">Open transport-lifecycle dashboard</a></p>",
+        "mode": "html"
+      },
+      "title": "ICE/DTLS",
+      "type": "text"
+    },
+    {
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 17
+      },
+      "id": 10,
+      "options": {
+        "content": "<p>Use this when DTLS is up but media ingress or local forwarding disappears.</p><ul><li><code>osfu:rtp_ingress_packets_rate_5m</code></li><li><code>osfu:rtp_local_forward_packets_rate_5m</code></li><li><code>osfu:local_forwarding_efficiency_active_5m</code></li></ul><p><a href=\"/d/osfu-media-path/o-sfu-media-path?orgId=1&from=${__from}&to=${__to}\">Open media-path dashboard</a></p>",
+        "mode": "html"
+      },
+      "title": "Media Path",
+      "type": "text"
+    },
+    {
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 17
+      },
+      "id": 11,
+      "options": {
+        "content": "<p>Keep the current canary cards for focused verification and longer trend reading.</p><ul><li>Noop probe</li><li>Join success ratio</li><li>Connected transports</li><li>Local forwarding efficiency</li></ul><p><a href=\"/d/osfu-staging-canary/o-sfu-staging-canary?orgId=1&from=${__from}&to=${__to}\">Open staging-canary dashboard</a></p>",
+        "mode": "html"
+      },
+      "title": "Canary",
+      "type": "text"
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": [
+    "o-sfu",
+    "operations"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timezone": "",
+  "title": "o-sfu Operations",
+  "uid": "osfu-operations",
+  "version": 1,
+  "weekStart": ""
+}

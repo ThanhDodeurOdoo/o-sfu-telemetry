@@ -58,7 +58,7 @@ groups:
   - name: o-sfu-phase-6
     rules:
       - alert: OSFUJoinSuccessRatioLow
-        expr: osfu:ws_join_success_ratio_5m < 0.9 and sum(rate(osfu_ws_connections_total{stage="accepted"}[5m])) > 0.05
+        expr: osfu:ws_join_success_ratio_5m < 0.9 and osfu:ws_join_attempts_rate_5m > 0.05
         for: 10m
         labels:
           severity: warning
@@ -85,10 +85,37 @@ groups:
           description: "Connected transports are dropping often enough that the canary no longer looks stable even after normalizing by active sessions."
 
       - alert: OSFULocalForwardingEfficiencyLow
-        expr: osfu:local_forwarding_efficiency_ratio_5m < 0.6 and sum(rate(osfu_rtp_packets_total{direction="ingress"}[5m])) > 10
+        expr: osfu:local_forwarding_efficiency_ratio_5m < 0.6 and osfu:rtp_ingress_packets_rate_5m > 10
         for: 10m
         labels:
           severity: page
         annotations:
           summary: "o-sfu ingress is not turning into local forwarding"
           description: "Ingress RTP is arriving, but too little of it is reaching local RTC forwarding paths for the current single-node canary."
+
+      - alert: OSFUIceDtlsEstablishmentLow
+        expr: osfu:operator_boundary_ice_dtls > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "o-sfu transport establishment is degraded"
+          description: "Joined sessions are reaching ICE checking, but too few of them are reaching ICE completion or DTLS connected in the recent traffic window."
+
+      - alert: OSFUJoinedWithoutDtlsGrowth
+        expr: osfu:joined_minus_dtls_15m > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "recent joined sessions are missing matching DTLS growth"
+          description: "Recent joined-session growth is outpacing DTLS-connected growth, which usually means some browsers are reaching signaling but not completing the RTC transport path."
+
+      - alert: OSFUDtlsWithoutIngress
+        expr: osfu:operator_boundary_publisher_media > 0.5
+        for: 10m
+        labels:
+          severity: page
+        annotations:
+          summary: "o-sfu has DTLS sessions without RTP ingress"
+          description: "Recent DTLS-connected sessions are not turning into RTP ingress, which points at publish-side media attachment or network-path issues."

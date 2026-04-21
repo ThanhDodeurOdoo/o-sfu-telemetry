@@ -1,14 +1,104 @@
 groups:
   - name: o-sfu-derived
     rules:
+      - record: osfu:ws_join_attempts_rate_5m
+        expr: sum(rate(osfu_ws_connections_total{stage="accepted"}[5m]))
+
+      - record: osfu:ws_credentials_rate_5m
+        expr: sum(rate(osfu_ws_connections_total{stage="credentials_received"}[5m]))
+
+      - record: osfu:ws_joined_rate_5m
+        expr: sum(rate(osfu_ws_connections_total{stage="joined"}[5m]))
+
+      - record: osfu:recent_join_traffic_5m
+        expr: osfu:ws_join_attempts_rate_5m > bool 0.05
+
+      - record: osfu:ws_credentials_after_accept_ratio_5m
+        expr: clamp_max(osfu:ws_credentials_rate_5m / clamp_min(osfu:ws_join_attempts_rate_5m, 0.001), 1)
+
+      - record: osfu:ws_join_after_credentials_ratio_5m
+        expr: clamp_max(osfu:ws_joined_rate_5m / clamp_min(osfu:ws_credentials_rate_5m, 0.001), 1)
+
       - record: osfu:ws_join_success_ratio_5m
-        expr: clamp_max(sum(rate(osfu_ws_connections_total{stage="joined"}[5m])) / clamp_min(sum(rate(osfu_ws_connections_total{stage="accepted"}[5m])), 0.001), 1)
+        expr: clamp_max(osfu:ws_joined_rate_5m / clamp_min(osfu:ws_join_attempts_rate_5m, 0.001), 1)
+
+      - record: osfu:ws_join_success_ratio_active_5m
+        expr: osfu:ws_join_success_ratio_5m and (osfu:recent_join_traffic_5m > 0)
+
+      - record: osfu:ws_handshake_rejections_rate_5m
+        expr: sum(rate(osfu_ws_handshake_rejections_total[5m]))
 
       - record: osfu:ws_startup_failures_rate_5m
         expr: sum(rate(osfu_ws_startup_failures_total[5m]))
+
+      - record: osfu:transport_ice_checks_rate_5m
+        expr: sum(rate(osfu_transport_ice_state_changes_total{state="checking"}[5m]))
+
+      - record: osfu:transport_ice_completed_rate_5m
+        expr: sum(rate(osfu_transport_ice_state_changes_total{state="completed"}[5m]))
+
+      - record: osfu:transport_dtls_connected_rate_5m
+        expr: sum(rate(osfu_transport_dtls_connected_total[5m]))
+
+      - record: osfu:ice_check_after_join_ratio_5m
+        expr: clamp_max(osfu:transport_ice_checks_rate_5m / clamp_min(osfu:ws_joined_rate_5m, 0.001), 1)
+
+      - record: osfu:transport_establishment_ratio_5m
+        expr: clamp_max(osfu:transport_ice_completed_rate_5m / clamp_min(osfu:transport_ice_checks_rate_5m, 0.001), 1)
+
+      - record: osfu:transport_establishment_ratio_active_5m
+        expr: osfu:transport_establishment_ratio_5m and (osfu:transport_ice_checks_rate_5m > 0.05)
+
+      - record: osfu:dtls_after_ice_completion_ratio_5m
+        expr: clamp_max(osfu:transport_dtls_connected_rate_5m / clamp_min(osfu:transport_ice_completed_rate_5m, 0.001), 1)
+
+      - record: osfu:dtls_after_join_ratio_5m
+        expr: clamp_max(osfu:transport_dtls_connected_rate_5m / clamp_min(osfu:ws_joined_rate_5m, 0.001), 1)
+
+      - record: osfu:rtp_ingress_packets_rate_5m
+        expr: sum(rate(osfu_rtp_packets_total{direction="ingress"}[5m]))
+
+      - record: osfu:rtp_local_forward_packets_rate_5m
+        expr: sum(rate(osfu_rtp_forwarded_packets_total{destination="local_rtc"}[5m]))
+
+      - record: osfu:publisher_media_after_dtls_ratio_5m
+        expr: clamp_max((osfu:transport_dtls_connected_rate_5m > bool 0.05) * (osfu:rtp_ingress_packets_rate_5m > bool 10), 1)
 
       - record: osfu:transport_disconnect_churn_per_session_5m
         expr: sum(rate(osfu_transport_health_transitions_total{from="connected",to="disconnected"}[5m])) / clamp_min(sum(osfu_transport_sessions_active), 1)
 
       - record: osfu:local_forwarding_efficiency_ratio_5m
-        expr: clamp_max(sum(rate(osfu_rtp_forwarded_packets_total{destination="local_rtc"}[5m])) / clamp_min(sum(rate(osfu_rtp_packets_total{direction="ingress"}[5m])), 0.001), 1)
+        expr: clamp_max(osfu:rtp_local_forward_packets_rate_5m / clamp_min(osfu:rtp_ingress_packets_rate_5m, 0.001), 1)
+
+      - record: osfu:local_forwarding_efficiency_active_5m
+        expr: osfu:local_forwarding_efficiency_ratio_5m and (osfu:rtp_ingress_packets_rate_5m > 10)
+
+      - record: osfu:routing_pressure_rate_5m
+        expr: sum(rate(osfu_rtc_datagram_fallback_scans_total[5m]))
+
+      - record: osfu:no_session_drop_rate_5m
+        expr: sum(rate(osfu_rtc_datagram_drops_total{reason="no_session"}[5m]))
+
+      - record: osfu:joined_minus_dtls_15m
+        expr: clamp_min(sum(increase(osfu_ws_connections_total{stage="joined"}[15m])) - sum(increase(osfu_transport_dtls_connected_total[15m])), 0)
+
+      - record: osfu:operator_boundary_no_recent_traffic
+        expr: osfu:recent_join_traffic_5m == bool 0
+
+      - record: osfu:operator_boundary_admission
+        expr: clamp_max((osfu:recent_join_traffic_5m > bool 0) * ((osfu:ws_join_success_ratio_5m < bool 0.9) + (osfu:ws_startup_failures_rate_5m > bool 0.02) + (osfu:ws_handshake_rejections_rate_5m > bool 0.2)), 1)
+
+      - record: osfu:operator_boundary_ice_dtls
+        expr: clamp_max((osfu:ws_joined_rate_5m > bool 0.05) * ((osfu:transport_establishment_ratio_5m < bool 0.9) + (osfu:dtls_after_join_ratio_5m < bool 0.9)), 1)
+
+      - record: osfu:operator_boundary_publisher_media
+        expr: clamp_max((osfu:transport_dtls_connected_rate_5m > bool 0.05) * (osfu:rtp_ingress_packets_rate_5m < bool 10), 1)
+
+      - record: osfu:operator_boundary_forwarding
+        expr: clamp_max((osfu:rtp_ingress_packets_rate_5m > bool 10) * (osfu:local_forwarding_efficiency_ratio_5m < bool 0.6), 1)
+
+      - record: osfu:operator_boundary_churn
+        expr: clamp_max((osfu:transport_disconnect_churn_per_session_5m > bool 0.05) + (sum(osfu_transport_health_sessions{state="disconnected"}) > bool 0), 1)
+
+      - record: osfu:operator_boundary_routing
+        expr: clamp_max((osfu:routing_pressure_rate_5m > bool 0.5) + (osfu:no_session_drop_rate_5m > bool 0.2), 1)
