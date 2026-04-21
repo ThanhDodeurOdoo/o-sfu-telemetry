@@ -4,6 +4,9 @@ examples of tooling for https://github.com/ThanhDodeurOdoo/o-sfu
 
 see the repository for more info of what can be observed.
 
+For the otel tracing you should run the sfu with "TELEMETRY_OTLP_ENDPOINT" with the otel-collector address (TODO will write more on that later),
+and with the feature flag "otel-tracing".
+
 ## What is here
 
 - `docker-compose.yml`: local Prometheus, Grafana, Alertmanager, blackbox probe, and collector stack
