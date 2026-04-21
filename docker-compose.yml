@@ -9,10 +9,15 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - ./prometheus/recording-rules.yml:/etc/prometheus/recording-rules.yml:ro
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
 
   grafana:
     image: grafana/grafana-oss
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
     environment:
       GF_SECURITY_ADMIN_PASSWORD: admin
     ports:
@@ -44,7 +49,7 @@ services:
   node-exporter:
     image: prom/node-exporter
     profiles:
-      - infra
+      - linux-infra
     ports:
       - "9100:9100"
     command:
@@ -55,7 +60,7 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     profiles:
-      - infra
+      - linux-infra
     ports:
       - "8081:8080"
     privileged: true
@@ -69,6 +74,9 @@ services:
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib
+    depends_on:
+      - loki
+      - tempo
     command:
       - --config=/etc/otelcol-contrib/config.yaml
     ports:
@@ -76,3 +84,24 @@ services:
       - "4318:4318"
     volumes:
       - ./otel-collector/config.yaml:/etc/otelcol-contrib/config.yaml:ro
+      - ./data/logs:/var/log/o-sfu:ro
+
+  loki:
+    image: grafana/loki
+    command:
+      - -config.file=/etc/loki/config.yaml
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/config.yaml:/etc/loki/config.yaml:ro
+      - ./data/loki:/var/lib/loki
+
+  tempo:
+    image: grafana/tempo:2.9.0
+    command:
+      - -config.file=/etc/tempo/config.yaml
+    ports:
+      - "3200:3200"
+    volumes:
+      - ./tempo/config.yaml:/etc/tempo/config.yaml:ro
+      - ./data/tempo:/var/tempo

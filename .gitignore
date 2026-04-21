@@ -1,0 +1,8 @@
+data/**
+!data/
+!data/logs/
+!data/logs/.gitkeep
+!data/loki/
+!data/loki/.gitkeep
+!data/tempo/
+!data/tempo/.gitkeep

@@ -54,3 +54,41 @@ groups:
         annotations:
           summary: "datagram fallback scans are elevated"
           description: "Indexed datagram routing is missing often enough to trigger sustained fallback scans."
+
+  - name: o-sfu-phase-6
+    rules:
+      - alert: OSFUJoinSuccessRatioLow
+        expr: osfu:ws_join_success_ratio_5m < 0.9 and sum(rate(osfu_ws_connections_total{stage="accepted"}[5m])) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "o-sfu join success ratio is degraded"
+          description: "Accepted websocket joins are no longer progressing to joined sessions at the normal canary ratio."
+
+      - alert: OSFUStartupFailuresSpike
+        expr: osfu:ws_startup_failures_rate_5m > 0.02
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "o-sfu startup failures are elevated"
+          description: "Startup or session-initialize failures are rising before websocket sessions reach the steady-state loop."
+
+      - alert: OSFUTransportDisconnectRatePerSessionHigh
+        expr: osfu:transport_disconnect_churn_per_session_5m > 0.05 and sum(osfu_transport_sessions_active) > 0
+        for: 10m
+        labels:
+          severity: page
+        annotations:
+          summary: "o-sfu transport churn is high relative to active sessions"
+          description: "Connected transports are dropping often enough that the canary no longer looks stable even after normalizing by active sessions."
+
+      - alert: OSFULocalForwardingEfficiencyLow
+        expr: osfu:local_forwarding_efficiency_ratio_5m < 0.6 and sum(rate(osfu_rtp_packets_total{direction="ingress"}[5m])) > 10
+        for: 10m
+        labels:
+          severity: page
+        annotations:
+          summary: "o-sfu ingress is not turning into local forwarding"
+          description: "Ingress RTP is arriving, but too little of it is reaching local RTC forwarding paths for the current single-node canary."

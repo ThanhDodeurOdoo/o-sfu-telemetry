@@ -1,0 +1,322 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bool"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "expr": "max(probe_success{job=\"o-sfu-noop\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Noop Probe",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "expr": "osfu:ws_join_success_ratio_5m",
+          "refId": "A"
+        }
+      ],
+      "title": "Join Success Ratio",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(osfu_transport_health_sessions{state=\"connected\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Connected Transports",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "expr": "osfu:local_forwarding_efficiency_ratio_5m",
+          "refId": "A"
+        }
+      ],
+      "title": "Local Forwarding Efficiency",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 5
+      },
+      "id": 5,
+      "targets": [
+        {
+          "expr": "sum by (stage) (rate(osfu_ws_connections_total[5m]))",
+          "legendFormat": "{{stage}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Join Stages",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 5
+      },
+      "id": 6,
+      "targets": [
+        {
+          "expr": "sum(rate(osfu_ws_startup_failures_total[5m]))",
+          "legendFormat": "startup failures/s",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(osfu_ws_handshake_rejections_total[5m]))",
+          "legendFormat": "handshake rejections/s",
+          "refId": "B"
+        }
+      ],
+      "title": "Admission Failures",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 13
+      },
+      "id": 7,
+      "targets": [
+        {
+          "expr": "osfu:transport_disconnect_churn_per_session_5m",
+          "legendFormat": "disconnects per active session",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(osfu_transport_health_sessions{state=\"disconnected\"})",
+          "legendFormat": "disconnected transports",
+          "refId": "B"
+        }
+      ],
+      "title": "Transport Churn",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "pps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 13
+      },
+      "id": 8,
+      "targets": [
+        {
+          "expr": "sum(rate(osfu_rtp_packets_total{direction=\"ingress\"}[1m]))",
+          "legendFormat": "ingress",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(osfu_rtp_forwarded_packets_total{destination=\"local_rtc\"}[1m]))",
+          "legendFormat": "local_rtc",
+          "refId": "B"
+        }
+      ],
+      "title": "Ingress Versus Local Forwarding",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 9,
+      "targets": [
+        {
+          "expr": "sum(rate(osfu_rtc_datagram_fallback_scans_total[5m]))",
+          "legendFormat": "fallback scans/s",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(osfu_rtc_datagram_scan_sessions_total[5m]))",
+          "legendFormat": "scanned sessions/s",
+          "refId": "B"
+        }
+      ],
+      "title": "Routing Pressure",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": [
+    "o-sfu",
+    "phase-6"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timezone": "",
+  "title": "o-sfu Staging Canary",
+  "uid": "osfu-staging-canary",
+  "version": 1,
+  "weekStart": ""
+}

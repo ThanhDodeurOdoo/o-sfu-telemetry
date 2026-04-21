@@ -1,48 +1,131 @@
 # o-sfu telemetry defaults
 
-examples of tooling for https://github.com/ThanhDodeurOdoo/o-sfu
+> [!WARNING]
+> AI DISCLAIMER
+> I am not a "deployment"/"devops",
+> This repository was written following the guidance and explanations of AI (mostly the Gemini deep research feature)
+> README explanations have also been partially written (gemini) or formatted (Siri writing tools) by AI.
+> This is NOT a production-grade product, it is only a personal tool to help me visualize and dev/debug o-sfu.
 
-see the repository for more info of what can be observed.
+This repository carries the optional reference observability stack for
+[`o-sfu`](https://github.com/ThanhDodeurOdoo/o-sfu). It mirrors the runtime
+contract owned by the server:
 
-For the otel tracing you should run the sfu with "TELEMETRY_OTLP_ENDPOINT" with the otel-collector address (TODO will write more on that later),
-and with the feature flag "otel-tracing".
+- Prometheus scrapes `/metrics`
+- blackbox probes `GET /v1/noop`
+- Grafana ships the default dashboards
+- the OpenTelemetry Collector accepts OTLP traces and tails JSON logs
+- Loki stores structured logs
+- Tempo stores traces
 
-## What is here
+The stack is for local and staging validation. It is a reference baseline, not a
+required production deployment model.
 
-- `docker-compose.yml`: local Prometheus, Grafana, Alertmanager, blackbox probe, and collector stack
-- `prometheus/`: scrape config, alert rules, and host-metrics example
-- `grafana/`: provisioned Prometheus datasource plus dashboards for control-plane, transport lifecycle, media path, and recording
+## Layout
+
+- `docker-compose.yml`: local LGTM-style operator stack plus blackbox and Alertmanager
+- `prometheus/`: scrape config, recording rules, alert rules, and the optional host-metrics example
+- `grafana/`: provisioned datasources plus dashboards for control-plane, transport lifecycle, media path, recording, and staging canary checks
 - `alertmanager/`: default grouping and routing stub for the reference alerts
-- `blackbox/`: probe modules used to check `GET /v1/noop`
-- `otel-collector/`: placeholder OTLP receiver for the later trace feature
+- `blackbox/`: probe modules for `GET /v1/noop`
+- `otel-collector/`: OTLP and filelog collector pipeline that forwards traces to Tempo and JSON logs to Loki
+- `loki/`: local Loki config for structured OTLP log ingestion
+- `tempo/`: local Tempo config for OTLP trace ingestion
+- `data/`: bind-mounted local state for logs, Loki, and Tempo
 
-## Local prototype
+## Running the stack
 
-1. Start `o-sfu` on the host with the normal HTTP listener on `:8070`.
-2. From this repository root, run `docker compose up`.
-3. Open Grafana on `http://localhost:3000`, Prometheus on `http://localhost:9090`, and Alertmanager on `http://localhost:9093`.
-4. Confirm the `o-sfu` target is up, the `o-sfu-noop` probe succeeds, and Grafana auto-loads the default vuews
+Start `o-sfu` on the host with JSON logs and OTLP traces enabled:
+
+```bash
+cd /Volumes/X9-Pro/odoo-dev/o-sfu
+
+AUTH_KEY="$(openssl rand -base64 32)" \
+PUBLIC_IP=192.0.2.10 \
+TELEMETRY_LOG_FORMAT=json \
+TELEMETRY_OTLP_ENDPOINT=http://host.docker.internal:4318 \
+cargo run --release -p o-sfu 2>&1 | tee ../o-sfu-telemetry/data/logs/o-sfu.jsonl
+```
+
+Then bring up the reference stack:
+
+```bash
+cd /Volumes/X9-Pro/odoo-dev/o-sfu-telemetry
+docker compose up
+```
 
 The compose stack uses `host.docker.internal` with a host-gateway mapping so the
-containers can scrape a host-run `o-sfu` process.
+containers can scrape and receive OTLP data from a host-run `o-sfu` process.
+
+## Endpoints
+
+- Grafana: `http://localhost:3000`
+- Prometheus: `http://localhost:9090`
+- Alertmanager: `http://localhost:9093`
+- Loki: `http://localhost:3100/metrics`
+- Tempo: `http://localhost:3200/metrics`
+- OTLP gRPC receiver: `localhost:4317`
+- OTLP HTTP receiver: `localhost:4318`
+
+Grafana provisions three datasources out of the box:
+
+- `Prometheus`
+- `Loki`
+- `Tempo`
+
+## Validation flow
+
+1. Confirm `GET /v1/noop` succeeds on the host-run `o-sfu`.
+2. Check Prometheus target health for the `o-sfu` scrape and `o-sfu-noop` probe.
+3. Open the `o-sfu Staging Canary` dashboard and verify:
+   - `Noop Probe` stays at `1`
+   - `Join Success Ratio` stays healthy during staged joins
+   - `Connected Transports` rises after the canary join
+   - `Local Forwarding Efficiency` rises during live media
+4. Open Grafana Explore with the `Loki` datasource and inspect the structured JSON log fields such as `event`, `channel_uuid`, `session_id`, and `trace_id`.
+5. Open Grafana Explore with the `Tempo` datasource and confirm the control-plane spans arrive for the same canary session.
+
+## Alerts and recording rules
+
+The reference Prometheus config now ships:
+
+- recording rules for join success ratio, websocket startup failure rate, transport disconnect churn per active session, and local forwarding efficiency
+- alerts for low join success ratio, websocket startup failures, normalized transport disconnect churn, routing pressure, relay overload, and low local forwarding efficiency
+
+These derived rules are intended for operator dashboards and canary validation.
+They should stay derived from runtime-owned metrics instead of introducing extra
+application counters unless the runtime surface proves insufficient.
 
 ## Optional host and container metrics
 
 `node_exporter` and `cAdvisor` stay explicitly outside the application runtime
-scope. they are optional services behind  `infra` profile:
+scope.
+
+On Linux hosts:
 
 ```bash
-docker compose --profile infra up
+docker compose --profile linux-infra up
 ```
 
-The default `prometheus/prometheus.yml` stays focused on the application and the
-noop probe. If you want the reference host or container panels, use
-`prometheus/prometheus.host-metrics.example.yml` as the starting point for a local
-override.
+On Docker Desktop or macOS:
 
-## Dashboard layout
+```bash
+docker compose up
+```
 
-- `control-plane.json`: HTTP, websocket admission, session startup, and latency views
-- `transport-lifecycle.json`: transport health, ICE, DTLS, and lifetime views
+Do not enable the Linux host-metrics profile on Docker Desktop. Both
+`node-exporter` and `cAdvisor` depend on Linux host mount-propagation behavior
+and are aimed at real Linux hosts, not the Docker Desktop VM.
+
+The default `prometheus/prometheus.yml` stays focused on the application, the
+noop probe, and the reference operator signals. If you need host or container
+panels, use `prometheus/prometheus.host-metrics.example.yml` as the starting
+point for a local override.
+
+## Dashboard inventory
+
+- `control-plane.json`: HTTP, websocket admission, startup, and latency views
+- `transport-lifecycle.json`: transport health, ICE, DTLS, and session lifetime views
 - `media-path.json`: RTP ingress, forwarding, routing pressure, and route-control views
 - `recording.json`: recording action outcomes, active captures, and recording fan-out
+- `staging-canary.json`: join success, canary readiness, disconnect churn, and forwarding efficiency

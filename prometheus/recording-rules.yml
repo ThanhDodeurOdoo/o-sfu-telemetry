@@ -1,0 +1,14 @@
+groups:
+  - name: o-sfu-derived
+    rules:
+      - record: osfu:ws_join_success_ratio_5m
+        expr: clamp_max(sum(rate(osfu_ws_connections_total{stage="joined"}[5m])) / clamp_min(sum(rate(osfu_ws_connections_total{stage="accepted"}[5m])), 0.001), 1)
+
+      - record: osfu:ws_startup_failures_rate_5m
+        expr: sum(rate(osfu_ws_startup_failures_total[5m]))
+
+      - record: osfu:transport_disconnect_churn_per_session_5m
+        expr: sum(rate(osfu_transport_health_transitions_total{from="connected",to="disconnected"}[5m])) / clamp_min(sum(osfu_transport_sessions_active), 1)
+
+      - record: osfu:local_forwarding_efficiency_ratio_5m
+        expr: clamp_max(sum(rate(osfu_rtp_forwarded_packets_total{destination="local_rtc"}[5m])) / clamp_min(sum(rate(osfu_rtp_packets_total{direction="ingress"}[5m])), 0.001), 1)
