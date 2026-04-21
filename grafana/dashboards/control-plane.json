@@ -263,6 +263,110 @@
       ],
       "title": "Websocket Startup Duration p95",
       "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 21
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(osfu_publications_active)",
+          "refId": "A"
+        }
+      ],
+      "title": "Active Publications",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 21
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(osfu_subscriptions_active)",
+          "refId": "A"
+        }
+      ],
+      "title": "Active Subscriptions",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 21
+      },
+      "id": 11,
+      "targets": [
+        {
+          "expr": "sum(osfu_publications_active)",
+          "legendFormat": "publications",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(osfu_subscriptions_active)",
+          "legendFormat": "subscriptions",
+          "refId": "B"
+        }
+      ],
+      "title": "Live Media Totals",
+      "type": "timeseries"
     }
   ],
   "refresh": "15s",
@@ -282,6 +386,6 @@
   "timezone": "",
   "title": "o-sfu Control Plane",
   "uid": "osfu-control-plane",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
