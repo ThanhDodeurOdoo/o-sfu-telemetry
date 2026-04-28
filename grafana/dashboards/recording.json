@@ -36,11 +36,11 @@
       },
       "targets": [
         {
-          "expr": "sum(osfu_recording_channels_active)",
+          "expr": "sum(osfu_recording_rooms_active)",
           "refId": "A"
         }
       ],
-      "title": "Active Recording Channels",
+      "title": "Active Recording Rooms",
       "type": "stat"
     },
     {

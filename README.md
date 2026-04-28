@@ -44,6 +44,7 @@ AUTH_KEY="$(openssl rand -base64 32)" \
 PUBLIC_IP=192.0.2.10 \
 TELEMETRY_LOG_FORMAT=json \
 TELEMETRY_OTLP_ENDPOINT=http://host.docker.internal:4318 \
+DIAGNOSTICS_AUTH_TOKEN=examplepassword \
 cargo run --release -p o-sfu 2>&1 | tee ../o-sfu-telemetry/data/logs/o-sfu.jsonl
 ```
 
@@ -82,14 +83,14 @@ Grafana provisions three datasources out of the box:
    - `Join Success Ratio` stays healthy during staged joins
    - `Connected Transports` rises after the canary join
    - `Local Forwarding Efficiency` rises during live media
-4. Open Grafana Explore with the `Loki` datasource and inspect the structured JSON log fields such as `event`, `channel_uuid`, `session_id`, and `trace_id`.
-5. Open Grafana Explore with the `Tempo` datasource and confirm the control-plane spans arrive for the same canary session.
+4. Open Grafana Explore with the `Loki` datasource and inspect the structured JSON log fields such as `event`, `room_id`, `user_id`, and `trace_id`.
+5. Open Grafana Explore with the `Tempo` datasource and confirm the control-plane spans arrive for the same canary user.
 
 ## Alerts and recording rules
 
 The reference Prometheus config now ships:
 
-- recording rules for join success ratio, websocket startup failure rate, transport disconnect churn per active session, and local forwarding efficiency
+- recording rules for join success ratio, websocket startup failure rate, transport disconnect churn per active user, and local forwarding efficiency
 - alerts for low join success ratio, websocket startup failures, normalized transport disconnect churn, routing pressure, relay overload, and low local forwarding efficiency
 
 These derived rules are intended for operator dashboards and canary validation.
@@ -125,7 +126,7 @@ point for a local override.
 ## Dashboard inventory
 
 - `control-plane.json`: HTTP, websocket admission, startup, and latency views
-- `transport-lifecycle.json`: transport health, ICE, DTLS, and session lifetime views
+- `transport-lifecycle.json`: transport health, ICE, DTLS, and user lifetime views
 - `media-path.json`: RTP ingress, forwarding, routing pressure, and route-control views
 - `recording.json`: recording action outcomes, active captures, and recording fan-out
 - `staging-canary.json`: join success, canary readiness, disconnect churn, and forwarding efficiency

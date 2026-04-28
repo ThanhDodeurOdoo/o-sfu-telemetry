@@ -152,7 +152,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Estimated recent sessions that reached joined signaling without matching DTLS growth in the last 15 minutes.",
+      "description": "Estimated recent users that reached joined signaling without matching DTLS growth in the last 15 minutes.",
       "fieldConfig": {
         "defaults": {
           "thresholds": {
@@ -203,7 +203,7 @@
           "refId": "A"
         }
       ],
-      "title": "Affected Sessions",
+      "title": "Affected Users",
       "type": "stat"
     },
     {

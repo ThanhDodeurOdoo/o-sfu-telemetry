@@ -13,7 +13,7 @@ services:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
 
   grafana:
-    image: grafana/grafana-oss
+    image: grafana/grafana-oss:11.4.0
     depends_on:
       - prometheus
       - loki
@@ -21,6 +21,7 @@ services:
     environment:
       GF_SECURITY_ADMIN_PASSWORD: admin
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/operations.json
+      GF_INSTALL_PLUGINS: yesoreyeram-infinity-datasource
     ports:
       - "3000:3000"
     volumes:

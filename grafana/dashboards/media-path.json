@@ -133,8 +133,8 @@
           "refId": "A"
         },
         {
-          "expr": "sum(rate(osfu_rtc_datagram_scan_sessions_total[5m]))",
-          "legendFormat": "scanned sessions/s",
+          "expr": "sum(rate(osfu_rtc_datagram_scan_users_total[5m]))",
+          "legendFormat": "scanned users/s",
           "refId": "B"
         }
       ],

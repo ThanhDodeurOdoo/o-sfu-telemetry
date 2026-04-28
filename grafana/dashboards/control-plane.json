@@ -36,11 +36,11 @@
       },
       "targets": [
         {
-          "expr": "sum(osfu_sessions_active)",
+          "expr": "sum(osfu_users_active)",
           "refId": "A"
         }
       ],
-      "title": "Active Sessions",
+      "title": "Active Users",
       "type": "stat"
     },
     {
@@ -196,12 +196,12 @@
       "id": 6,
       "targets": [
         {
-          "expr": "sum by (reason) (rate(osfu_ws_session_loop_exits_total[5m]))",
+          "expr": "sum by (reason) (rate(osfu_ws_user_loop_exits_total[5m]))",
           "legendFormat": "{{reason}}",
           "refId": "A"
         }
       ],
-      "title": "Session Loop Exits by Reason",
+      "title": "User Loop Exits by Reason",
       "type": "timeseries"
     },
     {
@@ -256,8 +256,8 @@
           "refId": "B"
         },
         {
-          "expr": "histogram_quantile(0.95, rate(osfu_ws_session_initialize_duration_seconds_bucket[10m]))",
-          "legendFormat": "session init p95",
+          "expr": "histogram_quantile(0.95, rate(osfu_ws_user_initialize_duration_seconds_bucket[10m]))",
+          "legendFormat": "user init p95",
           "refId": "C"
         }
       ],

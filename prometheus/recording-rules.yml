@@ -64,8 +64,8 @@ groups:
       - record: osfu:publisher_media_after_dtls_ratio_5m
         expr: clamp_max((osfu:transport_dtls_connected_rate_5m > bool 0.05) * (osfu:rtp_ingress_packets_rate_5m > bool 10), 1)
 
-      - record: osfu:transport_disconnect_churn_per_session_5m
-        expr: sum(rate(osfu_transport_health_transitions_total{from="connected",to="disconnected"}[5m])) / clamp_min(sum(osfu_transport_sessions_active), 1)
+      - record: osfu:transport_disconnect_churn_per_user_5m
+        expr: sum(rate(osfu_transport_health_transitions_total{from="connected",to="disconnected"}[5m])) / clamp_min(sum(osfu_transport_users_active), 1)
 
       - record: osfu:local_forwarding_efficiency_ratio_5m
         expr: clamp_max(osfu:rtp_local_forward_packets_rate_5m / clamp_min(osfu:rtp_ingress_packets_rate_5m, 0.001), 1)
@@ -76,8 +76,8 @@ groups:
       - record: osfu:routing_pressure_rate_5m
         expr: sum(rate(osfu_rtc_datagram_fallback_scans_total[5m]))
 
-      - record: osfu:no_session_drop_rate_5m
-        expr: sum(rate(osfu_rtc_datagram_drops_total{reason="no_session"}[5m]))
+      - record: osfu:no_user_drop_rate_5m
+        expr: sum(rate(osfu_rtc_datagram_drops_total{reason="no_user"}[5m]))
 
       - record: osfu:joined_minus_dtls_15m
         expr: clamp_min(sum(increase(osfu_ws_connections_total{stage="joined"}[15m])) - sum(increase(osfu_transport_dtls_connected_total[15m])), 0)
@@ -98,7 +98,7 @@ groups:
         expr: clamp_max((osfu:rtp_ingress_packets_rate_5m > bool 10) * (osfu:local_forwarding_efficiency_ratio_5m < bool 0.6), 1)
 
       - record: osfu:operator_boundary_churn
-        expr: clamp_max((osfu:transport_disconnect_churn_per_session_5m > bool 0.05) + (sum(osfu_transport_health_sessions{state="disconnected"}) > bool 0), 1)
+        expr: clamp_max((osfu:transport_disconnect_churn_per_user_5m > bool 0.05) + (sum(osfu_transport_health_users{state="disconnected"}) > bool 0), 1)
 
       - record: osfu:operator_boundary_routing
-        expr: clamp_max((osfu:routing_pressure_rate_5m > bool 0.5) + (osfu:no_session_drop_rate_5m > bool 0.2), 1)
+        expr: clamp_max((osfu:routing_pressure_rate_5m > bool 0.5) + (osfu:no_user_drop_rate_5m > bool 0.2), 1)

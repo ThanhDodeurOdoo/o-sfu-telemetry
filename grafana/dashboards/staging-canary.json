@@ -139,7 +139,7 @@
       },
       "targets": [
         {
-          "expr": "sum(osfu_transport_health_sessions{state=\"connected\"})",
+          "expr": "sum(osfu_transport_health_users{state=\"connected\"})",
           "refId": "A"
         }
       ],
@@ -267,12 +267,12 @@
       "id": 7,
       "targets": [
         {
-          "expr": "osfu:transport_disconnect_churn_per_session_5m",
-          "legendFormat": "disconnects per active session",
+          "expr": "osfu:transport_disconnect_churn_per_user_5m",
+          "legendFormat": "disconnects per active user",
           "refId": "A"
         },
         {
-          "expr": "sum(osfu_transport_health_sessions{state=\"disconnected\"})",
+          "expr": "sum(osfu_transport_health_users{state=\"disconnected\"})",
           "legendFormat": "disconnected transports",
           "refId": "B"
         }
@@ -332,8 +332,8 @@
           "refId": "A"
         },
         {
-          "expr": "sum(rate(osfu_rtc_datagram_scan_sessions_total[5m]))",
-          "legendFormat": "scanned sessions/s",
+          "expr": "sum(rate(osfu_rtc_datagram_scan_users_total[5m]))",
+          "legendFormat": "scanned users/s",
           "refId": "B"
         }
       ],

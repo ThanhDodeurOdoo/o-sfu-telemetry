@@ -64,7 +64,7 @@ groups:
           severity: warning
         annotations:
           summary: "o-sfu join success ratio is degraded"
-          description: "Accepted websocket joins are no longer progressing to joined sessions at the normal canary ratio."
+          description: "Accepted websocket joins are no longer progressing to joined users at the normal canary ratio."
 
       - alert: OSFUStartupFailuresSpike
         expr: osfu:ws_startup_failures_rate_5m > 0.02
@@ -73,16 +73,16 @@ groups:
           severity: warning
         annotations:
           summary: "o-sfu startup failures are elevated"
-          description: "Startup or session-initialize failures are rising before websocket sessions reach the steady-state loop."
+          description: "Startup or user-initialize failures are rising before websocket users reach the steady-state loop."
 
-      - alert: OSFUTransportDisconnectRatePerSessionHigh
-        expr: osfu:transport_disconnect_churn_per_session_5m > 0.05 and sum(osfu_transport_sessions_active) > 0
+      - alert: OSFUTransportDisconnectRatePerUserHigh
+        expr: osfu:transport_disconnect_churn_per_user_5m > 0.05 and sum(osfu_transport_users_active) > 0
         for: 10m
         labels:
           severity: page
         annotations:
-          summary: "o-sfu transport churn is high relative to active sessions"
-          description: "Connected transports are dropping often enough that the canary no longer looks stable even after normalizing by active sessions."
+          summary: "o-sfu transport churn is high relative to active users"
+          description: "Connected transports are dropping often enough that the canary no longer looks stable even after normalizing by active users."
 
       - alert: OSFULocalForwardingEfficiencyLow
         expr: osfu:local_forwarding_efficiency_ratio_5m < 0.6 and osfu:rtp_ingress_packets_rate_5m > 10
@@ -100,7 +100,7 @@ groups:
           severity: warning
         annotations:
           summary: "o-sfu transport establishment is degraded"
-          description: "Joined sessions are reaching ICE checking, but too few of them are reaching ICE completion or DTLS connected in the recent traffic window."
+          description: "Joined users are reaching ICE checking, but too few of them are reaching ICE completion or DTLS connected in the recent traffic window."
 
       - alert: OSFUJoinedWithoutDtlsGrowth
         expr: osfu:joined_minus_dtls_15m > 0
@@ -108,8 +108,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "recent joined sessions are missing matching DTLS growth"
-          description: "Recent joined-session growth is outpacing DTLS-connected growth, which usually means some browsers are reaching signaling but not completing the RTC transport path."
+          summary: "recent joined users are missing matching DTLS growth"
+          description: "Recent joined-user growth is outpacing DTLS-connected growth, which usually means some browsers are reaching signaling but not completing the RTC transport path."
 
       - alert: OSFUDtlsWithoutIngress
         expr: osfu:operator_boundary_publisher_media > 0.5
@@ -117,5 +117,5 @@ groups:
         labels:
           severity: page
         annotations:
-          summary: "o-sfu has DTLS sessions without RTP ingress"
-          description: "Recent DTLS-connected sessions are not turning into RTP ingress, which points at publish-side media attachment or network-path issues."
+          summary: "o-sfu has DTLS users without RTP ingress"
+          description: "Recent DTLS-connected users are not turning into RTP ingress, which points at publish-side media attachment or network-path issues."
