@@ -67,6 +67,18 @@ groups:
       - record: osfu:transport_disconnect_churn_per_user_5m
         expr: sum(rate(osfu_transport_health_transitions_total{from="connected",to="disconnected"}[5m])) / clamp_min(sum(osfu_transport_users_active), 1)
 
+      - record: osfu:transport_cleanup_retry_rate_5m
+        expr: sum(rate(osfu_transport_cleanup_retries_total[5m]))
+
+      - record: osfu:transport_cleanup_retry_success_rate_5m
+        expr: sum(rate(osfu_transport_cleanup_retry_successes_total[5m]))
+
+      - record: osfu:transport_cleanup_failure_rate_5m
+        expr: sum(rate(osfu_transport_cleanup_failures_total[5m]))
+
+      - record: osfu:transport_cleanup_unrecovered_failure_rate_5m
+        expr: sum(rate(osfu_transport_cleanup_failures_total{kind!="shutdown"}[5m]))
+
       - record: osfu:local_forwarding_efficiency_ratio_5m
         expr: clamp_max(osfu:rtp_local_forward_packets_rate_5m / clamp_min(osfu:rtp_ingress_packets_rate_5m, 0.001), 1)
 

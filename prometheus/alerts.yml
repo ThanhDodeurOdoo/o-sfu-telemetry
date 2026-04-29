@@ -84,6 +84,15 @@ groups:
           summary: "o-sfu transport churn is high relative to active users"
           description: "Connected transports are dropping often enough that the canary no longer looks stable even after normalizing by active users."
 
+      - alert: OSFUTransportCleanupFailures
+        expr: osfu:transport_cleanup_unrecovered_failure_rate_5m > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "o-sfu transport cleanup failures are unrecovered"
+          description: "Room cleanup retries are reaching a terminal, queue-full, or retry-exhausted state instead of completing successfully."
+
       - alert: OSFULocalForwardingEfficiencyLow
         expr: osfu:local_forwarding_efficiency_ratio_5m < 0.6 and osfu:rtp_ingress_packets_rate_5m > 10
         for: 10m

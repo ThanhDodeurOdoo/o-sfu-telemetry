@@ -221,6 +221,61 @@
       ],
       "title": "DTLS and Transport Disconnects",
       "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 21
+      },
+      "id": 8,
+      "targets": [
+        {
+          "expr": "osfu:transport_cleanup_retry_rate_5m",
+          "legendFormat": "retry attempts/s",
+          "refId": "A"
+        },
+        {
+          "expr": "osfu:transport_cleanup_retry_success_rate_5m",
+          "legendFormat": "retry successes/s",
+          "refId": "B"
+        }
+      ],
+      "title": "Cleanup Retry Recovery",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 21
+      },
+      "id": 9,
+      "targets": [
+        {
+          "expr": "sum by (kind) (rate(osfu_transport_cleanup_failures_total[5m]))",
+          "legendFormat": "{{kind}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Cleanup Failures by Kind",
+      "type": "timeseries"
     }
   ],
   "refresh": "15s",

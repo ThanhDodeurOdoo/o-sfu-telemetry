@@ -47,6 +47,7 @@ TELEMETRY_OTLP_ENDPOINT=http://host.docker.internal:4318 \
 DIAGNOSTICS_AUTH_TOKEN=examplepassword \
 cargo run --release -p o-sfu 2>&1 | tee ../o-sfu-telemetry/data/logs/o-sfu.jsonl
 ```
+(the current urls are execting DIAGNOSTICS_AUTH_TOKEN=examplepassword)
 
 Then bring up the reference stack:
 
@@ -90,8 +91,8 @@ Grafana provisions three datasources out of the box:
 
 The reference Prometheus config now ships:
 
-- recording rules for join success ratio, websocket startup failure rate, transport disconnect churn per active user, and local forwarding efficiency
-- alerts for low join success ratio, websocket startup failures, normalized transport disconnect churn, routing pressure, relay overload, and low local forwarding efficiency
+- recording rules for join success ratio, websocket startup failure rate, transport disconnect churn per active user, transport cleanup recovery, and local forwarding efficiency
+- alerts for low join success ratio, websocket startup failures, normalized transport disconnect churn, unrecovered transport cleanup failures, routing pressure, relay overload, and low local forwarding efficiency
 
 These derived rules are intended for operator dashboards and canary validation.
 They should stay derived from runtime-owned metrics instead of introducing extra
@@ -126,7 +127,7 @@ point for a local override.
 ## Dashboard inventory
 
 - `control-plane.json`: HTTP, websocket admission, startup, and latency views
-- `transport-lifecycle.json`: transport health, ICE, DTLS, and user lifetime views
+- `transport-lifecycle.json`: transport health, ICE, DTLS, cleanup recovery, and user lifetime views
 - `media-path.json`: RTP ingress, forwarding, routing pressure, and route-control views
 - `recording.json`: recording action outcomes, active captures, and recording fan-out
 - `staging-canary.json`: join success, canary readiness, disconnect churn, and forwarding efficiency
