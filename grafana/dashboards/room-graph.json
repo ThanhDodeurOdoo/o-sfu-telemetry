@@ -1,0 +1,181 @@
+{
+  "title": "o-sfu Room Graph",
+  "uid": "room-graph",
+  "schemaVersion": 39,
+  "refresh": "10s",
+  "templating": {
+    "list": [
+      {
+        "name": "room_uuid",
+        "type": "textbox",
+        "current": { "text": "", "value": "" },
+        "query": "",
+        "label": "Selected Room UUID"
+      },
+      {
+        "name": "user_id",
+        "type": "textbox",
+        "current": { "text": "", "value": "" },
+        "query": "",
+        "label": "Selected User"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "table",
+      "title": "Active Rooms",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/rooms",
+          "url_options": { "method": "GET", "data": "" },
+          "root_selector": "",
+          "columns": [
+            { "selector": "uuid", "text": "UUID", "type": "string" },
+            { "selector": "userCount", "text": "Users", "type": "number" },
+            { "selector": "sourceCount", "text": "Streams", "type": "number" },
+            { "selector": "publicationCount", "text": "Producers", "type": "number" },
+            { "selector": "subscriptionCount", "text": "Consumers", "type": "number" },
+            { "selector": "mediaWorkerId", "text": "PrimaryWorker", "type": "number" },
+            { "selector": "createDate", "text": "Created", "type": "string" }
+          ],
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "links": [
+              {
+                "title": "View Room",
+                "url": "/d/room-graph/o-sfu-room-graph?var-room_uuid=${__data.fields.UUID}&var-user_id="
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "type": "nodeGraph",
+      "title": "Room Topology: ${room_uuid}",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "format": "node-graph-nodes",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_uuid}",
+          "url_options": { "method": "GET", "data": "" },
+          "root_selector": "nodes",
+          "refId": "A"
+        },
+        {
+          "type": "json",
+          "source": "url",
+          "format": "node-graph-edges",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_uuid}",
+          "url_options": { "method": "GET", "data": "" },
+          "root_selector": "edges",
+          "refId": "B"
+        }
+      ],
+      "gridPos": { "h": 14, "w": 14, "x": 0, "y": 8 }
+    },
+    {
+      "type": "table",
+      "title": "Room Users",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/rooms/${room_uuid}/users",
+          "url_options": { "method": "GET", "data": "" },
+          "root_selector": "",
+          "columns": [
+            { "selector": "roomId", "text": "Room", "type": "string" },
+            { "selector": "userKey", "text": "UserKey", "type": "string" },
+            { "selector": "userId", "text": "User", "type": "string" },
+            { "selector": "connectionId", "text": "Connection", "type": "number" },
+            { "selector": "mediaWorkerId", "text": "Worker", "type": "number" },
+            { "selector": "health", "text": "Health", "type": "string" },
+            { "selector": "incomingBitrateBps", "text": "IncomingBps", "type": "number" },
+            { "selector": "publicationCount", "text": "Producers", "type": "number" },
+            { "selector": "subscriptionCount", "text": "Consumers", "type": "number" }
+          ],
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "links": [
+              {
+                "title": "View User Path",
+                "url": "/d/room-graph/o-sfu-room-graph?var-room_uuid=${__data.fields.Room}&var-user_id=${__data.fields.UserKey}"
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": { "h": 14, "w": 10, "x": 14, "y": 8 }
+    },
+    {
+      "type": "nodeGraph",
+      "title": "User Media Path: ${user_id}",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "format": "node-graph-nodes",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_uuid}/users/${user_id}",
+          "url_options": { "method": "GET", "data": "" },
+          "root_selector": "nodes",
+          "refId": "A"
+        },
+        {
+          "type": "json",
+          "source": "url",
+          "format": "node-graph-edges",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_uuid}/users/${user_id}",
+          "url_options": { "method": "GET", "data": "" },
+          "root_selector": "edges",
+          "refId": "B"
+        }
+      ],
+      "gridPos": { "h": 14, "w": 18, "x": 0, "y": 22 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Source Selection Updates",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum by (selector) (rate(osfu_source_selection_updates_total[5m]))",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 14, "w": 6, "x": 18, "y": 22 }
+    }
+  ]
+}

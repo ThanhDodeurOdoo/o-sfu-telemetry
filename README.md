@@ -184,7 +184,7 @@ Grafana provisions three datasources out of the box:
    - `Local Forwarding Efficiency` rises during live media
    - receiver budget cards show whether adaptation is degrading, pausing, resuming, or intentionally staying over budget for protected video
 5. Open the `o-sfu Media Path` dashboard during simulcast validation. The receiver budget section should explain whether media pressure is normal selected-layer adaptation, whole-route policy pauses, recovery resumes, or protected-over-budget layout intent.
-6. Open the `o-sfu Channel Graph` dashboard and use the user lookup field to inspect `/internal/diagnostics/users/{id}` without scanning every room in Grafana. Use it to inspect the exact receiver BWE estimate, selected receiver budget, active route count, selected bitrate, pause reason, and over-budget exception reason behind the low-cardinality Prometheus signals.
+6. Open the `o-sfu Room Graph` dashboard, select a room from the active-room table, then select a user from the room-user table. The room graph shows the whole room topology, while the user graph shows that user's inbound and outbound media paths through media-worker nodes, source nodes, and peer users. Use it to inspect the exact receiver BWE estimate, selected receiver budget, active route count, selected bitrate, pause reason, and over-budget exception reason behind the low-cardinality Prometheus signals.
 7. Open Grafana Explore with the `Loki` datasource and inspect the structured JSON log fields such as `event`, `room_id`, `user_id`, and `trace_id`.
 8. Open Grafana Explore with the `Tempo` datasource and confirm the control-plane spans arrive for the same canary user.
 
@@ -244,4 +244,4 @@ Before using it outside a controlled environment:
 - `media-path.json`: RTP ingress, forwarding, routing pressure, and route-control views
 - `recording.json`: recording action outcomes, active captures, and recording fan-out
 - `staging-canary.json`: join success, canary readiness, disconnect churn, and forwarding efficiency
-- `channel-graph.json`: diagnostics-backed active-room, user lookup, topology, and source-selection views
+- `room-graph.json`: diagnostics-backed active-room selection, room topology, room-user selection, per-user media-path topology, and source-selection views
