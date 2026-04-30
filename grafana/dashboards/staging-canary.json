@@ -197,6 +197,234 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Any recent receiver budget activity during the canary window.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0.01
+              }
+            ]
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 5
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "sum(osfu:budget_solver_outcomes_rate_5m)",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Budget Decisions/s",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Semantic overload pauses. Sustained growth during a canary means receivers are bandwidth constrained.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.05
+              },
+              {
+                "color": "red",
+                "value": 0.2
+              }
+            ]
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 5
+      },
+      "id": 12,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "osfu:budget_solver_paused_rate_5m",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Budget Pauses/s",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Recovery signal after budget pressure. Use together with pauses to see whether adaptation is healing.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0.01
+              }
+            ]
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 5
+      },
+      "id": 13,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "osfu:budget_solver_resumed_rate_5m",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Budget Resumes/s",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Policy-protected routes that stayed over budget. This should be explainable through diagnostics layout intent.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.02
+              },
+              {
+                "color": "red",
+                "value": 0.1
+              }
+            ]
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 5
+      },
+      "id": 14,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "osfu:budget_solver_protected_over_budget_rate_5m",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Protected Exceptions/s",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
           "unit": "reqps"
@@ -207,7 +435,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 5
+        "y": 10
       },
       "id": 5,
       "targets": [
@@ -232,7 +460,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 5
+        "y": 10
       },
       "id": 6,
       "targets": [
@@ -262,7 +490,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 13
+        "y": 18
       },
       "id": 7,
       "targets": [
@@ -292,7 +520,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 13
+        "y": 18
       },
       "id": 8,
       "targets": [
@@ -322,7 +550,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 21
+        "y": 26
       },
       "id": 9,
       "targets": [
@@ -341,11 +569,64 @@
       "type": "timeseries"
     },
     {
+      "datasource": "Prometheus",
+      "description": "Receiver budget decisions beside selected-layer updates. The canary should show explainable adaptation rather than unexplained forwarding loss.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 34
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "osfu:budget_solver_outcomes_rate_5m",
+          "legendFormat": "{{outcome}}",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (selector) (rate(osfu_source_selection_updates_total{selector=\"encoding\"}[5m]))",
+          "legendFormat": "selector {{selector}}",
+          "refId": "B"
+        }
+      ],
+      "title": "Budget Adaptation During Canary",
+      "type": "timeseries"
+    },
+    {
       "gridPos": {
         "h": 4,
         "w": 24,
         "x": 0,
-        "y": 29
+        "y": 42
       },
       "id": 10,
       "options": {

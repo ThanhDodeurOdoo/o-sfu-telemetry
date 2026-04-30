@@ -8,37 +8,49 @@ receivers:
   filelog:
     include:
       - /var/log/o-sfu/*.jsonl
-    start_at: beginning
+    start_at: end
+    storage: file_storage
     include_file_path: true
     operators:
       - type: json_parser
 
+extensions:
+  file_storage:
+    directory: /var/lib/otelcol/file_storage
+  health_check:
+    endpoint: 0.0.0.0:13133
+
 processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+    spike_limit_mib: 128
   batch:
 
 exporters:
-  debug:
-    verbosity: basic
   otlp_http/tempo:
     endpoint: http://tempo:4318
   otlp_http/loki:
     endpoint: http://loki:3100/otlp
 
 service:
+  extensions:
+    - file_storage
+    - health_check
   pipelines:
     traces:
       receivers:
         - otlp
       processors:
+        - memory_limiter
         - batch
       exporters:
-        - debug
         - otlp_http/tempo
     logs:
       receivers:
         - filelog
       processors:
+        - memory_limiter
         - batch
       exporters:
-        - debug
         - otlp_http/loki

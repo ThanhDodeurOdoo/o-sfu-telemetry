@@ -165,6 +165,415 @@
       ],
       "title": "Route Control Outcomes",
       "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Total receiver budget solver decisions. This should move when the SFU actively adapts receiver video quality.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0.01
+              }
+            ]
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 24
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "sum(osfu:budget_solver_outcomes_rate_5m)",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Adaptation Decisions/s",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Semantic route pauses caused by receiver budget pressure. These preserve subscriptions while withholding RTP delivery.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.05
+              },
+              {
+                "color": "red",
+                "value": 0.2
+              }
+            ]
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 24
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "osfu:budget_solver_paused_rate_5m",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Paused Routes/s",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Budget-policy route resumes. This rising after pause pressure indicates the policy is recovering instead of leaving routes stuck.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0.01
+              }
+            ]
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 24
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "osfu:budget_solver_resumed_rate_5m",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Recovery Resumes/s",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Policy-protected routes that intentionally keep selected video over the current receiver budget.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.02
+              },
+              {
+                "color": "red",
+                "value": 0.1
+              }
+            ]
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 24
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "osfu:budget_solver_protected_over_budget_rate_5m",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Protected Over Budget/s",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Current adaptation mix by low-cardinality outcome. Use this to distinguish healthy downswitching, overload pauses, recovery, and protected exceptions.",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.05
+              },
+              {
+                "color": "red",
+                "value": 0.2
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 10,
+        "x": 0,
+        "y": 29
+      },
+      "id": 11,
+      "options": {
+        "displayMode": "lcd",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "expr": "osfu:budget_solver_outcomes_rate_5m",
+          "instant": true,
+          "legendFormat": "{{outcome}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Budget Solver Mix",
+      "type": "bargauge"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Decision-rate timeline for receiver adaptation. Degraded should normally appear before paused when budget pressure rises.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 14,
+        "x": 10,
+        "y": 29
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "osfu:budget_solver_outcomes_rate_5m",
+          "legendFormat": "{{outcome}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Budget Solver Timeline",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Correlates transport selector updates with budget decisions. Encoding updates without budget outcomes usually mean normal receiver-driven layer selection.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 37
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(osfu_source_selection_updates_total{selector=\"encoding\"}[5m]))",
+          "legendFormat": "encoding selector updates",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(osfu:budget_solver_outcomes_rate_5m)",
+          "legendFormat": "budget decisions",
+          "refId": "B"
+        },
+        {
+          "expr": "osfu:budget_solver_paused_rate_5m",
+          "legendFormat": "policy pauses",
+          "refId": "C"
+        }
+      ],
+      "title": "Selection Updates Versus Budget Actions",
+      "type": "timeseries"
+    },
+    {
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 37
+      },
+      "id": 14,
+      "options": {
+        "content": "### Receiver budget policy\n\n- **degraded** means the receiver stayed active but was downswitched to a cheaper useful encoding.\n- **paused** means the subscription still exists, but room policy withheld a whole route to stay within budget.\n- **resumed** means a policy-paused route was allowed back after stable budget recovery.\n- **protected_over_budget** means featured, pinned, or screen-share intent intentionally won over the current BWE estimate.\n\nOpen **Channel Graph** or the diagnostics user lookup to inspect the exact receiver BWE, selected budget, active route count, selected bitrate, pause reason, and exception reason.",
+        "mode": "markdown"
+      },
+      "title": "How to Read Receiver Budget Policy",
+      "type": "text"
     }
   ],
   "refresh": "15s",

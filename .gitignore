@@ -1,8 +1,15 @@
+.env
 data/**
 !data/
 !data/logs/
 !data/logs/.gitkeep
 !data/loki/
 !data/loki/.gitkeep
+!data/otelcol/
+!data/otelcol/.gitkeep
+!data/prometheus/
+!data/prometheus/.gitkeep
 !data/tempo/
 !data/tempo/.gitkeep
+!data/grafana/
+!data/grafana/.gitkeep

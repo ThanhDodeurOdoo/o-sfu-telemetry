@@ -85,6 +85,21 @@ groups:
       - record: osfu:local_forwarding_efficiency_active_5m
         expr: osfu:local_forwarding_efficiency_ratio_5m and (osfu:rtp_ingress_packets_rate_5m > 10)
 
+      - record: osfu:budget_solver_outcomes_rate_5m
+        expr: sum by (outcome) (rate(osfu_budget_solver_outcomes_total[5m]))
+
+      - record: osfu:budget_solver_degraded_rate_5m
+        expr: sum(rate(osfu_budget_solver_outcomes_total{outcome="degraded"}[5m]))
+
+      - record: osfu:budget_solver_paused_rate_5m
+        expr: sum(rate(osfu_budget_solver_outcomes_total{outcome="paused"}[5m]))
+
+      - record: osfu:budget_solver_resumed_rate_5m
+        expr: sum(rate(osfu_budget_solver_outcomes_total{outcome="resumed"}[5m]))
+
+      - record: osfu:budget_solver_protected_over_budget_rate_5m
+        expr: sum(rate(osfu_budget_solver_outcomes_total{outcome="protected_over_budget"}[5m]))
+
       - record: osfu:routing_pressure_rate_5m
         expr: sum(rate(osfu_rtc_datagram_fallback_scans_total[5m]))
 

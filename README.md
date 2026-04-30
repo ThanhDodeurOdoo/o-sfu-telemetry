@@ -1,12 +1,5 @@
 # o-sfu telemetry defaults
 
-> [!WARNING]
-> AI DISCLAIMER
-> I am not a "deployment"/"devops",
-> This repository was written following the guidance and explanations of AI (mostly the Gemini deep research feature)
-> README explanations have also been partially written (gemini) or formatted (Siri writing tools) by AI.
-> This is NOT a production-grade product, it is only a personal tool to help me visualize and dev/debug o-sfu.
-
 This repository carries the optional reference observability stack for
 [`o-sfu`](https://github.com/ThanhDodeurOdoo/o-sfu). It mirrors the runtime
 contract owned by the server:
@@ -19,24 +12,40 @@ contract owned by the server:
 - Loki stores structured logs
 - Tempo stores traces
 
-The stack is for local and staging validation. It is a reference baseline, not a
-required production deployment model.
+The stack is for local and staging validation, but its defaults now follow the
+same shape expected from production logging: the application writes structured
+logs to its normal runtime sink, the collector tails a bounded log source, and
+file copies are exported on demand for incidents instead of being kept as an
+ever-growing debug file.
 
 ## Layout
 
 - `docker-compose.yml`: local LGTM-style operator stack plus blackbox and Alertmanager
 - `prometheus/`: scrape config, recording rules, alert rules, and the optional host-metrics example
-- `grafana/`: provisioned datasources plus dashboards for control-plane, transport lifecycle, media path, recording, and staging canary checks
+- `grafana/`: provisioned datasources plus dashboards for control-plane, transport lifecycle, media path, receiver budget adaptation, recording, and staging canary checks
 - `alertmanager/`: default grouping and routing stub for the reference alerts
 - `blackbox/`: probe modules for `GET /v1/noop`
 - `otel-collector/`: OTLP and filelog collector pipeline that forwards traces to Tempo and JSON logs to Loki
 - `loki/`: local Loki config for structured OTLP log ingestion
 - `tempo/`: local Tempo config for OTLP trace ingestion
-- `data/`: bind-mounted local state for logs, Loki, and Tempo
+- `data/`: bind-mounted local state for logs, collector offsets, Prometheus, Loki, Grafana, and Tempo
 
 ## Running the stack
 
-Start `o-sfu` on the host with JSON logs and OTLP traces enabled:
+Create a local environment file before starting the stack:
+
+```bash
+cd /Volumes/X9-Pro/odoo-dev/o-sfu-telemetry
+cp .env.example .env
+```
+
+Set `GRAFANA_ADMIN_PASSWORD` to a non-default value. The default
+`O_SFU_LOG_DIR=./data/logs` is a local fallback for rotated JSON log files. In a
+service deployment, point `O_SFU_LOG_DIR` at the directory where the process
+manager or container runtime exposes rotated `o-sfu` JSON logs.
+
+Start `o-sfu` on the host with JSON logs and OTLP traces enabled. Do not pipe it
+through `tee` as the primary retention mechanism:
 
 ```bash
 cd /Volumes/X9-Pro/odoo-dev/o-sfu
@@ -46,9 +55,8 @@ PUBLIC_IP=192.0.2.10 \
 TELEMETRY_LOG_FORMAT=json \
 TELEMETRY_OTLP_ENDPOINT=http://host.docker.internal:4318 \
 DIAGNOSTICS_AUTH_TOKEN=examplepassword \
-cargo run --release -p o-sfu 2>&1 | tee ../o-sfu-telemetry/data/logs/o-sfu.jsonl
+cargo run --release -p o-sfu
 ```
-(the current urls are execting DIAGNOSTICS_AUTH_TOKEN=examplepassword)
 
 Then bring up the reference stack:
 
@@ -59,6 +67,94 @@ docker compose up
 
 The compose stack uses `host.docker.internal` with a host-gateway mapping so the
 containers can scrape and receive OTLP data from a host-run `o-sfu` process.
+Service ports are bound to `127.0.0.1` by default; put Grafana or the telemetry
+endpoints behind your deployment's normal access-control layer if they must be
+reachable remotely.
+
+## Log ingestion model
+
+`o-sfu` should emit structured JSON logs to stdout/stderr. The runtime or process
+manager owns log file rotation and retention at the source:
+
+- systemd/journald: keep logs in the journal and export slices with
+  `journalctl`.
+- Docker: use the runtime JSON logs with `max-size` and `max-file`.
+- Kubernetes: let the node/container runtime rotate container logs and ship them
+  from the node log path.
+- direct files: write to a rotated directory such as `/var/log/o-sfu` and point
+  `O_SFU_LOG_DIR` at that directory.
+
+The OpenTelemetry Collector tails `*.jsonl` files from `O_SFU_LOG_DIR`, starts at
+the end for new files, and stores file offsets in `data/otelcol` so collector
+restarts do not replay the same logs. The local `data/logs` directory remains
+available for manual replay, but it is not the production retention mechanism.
+
+For a local replay file:
+
+```bash
+cd /Volumes/X9-Pro/odoo-dev/o-sfu
+
+AUTH_KEY="$(openssl rand -base64 32)" \
+PUBLIC_IP=192.0.2.10 \
+TELEMETRY_LOG_FORMAT=json \
+TELEMETRY_OTLP_ENDPOINT=http://host.docker.internal:4318 \
+DIAGNOSTICS_AUTH_TOKEN=examplepassword \
+cargo run --release -p o-sfu > ../o-sfu-telemetry/data/logs/o-sfu.jsonl 2>&1
+```
+
+Start the telemetry stack before writing this file, or truncate the file before
+rerunning `o-sfu`, because the production-shaped collector starts at the end of
+new files. This is useful for local reproduction only. Delete or rotate the file
+yourself after the replay is no longer needed.
+
+## Exporting a debug log copy
+
+Use bounded exports when you need a file for debugging.
+
+From Loki:
+
+```bash
+curl -G 'http://localhost:3100/loki/api/v1/query_range' \
+  --data-urlencode 'query={service_name="o-sfu"}' \
+  --data-urlencode 'start=2026-04-30T10:00:00Z' \
+  --data-urlencode 'end=2026-04-30T10:30:00Z' \
+  --data-urlencode 'limit=5000' \
+  > o-sfu-incident-2026-04-30.json
+```
+
+From journald:
+
+```bash
+journalctl -u o-sfu \
+  --since '2026-04-30 10:00:00 UTC' \
+  --until '2026-04-30 10:30:00 UTC' \
+  -o json > o-sfu-incident-2026-04-30.jsonl
+```
+
+From Docker:
+
+```bash
+docker logs \
+  --since '2026-04-30T10:00:00Z' \
+  --until '2026-04-30T10:30:00Z' \
+  o-sfu > o-sfu-incident-2026-04-30.jsonl
+```
+
+The exported file is an incident artifact, not the telemetry stack's source of
+truth.
+
+## Retention
+
+The reference stack applies bounded local retention:
+
+- Prometheus uses `PROMETHEUS_RETENTION_TIME` and
+  `PROMETHEUS_RETENTION_SIZE`.
+- Loki keeps logs for `14d` through its compactor.
+- Tempo keeps traces for `48h`.
+
+These defaults are intentionally small for a local/staging stack. A real
+deployment should move long-lived Loki and Tempo storage to the deployment's
+object store and set retention from incident-response requirements.
 
 ## Endpoints
 
@@ -86,15 +182,17 @@ Grafana provisions three datasources out of the box:
    - `Join Success Ratio` stays healthy during staged joins
    - `Connected Transports` rises after the canary join
    - `Local Forwarding Efficiency` rises during live media
-5. Open the `o-sfu Channel Graph` dashboard and use the user lookup field to inspect `/internal/diagnostics/users/{id}` without scanning every room in Grafana.
-6. Open Grafana Explore with the `Loki` datasource and inspect the structured JSON log fields such as `event`, `room_id`, `user_id`, and `trace_id`.
-7. Open Grafana Explore with the `Tempo` datasource and confirm the control-plane spans arrive for the same canary user.
+   - receiver budget cards show whether adaptation is degrading, pausing, resuming, or intentionally staying over budget for protected video
+5. Open the `o-sfu Media Path` dashboard during simulcast validation. The receiver budget section should explain whether media pressure is normal selected-layer adaptation, whole-route policy pauses, recovery resumes, or protected-over-budget layout intent.
+6. Open the `o-sfu Channel Graph` dashboard and use the user lookup field to inspect `/internal/diagnostics/users/{id}` without scanning every room in Grafana. Use it to inspect the exact receiver BWE estimate, selected receiver budget, active route count, selected bitrate, pause reason, and over-budget exception reason behind the low-cardinality Prometheus signals.
+7. Open Grafana Explore with the `Loki` datasource and inspect the structured JSON log fields such as `event`, `room_id`, `user_id`, and `trace_id`.
+8. Open Grafana Explore with the `Tempo` datasource and confirm the control-plane spans arrive for the same canary user.
 
 ## Alerts and recording rules
 
 The reference Prometheus config now ships:
 
-- recording rules for join success ratio, websocket startup failure rate, transport disconnect churn per active user, transport cleanup recovery, and local forwarding efficiency
+- recording rules for join success ratio, websocket startup failure rate, transport disconnect churn per active user, transport cleanup recovery, local forwarding efficiency, and receiver budget solver outcome rates
 - alerts for low join success ratio, websocket startup failures, diagnostics probe failures, normalized transport disconnect churn, unrecovered transport cleanup failures, routing pressure, relay overload, and low local forwarding efficiency
 
 These derived rules are intended for operator dashboards and canary validation.
@@ -126,6 +224,18 @@ The default `prometheus/prometheus.yml` stays focused on the application, the
 noop probe, and the reference operator signals. If you need host or container
 panels, use `prometheus/prometheus.host-metrics.example.yml` as the starting
 point for a local override.
+
+## Production gaps
+
+This repository is still a reference stack, not a complete production platform.
+Before using it outside a controlled environment:
+
+- replace the example diagnostics token in `blackbox/blackbox.yml` and
+  `grafana/provisioning/datasources/infinity.yaml`
+- put Grafana and backend APIs behind your normal authentication and TLS layer
+- move durable Loki and Tempo storage to object storage
+- decide retention periods from operational requirements
+- provision secrets through your deployment system instead of committed files
 
 ## Dashboard inventory
 
