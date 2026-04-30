@@ -4,6 +4,7 @@ global:
 
 rule_files:
   - /etc/prometheus/alerts.yml
+  - /etc/prometheus/recording-rules.yml
 
 alerting:
   alertmanagers:
@@ -25,6 +26,23 @@ scrape_configs:
         - http_2xx
       target:
         - http://host.docker.internal:8070/v1/noop
+    static_configs:
+      - targets:
+          - blackbox-exporter:9115
+    relabel_configs:
+      - source_labels:
+          - __param_target
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: o-sfu-diagnostics
+    metrics_path: /probe
+    params:
+      module:
+        - http_2xx_diagnostics
+      target:
+        - http://host.docker.internal:8070/internal/diagnostics/summary
     static_configs:
       - targets:
           - blackbox-exporter:9115

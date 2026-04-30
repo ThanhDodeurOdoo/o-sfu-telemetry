@@ -13,6 +13,7 @@ contract owned by the server:
 
 - Prometheus scrapes `/metrics`
 - blackbox probes `GET /v1/noop`
+- blackbox probes `GET /internal/diagnostics/summary` with the example diagnostics token
 - Grafana ships the default dashboards
 - the OpenTelemetry Collector accepts OTLP traces and tails JSON logs
 - Loki stores structured logs
@@ -78,21 +79,23 @@ Grafana provisions three datasources out of the box:
 ## Validation flow
 
 1. Confirm `GET /v1/noop` succeeds on the host-run `o-sfu`.
-2. Check Prometheus target health for the `o-sfu` scrape and `o-sfu-noop` probe.
-3. Open the `o-sfu Staging Canary` dashboard and verify:
+2. Confirm `GET /internal/diagnostics/summary` succeeds with `Authorization: Bearer examplepassword`.
+3. Check Prometheus target health for the `o-sfu` scrape, `o-sfu-noop`, and `o-sfu-diagnostics` probes.
+4. Open the `o-sfu Staging Canary` dashboard and verify:
    - `Noop Probe` stays at `1`
    - `Join Success Ratio` stays healthy during staged joins
    - `Connected Transports` rises after the canary join
    - `Local Forwarding Efficiency` rises during live media
-4. Open Grafana Explore with the `Loki` datasource and inspect the structured JSON log fields such as `event`, `room_id`, `user_id`, and `trace_id`.
-5. Open Grafana Explore with the `Tempo` datasource and confirm the control-plane spans arrive for the same canary user.
+5. Open the `o-sfu Channel Graph` dashboard and use the user lookup field to inspect `/internal/diagnostics/users/{id}` without scanning every room in Grafana.
+6. Open Grafana Explore with the `Loki` datasource and inspect the structured JSON log fields such as `event`, `room_id`, `user_id`, and `trace_id`.
+7. Open Grafana Explore with the `Tempo` datasource and confirm the control-plane spans arrive for the same canary user.
 
 ## Alerts and recording rules
 
 The reference Prometheus config now ships:
 
 - recording rules for join success ratio, websocket startup failure rate, transport disconnect churn per active user, transport cleanup recovery, and local forwarding efficiency
-- alerts for low join success ratio, websocket startup failures, normalized transport disconnect churn, unrecovered transport cleanup failures, routing pressure, relay overload, and low local forwarding efficiency
+- alerts for low join success ratio, websocket startup failures, diagnostics probe failures, normalized transport disconnect churn, unrecovered transport cleanup failures, routing pressure, relay overload, and low local forwarding efficiency
 
 These derived rules are intended for operator dashboards and canary validation.
 They should stay derived from runtime-owned metrics instead of introducing extra
@@ -126,8 +129,9 @@ point for a local override.
 
 ## Dashboard inventory
 
-- `control-plane.json`: HTTP, websocket admission, startup, and latency views
+- `control-plane.json`: HTTP, websocket admission, diagnostics probe, startup, and latency views
 - `transport-lifecycle.json`: transport health, ICE, DTLS, cleanup recovery, and user lifetime views
 - `media-path.json`: RTP ingress, forwarding, routing pressure, and route-control views
 - `recording.json`: recording action outcomes, active captures, and recording fan-out
 - `staging-canary.json`: join success, canary readiness, disconnect churn, and forwarding efficiency
+- `channel-graph.json`: diagnostics-backed active-room, user lookup, topology, and source-selection views

@@ -19,6 +19,15 @@ groups:
           summary: "o-sfu noop probe is failing"
           description: "The blackbox probe cannot complete GET /v1/noop successfully."
 
+      - alert: OSFUDiagnosticsProbeFailed
+        expr: osfu:diagnostics_probe_success == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "o-sfu diagnostics probe is failing"
+          description: "The blackbox probe cannot complete GET /internal/diagnostics/summary with the configured diagnostics token."
+
       - alert: OSFUHandshakeRejectionSpike
         expr: sum(rate(osfu_ws_handshake_rejections_total[5m])) > 1
         for: 10m

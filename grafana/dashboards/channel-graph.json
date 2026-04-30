@@ -11,6 +11,13 @@
         "current": { "text": "", "value": "" },
         "query": "",
         "label": "Selected Channel UUID"
+      },
+      {
+        "name": "user_id",
+        "type": "textbox",
+        "current": { "text": "", "value": "" },
+        "query": "",
+        "label": "Diagnostics User ID"
       }
     ]
   },
@@ -52,6 +59,31 @@
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 }
     },
     {
+      "type": "table",
+      "title": "User Lookup: ${user_id}",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "targets": [
+        {
+          "type": "json",
+          "source": "url",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/users/${user_id}",
+          "url_options": { "method": "GET", "data": "" },
+          "root_selector": "",
+          "columns": [
+            { "selector": "roomId", "text": "Room", "type": "string" },
+            { "selector": "user.userId", "text": "User", "type": "string" },
+            { "selector": "user.transport.connectionId", "text": "Connection", "type": "number" },
+            { "selector": "recordingState.recording", "text": "Recording", "type": "string" }
+          ],
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 8 }
+    },
+    {
       "type": "nodeGraph",
       "title": "Room Topology: ${channel_uuid}",
       "datasource": {
@@ -78,7 +110,7 @@
           "refId": "B"
         }
       ],
-      "gridPos": { "h": 14, "w": 18, "x": 0, "y": 8 }
+      "gridPos": { "h": 14, "w": 18, "x": 0, "y": 14 }
     },
     {
       "type": "timeseries",
@@ -93,7 +125,7 @@
           "refId": "A"
         }
       ],
-      "gridPos": { "h": 14, "w": 6, "x": 18, "y": 8 }
+      "gridPos": { "h": 14, "w": 6, "x": 18, "y": 14 }
     }
   ]
 }

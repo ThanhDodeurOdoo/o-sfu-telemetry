@@ -97,6 +97,9 @@ groups:
       - record: osfu:operator_boundary_no_recent_traffic
         expr: osfu:recent_join_traffic_5m == bool 0
 
+      - record: osfu:diagnostics_probe_success
+        expr: max(probe_success{job="o-sfu-diagnostics"} or vector(0))
+
       - record: osfu:operator_boundary_admission
         expr: clamp_max((osfu:recent_join_traffic_5m > bool 0) * ((osfu:ws_join_success_ratio_5m < bool 0.9) + (osfu:ws_startup_failures_rate_5m > bool 0.02) + (osfu:ws_handshake_rejections_rate_5m > bool 0.2)), 1)
 

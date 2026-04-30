@@ -84,7 +84,7 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "unit": "ops"
+          "unit": "bool"
         },
         "overrides": []
       },
@@ -110,11 +110,11 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(osfu_ws_handshake_rejections_total[5m]))",
+          "expr": "max(probe_success{job=\"o-sfu-noop\"})",
           "refId": "A"
         }
       ],
-      "title": "Handshake Rejections/s",
+      "title": "Noop Probe",
       "type": "stat"
     },
     {
@@ -147,11 +147,11 @@
       },
       "targets": [
         {
-          "expr": "max(probe_success{job=\"o-sfu-noop\"})",
+          "expr": "osfu:diagnostics_probe_success",
           "refId": "A"
         }
       ],
-      "title": "Noop Probe",
+      "title": "Diagnostics Probe",
       "type": "stat"
     },
     {

@@ -5,3 +5,11 @@ modules:
     http:
       method: GET
       preferred_ip_protocol: ip4
+  http_2xx_diagnostics:
+    prober: http
+    timeout: 5s
+    http:
+      method: GET
+      preferred_ip_protocol: ip4
+      headers:
+        Authorization: Bearer examplepassword
