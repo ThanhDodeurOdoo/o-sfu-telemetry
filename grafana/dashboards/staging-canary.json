@@ -366,7 +366,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Policy-protected routes that stayed over budget. This should be explainable through diagnostics layout intent.",
+      "description": "Policy-protected routes that stayed over budget. This should be explainable through diagnostics room policy.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",

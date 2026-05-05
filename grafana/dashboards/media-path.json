@@ -337,7 +337,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Policy-protected routes that intentionally keep selected video over the current receiver budget.",
+      "description": "Policy-protected routes that intentionally keep selected media over the current receiver budget.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -569,7 +569,7 @@
       },
       "id": 14,
       "options": {
-        "content": "### Receiver budget policy\n\n- **degraded** means the receiver stayed active but was downswitched to a cheaper useful encoding.\n- **paused** means the subscription still exists, but room policy withheld a whole route to stay within budget.\n- **resumed** means a policy-paused route was allowed back after stable budget recovery.\n- **protected_over_budget** means featured, pinned, or screen-share intent intentionally won over the current BWE estimate.\n\nOpen **Room Graph** or the diagnostics user lookup to inspect the exact receiver BWE, selected budget, active route count, selected bitrate, pause reason, and exception reason.",
+        "content": "### Receiver budget policy\n\n- **degraded** means the receiver stayed active but was downswitched to a cheaper useful encoding.\n- **paused** means the subscription still exists, but room policy withheld a whole route to stay within budget.\n- **resumed** means a policy-paused route was allowed back after stable budget recovery.\n- **protected_over_budget** means pinned, featured, readable-detail or active-speaker room policy intentionally won over the current BWE estimate.\n\nOpen **Room Graph** or the diagnostics user lookup to inspect the exact receiver BWE, selected budget, active route count, selected bitrate, pause reason, and exception reason.",
         "mode": "markdown"
       },
       "title": "How to Read Receiver Budget Policy",
