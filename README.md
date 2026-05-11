@@ -192,8 +192,8 @@ Grafana provisions three datasources out of the box:
 
 The reference Prometheus config now ships:
 
-- recording rules for join success ratio, websocket startup failure rate, transport disconnect churn per active user, transport cleanup recovery, local forwarding efficiency, and receiver budget solver outcome rates
-- alerts for low join success ratio, websocket startup failures, diagnostics probe failures, normalized transport disconnect churn, unrecovered transport cleanup failures, routing pressure, relay overload, and low local forwarding efficiency
+- recording rules for join success ratio, websocket startup failure rate, websocket outbound queue pressure, transport disconnect churn per active user, transport cleanup recovery, local forwarding efficiency and receiver budget solver outcome rates
+- alerts for low join success ratio, websocket startup failures, websocket outbound queue overflow, diagnostics probe failures, normalized transport disconnect churn, unrecovered transport cleanup failures, routing pressure, relay overload and low local forwarding efficiency
 
 These derived rules are intended for operator dashboards and canary validation.
 They should stay derived from runtime-owned metrics instead of introducing extra
@@ -239,7 +239,7 @@ Before using it outside a controlled environment:
 
 ## Dashboard inventory
 
-- `control-plane.json`: HTTP, websocket admission, diagnostics probe, startup, and latency views
+- `control-plane.json`: HTTP, websocket admission, diagnostics probe, startup, outbound queue pressure and latency views
 - `transport-lifecycle.json`: transport health, ICE, DTLS, cleanup recovery, and user lifetime views
 - `media-path.json`: RTP ingress, forwarding, routing pressure, and route-control views
 - `recording.json`: recording action outcomes, active captures, and recording fan-out

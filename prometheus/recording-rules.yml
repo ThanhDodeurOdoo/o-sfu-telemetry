@@ -31,6 +31,12 @@ groups:
       - record: osfu:ws_startup_failures_rate_5m
         expr: sum(rate(osfu_ws_startup_failures_total[5m]))
 
+      - record: osfu:ws_outbound_queue_depth
+        expr: sum(osfu_ws_outbound_queued_messages)
+
+      - record: osfu:ws_outbound_queue_overflow_rate_5m
+        expr: sum(rate(osfu_ws_outbound_queue_overflows_total[5m]))
+
       - record: osfu:transport_ice_checks_rate_5m
         expr: sum(rate(osfu_transport_ice_state_changes_total{state="checking"}[5m]))
 

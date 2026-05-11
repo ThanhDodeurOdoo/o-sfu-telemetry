@@ -367,6 +367,58 @@
       ],
       "title": "Live Media Totals",
       "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Current room-event messages waiting in bounded per-user websocket outbound queues.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 29
+      },
+      "id": 12,
+      "targets": [
+        {
+          "expr": "osfu:ws_outbound_queue_depth",
+          "legendFormat": "queued messages",
+          "refId": "A"
+        }
+      ],
+      "title": "Websocket Outbound Queue Depth",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Slow-consumer shutdown rate caused by full per-user websocket outbound queues.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 29
+      },
+      "id": 13,
+      "targets": [
+        {
+          "expr": "osfu:ws_outbound_queue_overflow_rate_5m",
+          "legendFormat": "overflow rate",
+          "refId": "A"
+        }
+      ],
+      "title": "Websocket Outbound Queue Overflow Rate",
+      "type": "timeseries"
     }
   ],
   "refresh": "15s",
@@ -386,6 +438,6 @@
   "timezone": "",
   "title": "o-sfu Control Plane",
   "uid": "osfu-control-plane",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }
