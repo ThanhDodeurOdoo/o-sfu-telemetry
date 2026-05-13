@@ -8,6 +8,7 @@
   "panels": [
     {
       "datasource": "Prometheus",
+      "description": "The volume of actual audio/video data entering (ingress) and leaving (egress) the server. Egress is usually much higher as one person broadcasting is sent to many viewers.",
       "fieldConfig": {
         "defaults": {
           "unit": "bps"
@@ -38,6 +39,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Tracks where packets are being sent after they reach the SFU. 'local_rtc' represents internal processing, while other labels represent physical network interfaces.",
       "fieldConfig": {
         "defaults": {
           "unit": "pps"
@@ -63,6 +65,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Shows which internal logic paths are being used to move data. This helps developers verify that the 'fast path' is being used for media instead of slower 'fallback' paths.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops"
@@ -88,6 +91,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "A critical graph showing exactly why media data is being lost. 'No user' means the recipient left, 'Congestion' means the network is full, and 'Rate Limit' means the server is protecting itself.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops"
@@ -113,6 +117,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Measures how hard the server is working to find valid recipients for incoming media. Sudden spikes here can indicate high CPU usage and potential lag.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops"
@@ -143,6 +148,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Shows the result of internal routing decisions (e.g., 'Success', 'Skipped', or 'Error'). Use this to verify that media is being routed correctly to every subscriber.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops"
@@ -168,7 +174,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Total receiver budget solver decisions. This should move when the SFU actively adapts receiver video quality.",
+      "description": "The number of times per second the server adjusts video quality to match users' bandwidth. Constant movement is normal as network conditions change.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -223,7 +229,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Semantic route pauses caused by receiver budget pressure. These preserve subscriptions while withholding RTP delivery.",
+      "description": "The rate at which the server temporarily stops sending video to a user because their connection is too poor. This prevents the user's connection from completely failing.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -282,7 +288,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Budget-policy route resumes. This rising after pause pressure indicates the policy is recovering instead of leaving routes stuck.",
+      "description": "The rate at which previously paused video streams are restored once a user's network connection improves. This shows the system's ability to 'heal' itself.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -337,7 +343,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Policy-protected routes that intentionally keep selected media over the current receiver budget.",
+      "description": "Shows when the server intentionally ignores bandwidth limits to keep a 'critical' stream (like an active speaker) visible. This prioritizes human conversation over technical limits.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -396,7 +402,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Current adaptation mix by low-cardinality outcome. Use this to distinguish healthy downswitching, overload pauses, recovery, and protected exceptions.",
+      "description": "A summary of how the server is currently managing bandwidth. It shows the balance between healthy video, quality-reduced video, and paused streams.",
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -456,7 +462,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Decision-rate timeline for receiver adaptation. Degraded should normally appear before paused when budget pressure rises.",
+      "description": "A history of how the server's quality-adjustment decisions have changed over time. Use this to spot trends in network instability or server overload.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -504,7 +510,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Correlates transport selector updates with budget decisions. Encoding updates without budget outcomes usually mean normal receiver-driven layer selection.",
+      "description": "Compares manual quality choices (like a user picking 'High Quality') against the server's automatic budget decisions. This helps verify that automatic logic is not fighting against user intent.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",

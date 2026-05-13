@@ -30,6 +30,7 @@
   "panels": [
     {
       "datasource": "Prometheus",
+      "description": "Shows the overall health of the system based on active alerts. 'Healthy' means no issues, 'Warning' means minor problems are detected, and 'Page' means a critical failure requires immediate attention.",
       "fieldConfig": {
         "defaults": {
           "thresholds": {
@@ -87,6 +88,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Identifies which part of the system is currently failing. It scans through Admission, ICE/DTLS, Media, and Routing to find the 'first' point where users are dropping off, helping you focus your debugging.",
       "fieldConfig": {
         "defaults": {
           "thresholds": {
@@ -152,7 +154,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Estimated recent users that reached joined signaling without matching DTLS growth in the last 15 minutes.",
+      "description": "The estimated number of users who successfully joined a room but failed to establish a secure media connection in the last 15 minutes. High numbers indicate a significant connectivity problem.",
       "fieldConfig": {
         "defaults": {
           "thresholds": {
@@ -208,7 +210,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Five-minute accepted websocket join rate. Zero means the dashboard should be read as an idle window unless another boundary is red.",
+      "description": "The rate at which users are trying to join rooms. A value of zero means the server is currently idle. If this is high but 'Joined' signals are low, it indicates a failure in authentication or admission.",
       "fieldConfig": {
         "defaults": {
           "thresholds": {
@@ -260,7 +262,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Current pending or firing OSFU alerts from Prometheus.",
+      "description": "A detailed list of all currently active or pending alerts. Use this to see the specific technical errors (like 'High CPU' or 'Network Failure') that are contributing to a non-healthy state.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -311,7 +313,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Operator funnel signals. The first six bars are recent stage counts over 15 minutes. The last two are recent packet rates, kept here to show where media disappears after transport establishment.",
+      "description": "Shows the raw number of users or packets reaching each stage of the connection. By comparing the bars, you can see exactly where the 'flow' of users or data is being interrupted.",
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -405,7 +407,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Drop-off percentages between successive stages. Empty bars mean the predecessor stage did not happen in the recent window.",
+      "description": "The percentage of users who successfully moved from one stage to the next. For example, '64%' means 36% of users were lost at that specific step. High values (close to 100%) indicate a healthy pipeline.",
       "fieldConfig": {
         "defaults": {
           "mappings": [

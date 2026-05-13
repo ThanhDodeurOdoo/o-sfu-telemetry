@@ -29,6 +29,7 @@
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"
       },
+      "description": "A searchable list of all currently active video call rooms on the server. Click 'View Room' to see detailed connection data for a specific group.",
       "targets": [
         {
           "type": "json",
@@ -69,6 +70,7 @@
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"
       },
+      "description": "A visual map of the selected room, showing all users and how they are connected to each other. This helps visualize who is talking to whom.",
       "targets": [
         {
           "type": "json",
@@ -98,6 +100,7 @@
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"
       },
+      "description": "A list of every person currently in the selected room, along with their connection health and how much data they are sending/receiving.",
       "targets": [
         {
           "type": "json",
@@ -140,6 +143,7 @@
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"
       },
+      "description": "A deep-dive visualization for a single user. It shows the exact path their camera and microphone take through the server's internal systems.",
       "targets": [
         {
           "type": "json",
@@ -169,6 +173,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "description": "Tracks how often the server is changing which video quality level (Low, Medium, High) it is sending to users. Frequent spikes here can indicate unstable internet connections.",
       "targets": [
         {
           "expr": "sum by (selector) (rate(osfu_source_selection_updates_total[5m]))",

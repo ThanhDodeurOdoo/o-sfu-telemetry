@@ -8,6 +8,7 @@
   "panels": [
     {
       "datasource": "Prometheus",
+      "description": "The total number of users currently connected to the server. Use this to monitor the overall load and reach of the system.",
       "fieldConfig": {
         "defaults": {
           "unit": "none"
@@ -45,6 +46,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "The number of HTTP requests currently being processed by the server. High numbers might indicate the server is struggling to keep up with API requests.",
       "fieldConfig": {
         "defaults": {
           "unit": "none"
@@ -82,6 +84,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "A simple health check that verifies if the server's basic API is responsive. 1 means the server is responding, 0 means it is likely frozen or down.",
       "fieldConfig": {
         "defaults": {
           "unit": "bool"
@@ -119,6 +122,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "A more advanced health check that verifies if the internal diagnostic systems are functioning correctly. This ensures that the telemetry you see is accurate.",
       "fieldConfig": {
         "defaults": {
           "unit": "bool"
@@ -156,6 +160,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Shows why WebSocket connections are being rejected (e.g., wrong credentials or server too busy). Each color represents a different rejection reason.",
       "fieldConfig": {
         "defaults": {
           "unit": "reqps"
@@ -181,6 +186,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Tracks why active user sessions are ending. Common reasons include 'Normal Closure' or 'Network Timeout'. This helps identify stability issues.",
       "fieldConfig": {
         "defaults": {
           "unit": "reqps"
@@ -206,6 +212,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Measures how long the server takes to respond to 95% of HTTP requests. Lower is better; sudden spikes indicate performance bottlenecks.",
       "fieldConfig": {
         "defaults": {
           "unit": "s"
@@ -231,6 +238,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Shows the time it takes for 95% of users to complete the initial connection handshake and authentication. High values lead to a 'slow' feel when joining.",
       "fieldConfig": {
         "defaults": {
           "unit": "s"
@@ -266,6 +274,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "The number of users currently broadcasting their camera, microphone, or screen. This is the 'Input' side of the media flow.",
       "fieldConfig": {
         "defaults": {
           "unit": "none"
@@ -303,6 +312,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "The number of individual media streams being received by users. This is the 'Output' side and represents the actual bandwidth being consumed.",
       "fieldConfig": {
         "defaults": {
           "unit": "none"
@@ -340,6 +350,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "A timeline view comparing how many people are broadcasting (publications) versus how many people are watching (subscriptions).",
       "fieldConfig": {
         "defaults": {
           "unit": "none"
@@ -370,7 +381,8 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Current room-event messages waiting in bounded per-user websocket outbound queues.",
+      "description": "The number of messages waiting to be sent to users' browsers. If this grows, it means the server is sending data faster than the users' networks can receive it.",
+      "fieldConfig": {
       "fieldConfig": {
         "defaults": {
           "unit": "none"
@@ -396,7 +408,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Slow-consumer shutdown rate caused by full per-user websocket outbound queues.",
+      "description": "The rate at which the server is forced to disconnect 'slow' users because their message queue became too full. This protects the server's memory.",
       "fieldConfig": {
         "defaults": {
           "unit": "reqps"

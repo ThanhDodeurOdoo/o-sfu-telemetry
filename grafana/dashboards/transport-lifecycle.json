@@ -8,6 +8,7 @@
   "panels": [
     {
       "datasource": "Prometheus",
+      "description": "The number of users with a stable, active media connection. This is the primary metric for 'who is actually in the call'.",
       "fieldConfig": {
         "defaults": {
           "unit": "none"
@@ -45,6 +46,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "The number of users whose media connection has failed or closed. A high number here relative to 'Connected' indicates network trouble.",
       "fieldConfig": {
         "defaults": {
           "unit": "none"
@@ -82,6 +84,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "The rate at which active connections are failing. Frequent transitions indicate a 'jittery' network or server-side instability.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops"
@@ -119,6 +122,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Tracks the technical progress of establishing a connection (e.g., 'Checking', 'Completed', 'Failed'). Use this to debug why users are getting stuck during the join process.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops"
@@ -144,6 +148,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "A detailed look at how connection health moves between states like 'Stable', 'Weak', and 'Disconnected'. Helps identify subtle network degradation.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops"
@@ -169,6 +174,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Shows how long 95% of users stay in a call. Unexpectedly short lifetimes can indicate that users are being kicked out or experiencing crashes.",
       "fieldConfig": {
         "defaults": {
           "unit": "s"
@@ -194,6 +200,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Compares the rate of successful secure connections (DTLS) against the rate of disconnections. This highlights if security handshakes are a bottleneck.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops"
@@ -224,6 +231,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Shows the server's attempts to 'clean up' abandoned resources after a disconnection. A high success rate here means the server is effectively preventing memory leaks.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops"
@@ -254,6 +262,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Identifies specific types of errors that occurred while trying to close old connections. This helps developers find bugs in the session shutdown logic.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops"

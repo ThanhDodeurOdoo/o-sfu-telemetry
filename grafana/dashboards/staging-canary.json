@@ -25,6 +25,7 @@
   "panels": [
     {
       "datasource": "Prometheus",
+      "description": "A basic heartbeat check. 1 means the canary server is responding to API requests, 0 means it is down or frozen.",
       "fieldConfig": {
         "defaults": {
           "unit": "bool"
@@ -62,7 +63,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Recent join success ratio. This card stays empty when there were no accepted joins in the last five minutes.",
+      "description": "The percentage of users who successfully joined a room on the canary server. This should stay close to 100% if the new code is working correctly.",
       "fieldConfig": {
         "defaults": {
           "mappings": [
@@ -111,6 +112,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "The number of users currently in a call on this canary server. Use this to gauge how much traffic the test version is handling.",
       "fieldConfig": {
         "defaults": {
           "unit": "none"
@@ -148,7 +150,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Recent local forwarding efficiency. This card stays empty when there was no RTP ingress in the last five minutes.",
+      "description": "Measures if media is being correctly forwarded inside the canary server. A drop below 100% means the new code might be dropping packets improperly.",
       "fieldConfig": {
         "defaults": {
           "mappings": [
@@ -197,7 +199,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Any recent receiver budget activity during the canary window.",
+      "description": "How often the canary server is adjusting video quality. This shows if the new version's bandwidth-management logic is active.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -252,7 +254,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Semantic overload pauses. Sustained growth during a canary means receivers are bandwidth constrained.",
+      "description": "The rate at which the canary server is pausing video streams due to poor network. If this is much higher than the stable version, the new code may be too aggressive.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -311,7 +313,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Recovery signal after budget pressure. Use together with pauses to see whether adaptation is healing.",
+      "description": "The rate at which the canary server is restoring paused streams. This proves that the 'auto-healing' logic in the new version is functional.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -366,7 +368,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Policy-protected routes that stayed over budget. This should be explainable through diagnostics room policy.",
+      "description": "Shows when the canary server is prioritizing specific media (like active speakers) over bandwidth limits. Ensures the 'human priority' logic is working.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -425,6 +427,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "A detailed timeline of users moving through the connection process on the canary server. Helps spot if users are getting 'stuck' at a specific stage.",
       "fieldConfig": {
         "defaults": {
           "unit": "reqps"
@@ -450,6 +453,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Tracks rejections and startup errors on the canary server. Any sudden increase here means the new code is blocking users from joining.",
       "fieldConfig": {
         "defaults": {
           "unit": "reqps"
@@ -480,6 +484,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Measures how often users are losing their media connection on the canary. High churn means the new code might be less stable than the current version.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops"
@@ -510,6 +515,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Compares media coming into the canary versus media being processed. They should move in sync; if Ingress stays high while Forwarding drops, the canary is failing.",
       "fieldConfig": {
         "defaults": {
           "unit": "pps"
@@ -540,6 +546,7 @@
     },
     {
       "datasource": "Prometheus",
+      "description": "Measures the CPU load for media routing on the canary. If this is higher than the stable server for the same number of users, the new code is less efficient.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops"
@@ -570,7 +577,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Receiver budget decisions beside selected-layer updates. The canary should show explainable adaptation rather than unexplained forwarding loss.",
+      "description": "A combined view showing how the canary's automatic quality logic reacts to users' manual requests. This verifies the 'brain' of the new version.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
