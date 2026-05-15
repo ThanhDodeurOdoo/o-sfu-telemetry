@@ -383,7 +383,6 @@
       "datasource": "Prometheus",
       "description": "The number of messages waiting to be sent to users' browsers. If this grows, it means the server is sending data faster than the users' networks can receive it.",
       "fieldConfig": {
-      "fieldConfig": {
         "defaults": {
           "unit": "none"
         },

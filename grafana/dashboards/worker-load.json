@@ -1,0 +1,221 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "description": "Live worker assignment state from the protected diagnostics API. Worker pressure comes from the same low-cardinality transport snapshot used by load-triggered spillover.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "mediaWorkerId",
+              "text": "Worker",
+              "type": "number"
+            },
+            {
+              "selector": "pressure.workerPressureScore",
+              "text": "Pressure",
+              "type": "number"
+            },
+            {
+              "selector": "roomCount",
+              "text": "Rooms",
+              "type": "number"
+            },
+            {
+              "selector": "userCount",
+              "text": "Users",
+              "type": "number"
+            },
+            {
+              "selector": "connectedUserCount",
+              "text": "Connected",
+              "type": "number"
+            },
+            {
+              "selector": "disconnectedUserCount",
+              "text": "Disconnected",
+              "type": "number"
+            },
+            {
+              "selector": "unknownUserCount",
+              "text": "Unknown",
+              "type": "number"
+            },
+            {
+              "selector": "publicationCount",
+              "text": "Producers",
+              "type": "number"
+            },
+            {
+              "selector": "subscriptionCount",
+              "text": "Consumers",
+              "type": "number"
+            },
+            {
+              "selector": "pressure.egressBitrateBps",
+              "text": "EgressBps",
+              "type": "number"
+            },
+            {
+              "selector": "pressure.packetLoopLagMs",
+              "text": "LagMs",
+              "type": "number"
+            },
+            {
+              "selector": "pressure.commandBacklogDepth",
+              "text": "Commands",
+              "type": "number"
+            },
+            {
+              "selector": "pressure.relayMailboxDepth",
+              "text": "RelayMailbox",
+              "type": "number"
+            }
+          ],
+          "refId": "A",
+          "root_selector": "",
+          "source": "url",
+          "type": "json",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/workers",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        }
+      ],
+      "title": "Worker Assignment and Pressure",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Per-worker RTP packet rate. This uses bounded media-worker labels only, so it stays safe for Prometheus cardinality.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "pps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "id": 2,
+      "targets": [
+        {
+          "expr": "sum by (media_worker_id, direction) (rate(osfu_worker_rtp_packets_total[1m]))",
+          "legendFormat": "worker {{media_worker_id}} {{direction}}",
+          "refId": "A"
+        }
+      ],
+      "title": "RTP Packets/s by Worker",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Per-worker RTP payload bitrate by direction. Egress should rise with fan-out and makes worker imbalance visible during spillover.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
+      "id": 3,
+      "targets": [
+        {
+          "expr": "sum by (media_worker_id, direction) (rate(osfu_worker_rtp_payload_bytes_total[1m])) * 8",
+          "legendFormat": "worker {{media_worker_id}} {{direction}}",
+          "refId": "A"
+        }
+      ],
+      "title": "RTP Payload Bitrate by Worker",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Per-worker fan-out operations split by destination. Intra-node relay growth here confirms same-room spillover is moving media between local workers.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "pps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 4,
+      "targets": [
+        {
+          "expr": "sum by (media_worker_id, destination) (rate(osfu_worker_rtp_forwarded_packets_total[1m]))",
+          "legendFormat": "worker {{media_worker_id}} {{destination}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Forwarded Packets/s by Worker",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": [
+    "o-sfu",
+    "workers",
+    "spillover"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timezone": "",
+  "title": "o-sfu Worker Load",
+  "uid": "worker-load",
+  "version": 1,
+  "weekStart": ""
+}
