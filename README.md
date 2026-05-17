@@ -71,6 +71,100 @@ Service ports are bound to `127.0.0.1` by default; put Grafana or the telemetry
 endpoints behind your deployment's normal access-control layer if they must be
 reachable remotely.
 
+## Running on the SFU VPS
+
+The `deploy/sfu-vps` profile is for a VPS where `o-sfu` already runs through the
+server compose stack and a trusted reverse proxy terminates TLS. It does not
+publish Prometheus, Loki, Tempo, Alertmanager or the collector to the public
+internet. Grafana is served through the existing reverse proxy under `/grafana`.
+
+The profile is reverse-proxy agnostic. The proxy only needs to route
+`/grafana*` to `grafana:3000` on the shared Docker network. The example below
+uses Caddy because that is the tested single-VPS setup.
+
+The profile keeps the dashboard URLs compatible with the local stack by making
+the `o-sfu` container own the `host.docker.internal` network alias on the shared
+Docker network.
+
+In `/opt/o-sfu/compose.yml`, add the alias to the `o-sfu` service:
+
+```yaml
+  o-sfu:
+    networks:
+      default:
+        aliases:
+          - host.docker.internal
+```
+
+Add the collector endpoint to `/etc/o-sfu/o-sfu.env`:
+
+```bash
+sudo sh -c 'grep -q "^TELEMETRY_OTLP_ENDPOINT=" /etc/o-sfu/o-sfu.env || echo "TELEMETRY_OTLP_ENDPOINT=http://otel-collector:4318" >> /etc/o-sfu/o-sfu.env'
+```
+
+If the server stack uses Caddy, update `/opt/o-sfu/Caddyfile`:
+
+```caddyfile
+<SFU_URL_DOMAIN> {
+    @blocked path /metrics /internal/diagnostics/*
+    respond @blocked 404
+
+    handle /grafana* {
+        reverse_proxy grafana:3000
+    }
+
+    reverse_proxy o-sfu:8070
+}
+```
+
+Start or restart the server stack:
+
+```bash
+cd /opt/o-sfu
+sudo docker compose up -d
+```
+
+Clone this repository on the VPS and create the telemetry environment file:
+
+```bash
+sudo mkdir -p /opt/o-sfu-telemetry
+sudo chown -R "$USER:$USER" /opt/o-sfu-telemetry
+git clone https://github.com/ThanhDodeurOdoo/o-sfu-telemetry.git /opt/o-sfu-telemetry
+cd /opt/o-sfu-telemetry
+cp deploy/sfu-vps/.env.example deploy/sfu-vps/.env
+```
+
+Set a real Grafana password and keep the root URL aligned with the reverse-proxy
+path:
+
+```bash
+sed -i 's/^GRAFANA_ADMIN_PASSWORD=.*/GRAFANA_ADMIN_PASSWORD=<long-grafana-password>/' deploy/sfu-vps/.env
+sed -i 's|^GRAFANA_ROOT_URL=.*|GRAFANA_ROOT_URL=https://<SFU_URL_DOMAIN>/grafana/|' deploy/sfu-vps/.env
+```
+
+Start the telemetry stack:
+
+```bash
+docker compose --env-file deploy/sfu-vps/.env --file deploy/sfu-vps/docker-compose.yml up -d
+```
+
+Reload the reverse proxy after Grafana joins the shared network. With the tested
+Caddy stack:
+
+```bash
+cd /opt/o-sfu
+sudo docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
+```
+
+Grafana is then available at:
+
+```text
+https://<SFU_URL_DOMAIN>/grafana/
+```
+
+Prometheus scrapes `o-sfu` through the private Docker network. The public
+reverse-proxy route still blocks `/metrics` and `/internal/diagnostics/...`.
+
 ## Log ingestion model
 
 `o-sfu` should emit structured JSON logs to stdout/stderr. The runtime or process

@@ -1,0 +1,32 @@
+name: Compose
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compose-config:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Validate local compose stack
+        run: |
+          cp .env.example .env
+          docker compose config --quiet
+
+      - name: Validate SFU VPS compose stack
+        run: |
+          docker compose --env-file deploy/sfu-vps/.env.example --file deploy/sfu-vps/docker-compose.yml config --quiet
