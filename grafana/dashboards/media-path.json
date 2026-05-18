@@ -580,6 +580,333 @@
       },
       "title": "How to Read Receiver Budget Policy",
       "type": "text"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "summarizes current relay pressure rates from bounded mailbox and remote-control signals",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.01
+              },
+              {
+                "color": "red",
+                "value": 0.1
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 18,
+        "x": 0,
+        "y": 45
+      },
+      "id": 15,
+      "options": {
+        "displayMode": "lcd",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "expr": "osfu:relay_overload_rate_5m",
+          "instant": true,
+          "legendFormat": "overloaded",
+          "refId": "A"
+        },
+        {
+          "expr": "osfu:relay_closed_target_rate_5m",
+          "instant": true,
+          "legendFormat": "closed targets",
+          "refId": "B"
+        },
+        {
+          "expr": "osfu:relay_drain_cap_hit_rate_5m",
+          "instant": true,
+          "legendFormat": "drain cap hits",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(osfu:remote_control_drop_rate_5m)",
+          "instant": true,
+          "legendFormat": "control drops",
+          "refId": "D"
+        },
+        {
+          "expr": "osfu:remote_packet_gate_retry_rate_5m",
+          "instant": true,
+          "legendFormat": "gate retries",
+          "refId": "E"
+        }
+      ],
+      "title": "Relay Pressure Rates",
+      "type": "bargauge"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "tracks average bounded relay mailbox depth from sampled packet-loop drains",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "min": 0,
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 45
+      },
+      "id": 16,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "targets": [
+        {
+          "expr": "osfu:relay_mailbox_depth_average_5m",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Relay Mailbox Depth",
+      "type": "gauge"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "shows accepted plus overloaded plus closed relay enqueue outcomes split by target loop",
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 51
+      },
+      "id": 19,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "osfu:relay_enqueue_rate_5m",
+          "legendFormat": "{{target}} {{outcome}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Relay Enqueue Outcomes",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "compares relay drain throughput with cap hits to show when loops leave queued packets for a later turn",
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 51
+      },
+      "id": 20,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "osfu:relay_drained_packet_rate_5m",
+          "legendFormat": "drained packets",
+          "refId": "A"
+        },
+        {
+          "expr": "osfu:relay_drain_batch_rate_5m",
+          "legendFormat": "drain batches",
+          "refId": "B"
+        },
+        {
+          "expr": "osfu:relay_drain_cap_hit_rate_5m",
+          "legendFormat": "drain cap hits",
+          "refId": "C"
+        }
+      ],
+      "title": "Relay Drain Pressure",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "breaks down remote-control drops by reason so stale source state is not confused with queue pressure",
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 59
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "osfu:remote_control_drop_rate_5m",
+          "legendFormat": "{{kind}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Remote Control Drops",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "tracks packet-gate convergence after remote source layer changes",
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 59
+      },
+      "id": 22,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "osfu:remote_packet_gate_convergence_rate_5m",
+          "legendFormat": "{{outcome}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Packet Gate Convergence",
+      "type": "timeseries"
     }
   ],
   "refresh": "15s",
