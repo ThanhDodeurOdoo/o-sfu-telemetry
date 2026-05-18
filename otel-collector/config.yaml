@@ -17,6 +17,7 @@ receivers:
 extensions:
   file_storage:
     directory: /var/lib/otelcol/file_storage
+    create_directory: true
   health_check:
     endpoint: 0.0.0.0:13133
 
@@ -28,9 +29,9 @@ processors:
   batch:
 
 exporters:
-  otlp_http/tempo:
+  otlphttp/tempo:
     endpoint: http://tempo:4318
-  otlp_http/loki:
+  otlphttp/loki:
     endpoint: http://loki:3100/otlp
 
 service:
@@ -45,7 +46,7 @@ service:
         - memory_limiter
         - batch
       exporters:
-        - otlp_http/tempo
+        - otlphttp/tempo
     logs:
       receivers:
         - filelog
@@ -53,4 +54,4 @@ service:
         - memory_limiter
         - batch
       exporters:
-        - otlp_http/loki
+        - otlphttp/loki
