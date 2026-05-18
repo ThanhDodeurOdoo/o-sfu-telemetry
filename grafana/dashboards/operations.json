@@ -25,6 +25,11 @@
       "title": "Media Path",
       "type": "link",
       "url": "/d/osfu-media-path/o-sfu-media-path?orgId=1&from=${__from}&to=${__to}"
+    },
+    {
+      "title": "Log Health",
+      "type": "link",
+      "url": "/d/osfu-log-health/o-sfu-log-health?orgId=1&from=${__from}&to=${__to}"
     }
   ],
   "panels": [

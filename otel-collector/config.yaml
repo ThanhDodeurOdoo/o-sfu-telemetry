@@ -26,6 +26,11 @@ processors:
     check_interval: 1s
     limit_mib: 512
     spike_limit_mib: 128
+  resource/o-sfu-logs:
+    attributes:
+      - key: service.name
+        value: o-sfu
+        action: upsert
   batch:
 
 exporters:
@@ -52,6 +57,7 @@ service:
         - filelog
       processors:
         - memory_limiter
+        - resource/o-sfu-logs
         - batch
       exporters:
         - otlphttp/loki
