@@ -1,0 +1,1190 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [
+    {
+      "title": "Log Health",
+      "type": "link",
+      "url": "/d/osfu-log-health/o-sfu-log-health?orgId=1&from=${__from}&to=${__to}"
+    },
+    {
+      "title": "Room Graph",
+      "type": "link",
+      "url": "/d/room-graph/o-sfu-room-graph?orgId=1&from=${__from}&to=${__to}&var-room_uuid=${room_id}&var-user_id=${user_id}"
+    },
+    {
+      "title": "Explore User Logs",
+      "type": "link",
+      "url": "/explore?orgId=1&left=%7B%22datasource%22:%22loki%22,%22queries%22:%5B%7B%22expr%22:%22%7Bservice_name%3D%5C%22o-sfu%5C%22%7D%20%7C~%20%5C%22%5C%5C%5C%22user_id%5C%5C%5C%22%5C%5Cs*:%5C%5Cs*(%5C%5C%5C%22(Integer%5C%5C()?${user_id:regex}(%5C%5C))?%5C%5C%5C%22%7C${user_id:regex})(%5B,%7D%5D)%5C%22%20%7C%20json%20%7C%20level%3D~%5C%22$log_level%5C%22%22,%22queryType%22:%22range%22,%22refId%22:%22A%22%7D%5D,%22range%22:%7B%22from%22:%22${__from}%22,%22to%22:%22${__to}%22%7D%7D"
+    }
+  ],
+  "panels": [
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Structured log count for the selected user over the dashboard time range.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 5,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum(count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | level=~\"$log_level\" [$__range]))",
+          "instant": true,
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "User Log Events",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Warnings and errors for the selected user.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 5,
+        "x": 5,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum(count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | level=~\"WARN|ERROR\" [$__range]))",
+          "instant": true,
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Warnings and Errors",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Failed offer or answer processing linked to the selected user.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 10,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum(count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | event=\"negotiation.failed\" [$__range]))",
+          "instant": true,
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Negotiation Failures",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Disconnect and close events for the selected user.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 3
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 14,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum(count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | event=~\"transport.health.changed|ws.closed|user.closed|user.disconnected\" [$__range]))",
+          "instant": true,
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Disconnect Signals",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "description": "Live diagnostics lookup for the selected user. The panel is empty when the user is no longer indexed in a live room.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "links": [
+              {
+                "title": "Set dashboard room",
+                "url": "/d/osfu-user-diagnostics/o-sfu-user-diagnostics?orgId=1&from=${__from}&to=${__to}&var-user_id=${__data.fields.User}&var-room_id=${__data.fields.Room}"
+              },
+              {
+                "title": "Open room graph",
+                "url": "/d/room-graph/o-sfu-room-graph?orgId=1&from=${__from}&to=${__to}&var-room_uuid=${__data.fields.Room}&var-user_id=${__data.fields.User}"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "roomId",
+              "text": "Room",
+              "type": "string"
+            },
+            {
+              "selector": "user.userId",
+              "text": "User",
+              "type": "string"
+            },
+            {
+              "selector": "user.transport.health",
+              "text": "Health",
+              "type": "string"
+            },
+            {
+              "selector": "user.transport.connectionId",
+              "text": "Connection",
+              "type": "number"
+            },
+            {
+              "selector": "user.transport.mediaWorkerId",
+              "text": "Worker",
+              "type": "number"
+            },
+            {
+              "selector": "user.transport.qualitySummary.currentIncomingBitrate.totalBps",
+              "text": "IncomingBps",
+              "type": "number"
+            },
+            {
+              "selector": "recordingState.recording",
+              "text": "Recording",
+              "type": "string"
+            }
+          ],
+          "refId": "A",
+          "root_selector": "",
+          "source": "url",
+          "type": "json",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/users/${user_id}",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        }
+      ],
+      "title": "Live User Summary",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Log volume by room id for this user over the selected time range.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 6
+      },
+      "id": 6,
+      "options": {
+        "displayMode": "gradient",
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "topk(10, sum by (room_id) (count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | level=~\"$log_level\" | room_id!=\"\" [$__range])))",
+          "instant": true,
+          "legendFormat": "{{room_id}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Rooms Seen in Logs",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Event mix for the selected user. The selected log level controls this panel.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 6
+      },
+      "id": 7,
+      "options": {
+        "displayMode": "lcd",
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "topk(12, sum by (event, level) (count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | level=~\"$log_level\" | event!=\"\" [$__range])))",
+          "instant": true,
+          "legendFormat": "{{level}} {{event}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "User Event Mix",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Event rate for the selected user.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 6
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum by (event, level) (rate({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | level=~\"$log_level\" | event!=\"\" [5m]))",
+          "legendFormat": "{{level}} {{event}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "User Event Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Structured logs for the selected user. It still works after logout while Loki retention keeps the JSON logs.",
+      "fieldConfig": null,
+      "gridPos": {
+        "h": 15,
+        "w": 14,
+        "x": 0,
+        "y": 14
+      },
+      "id": 9,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | level=~\"$log_level\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Recent User Logs",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Negotiation failure logs. If the runtime emitted SDP snapshot fields for a failure, expand the log details to inspect them.",
+      "fieldConfig": null,
+      "gridPos": {
+        "h": 15,
+        "w": 10,
+        "x": 14,
+        "y": 14
+      },
+      "id": 10,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | event=\"negotiation.failed\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Negotiation Failures and SDP Fields",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "description": "Bounded live diagnostics events recorded for the user while the live room still exists.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 11,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Timestamp"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "timestamp",
+              "text": "Timestamp",
+              "type": "string"
+            },
+            {
+              "selector": "event",
+              "text": "Event",
+              "type": "string"
+            },
+            {
+              "selector": "roomId",
+              "text": "Room",
+              "type": "string"
+            },
+            {
+              "selector": "userId",
+              "text": "User",
+              "type": "string"
+            },
+            {
+              "selector": "connectionId",
+              "text": "Connection",
+              "type": "number"
+            },
+            {
+              "selector": "mediaWorkerId",
+              "text": "Worker",
+              "type": "number"
+            },
+            {
+              "selector": "transportMediaId",
+              "text": "Media",
+              "type": "number"
+            }
+          ],
+          "refId": "A",
+          "root_selector": "recentEvents",
+          "source": "url",
+          "type": "json",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/users/${user_id}",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        }
+      ],
+      "title": "Live Diagnostics Events",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "description": "Current publications owned by the live user.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 11,
+        "x": 0,
+        "y": 38
+      },
+      "id": 12,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "streamId",
+              "text": "Stream",
+              "type": "string"
+            },
+            {
+              "selector": "mediaKind",
+              "text": "Kind",
+              "type": "string"
+            },
+            {
+              "selector": "active",
+              "text": "Active",
+              "type": "string"
+            },
+            {
+              "selector": "sourceId",
+              "text": "Source",
+              "type": "number"
+            },
+            {
+              "selector": "transportMediaId",
+              "text": "TransportMedia",
+              "type": "number"
+            },
+            {
+              "selector": "encodingIds",
+              "text": "Encodings",
+              "type": "string"
+            }
+          ],
+          "refId": "A",
+          "root_selector": "user.publications",
+          "source": "url",
+          "type": "json",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/users/${user_id}",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        }
+      ],
+      "title": "Current Publications",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "description": "Current subscriptions and receiver-side selection state for the live user.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 13,
+        "x": 11,
+        "y": 38
+      },
+      "id": 13,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "producerUserId",
+              "text": "Producer",
+              "type": "string"
+            },
+            {
+              "selector": "streamId",
+              "text": "Stream",
+              "type": "string"
+            },
+            {
+              "selector": "state",
+              "text": "State",
+              "type": "string"
+            },
+            {
+              "selector": "layoutRole",
+              "text": "Layout",
+              "type": "string"
+            },
+            {
+              "selector": "selection.selector",
+              "text": "Selector",
+              "type": "string"
+            },
+            {
+              "selector": "selection.selectedRid",
+              "text": "RID",
+              "type": "string"
+            },
+            {
+              "selector": "selection.latestReceiverBandwidthEstimateBps",
+              "text": "BWE",
+              "type": "number"
+            },
+            {
+              "selector": "selection.selectedVideoBudgetBps",
+              "text": "Budget",
+              "type": "number"
+            },
+            {
+              "selector": "selection.policyPauseReason",
+              "text": "Pause",
+              "type": "string"
+            }
+          ],
+          "refId": "A",
+          "root_selector": "user.subscriptions",
+          "source": "url",
+          "type": "json",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/users/${user_id}",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        }
+      ],
+      "title": "Current Subscriptions",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "description": "Per-user media topology. Set room_id from the live summary link or from a room seen in logs.",
+      "fieldConfig": null,
+      "gridPos": {
+        "h": 14,
+        "w": 16,
+        "x": 0,
+        "y": 46
+      },
+      "id": 14,
+      "options": null,
+      "targets": [
+        {
+          "format": "node-graph-nodes",
+          "refId": "A",
+          "root_selector": "nodes",
+          "source": "url",
+          "type": "json",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_id}/users/${user_id}",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        },
+        {
+          "format": "node-graph-edges",
+          "refId": "B",
+          "root_selector": "edges",
+          "source": "url",
+          "type": "json",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_id}/users/${user_id}",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        }
+      ],
+      "title": "User Media Graph: ${room_id} / ${user_id}",
+      "type": "nodeGraph"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "description": "Current source inventory for the selected room.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 8,
+        "x": 16,
+        "y": 46
+      },
+      "id": 15,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "ownerUserId",
+              "text": "Owner",
+              "type": "string"
+            },
+            {
+              "selector": "streamId",
+              "text": "Stream",
+              "type": "string"
+            },
+            {
+              "selector": "mediaKind",
+              "text": "Kind",
+              "type": "string"
+            },
+            {
+              "selector": "active",
+              "text": "Active",
+              "type": "string"
+            },
+            {
+              "selector": "currentIncomingBitrateBps",
+              "text": "IncomingBps",
+              "type": "number"
+            },
+            {
+              "selector": "mid",
+              "text": "MID",
+              "type": "string"
+            }
+          ],
+          "refId": "A",
+          "root_selector": "sources",
+          "source": "url",
+          "type": "json",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/rooms/${room_id}",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        }
+      ],
+      "title": "Room Source Inventory",
+      "type": "table"
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": [
+    "o-sfu",
+    "diagnostics",
+    "loki",
+    "users"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "hide": 0,
+        "label": "user id",
+        "name": "user_id",
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "WARN|ERROR",
+          "value": "WARN|ERROR"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "log level",
+        "multi": false,
+        "name": "log_level",
+        "options": [
+          {
+            "selected": true,
+            "text": "WARN|ERROR",
+            "value": "WARN|ERROR"
+          },
+          {
+            "selected": false,
+            "text": "ERROR",
+            "value": "ERROR"
+          },
+          {
+            "selected": false,
+            "text": "WARN",
+            "value": "WARN"
+          },
+          {
+            "selected": false,
+            "text": "INFO",
+            "value": "INFO"
+          },
+          {
+            "selected": false,
+            "text": "DEBUG",
+            "value": "DEBUG"
+          },
+          {
+            "selected": false,
+            "text": "TRACE",
+            "value": "TRACE"
+          },
+          {
+            "selected": false,
+            "text": "INFO|WARN|ERROR",
+            "value": "INFO|WARN|ERROR"
+          },
+          {
+            "selected": false,
+            "text": "DEBUG|INFO|WARN|ERROR",
+            "value": "DEBUG|INFO|WARN|ERROR"
+          },
+          {
+            "selected": false,
+            "text": "TRACE|DEBUG|INFO|WARN|ERROR",
+            "value": "TRACE|DEBUG|INFO|WARN|ERROR"
+          }
+        ],
+        "query": "WARN|ERROR,ERROR,WARN,INFO,DEBUG,TRACE,INFO|WARN|ERROR,DEBUG|INFO|WARN|ERROR,TRACE|DEBUG|INFO|WARN|ERROR",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "hide": 0,
+        "label": "room id",
+        "name": "room_id",
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timezone": "",
+  "title": "o-sfu User Diagnostics",
+  "uid": "osfu-user-diagnostics",
+  "version": 1,
+  "weekStart": ""
+}
