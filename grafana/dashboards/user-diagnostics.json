@@ -493,11 +493,11 @@
       },
       "id": 7,
       "options": {
-        "displayMode": "lcd",
+        "displayMode": "basic",
         "maxVizHeight": 300,
-        "minVizHeight": 16,
+        "minVizHeight": 20,
         "minVizWidth": 8,
-        "namePlacement": "auto",
+        "namePlacement": "left",
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
@@ -506,8 +506,8 @@
           "fields": "",
           "values": false
         },
-        "showUnfilled": true,
-        "valueMode": "color"
+        "showUnfilled": false,
+        "valueMode": "text"
       },
       "targets": [
         {
