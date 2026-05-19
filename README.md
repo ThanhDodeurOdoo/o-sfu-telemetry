@@ -339,3 +339,4 @@ Before using it outside a controlled environment:
 - `recording.json`: recording action outcomes, active captures, and recording fan-out
 - `staging-canary.json`: join success, canary readiness, disconnect churn, and forwarding efficiency
 - `room-graph.json`: diagnostics-backed active-room selection, room topology, room-user selection, per-user media-path topology, and source-selection views
+- `user-diagnostics.json`: user-id drill-down for retained Loki logs plus live diagnostics tables and optional room-scoped media graph

@@ -129,6 +129,10 @@
               {
                 "title": "View User Path",
                 "url": "/d/room-graph/o-sfu-room-graph?var-room_uuid=${__data.fields.Room}&var-user_id=${__data.fields.UserKey}"
+              },
+              {
+                "title": "View User Diagnostics",
+                "url": "/d/osfu-user-diagnostics/o-sfu-user-diagnostics?orgId=1&from=${__from}&to=${__to}&var-user_id=${__data.fields.UserKey}&var-room_id=${__data.fields.Room}"
               }
             ]
           }
