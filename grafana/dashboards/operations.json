@@ -35,7 +35,7 @@
   "panels": [
     {
       "datasource": "Prometheus",
-      "description": "Shows the overall health of the system based on active alerts. 'Healthy' means no issues, 'Warning' means minor problems are detected, and 'Page' means a critical failure requires immediate attention.",
+      "description": "Shows the current o-sfu alert state. OK means no firing page or warning alert, Warning means at least one firing warning alert, and Critical means at least one firing page alert.",
       "fieldConfig": {
         "defaults": {
           "thresholds": {
@@ -82,13 +82,13 @@
       },
       "targets": [
         {
-          "expr": "topk(1, label_replace(vector(2 * scalar(clamp_max(max(ALERTS{alertname=~\"OSFU.*\",alertstate=\"firing\",severity=\"page\"} or vector(0)), 1))), \"state\", \"Page\", \"\", \"\") or label_replace(vector(1 * scalar(clamp_max(max(ALERTS{alertname=~\"OSFU.*\",alertstate=\"firing\",severity=\"warning\"} or vector(0)), 1))), \"state\", \"Warning\", \"\", \"\") or label_replace(vector(0), \"state\", \"Healthy\", \"\", \"\"))",
+          "expr": "(label_replace(vector(2), \"state\", \"Critical\", \"\", \"\") and on() (max(ALERTS{alertname=~\"OSFU.*\",alertstate=\"firing\",severity=\"page\"} or vector(0)) > 0)) or ((label_replace(vector(1), \"state\", \"Warning\", \"\", \"\") and on() (max(ALERTS{alertname=~\"OSFU.*\",alertstate=\"firing\",severity=\"warning\"} or vector(0)) > 0)) unless on() (max(ALERTS{alertname=~\"OSFU.*\",alertstate=\"firing\",severity=\"page\"} or vector(0)) > 0)) or (label_replace(vector(0), \"state\", \"OK\", \"\", \"\") unless on() (max(ALERTS{alertname=~\"OSFU.*\",alertstate=\"firing\",severity=~\"page|warning\"} or vector(0)) > 0))",
           "instant": true,
           "legendFormat": "{{state}}",
           "refId": "A"
         }
       ],
-      "title": "Incident Now",
+      "title": "Alert Status",
       "type": "stat"
     },
     {
