@@ -426,6 +426,153 @@
       "type": "stat"
     },
     {
+      "id": 16,
+      "title": "Peer RTT p95",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 0,
+        "y": 10
+      },
+      "targets": [
+        {
+          "expr": "osfu:media_quality_peer_rtt_p95_5m",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 17,
+      "title": "Ingress Loss",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 8,
+        "y": 10
+      },
+      "targets": [
+        {
+          "expr": "osfu:media_quality_ingress_loss_ppm_average_5m / 1000000",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 3,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 18,
+      "title": "Egress Loss",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 16,
+        "y": 10
+      },
+      "targets": [
+        {
+          "expr": "osfu:media_quality_egress_loss_ppm_average_5m / 1000000",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 3,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      }
+    },
+    {
       "datasource": "Prometheus",
       "description": "A detailed timeline of users moving through the connection process on the canary server. Helps spot if users are getting 'stuck' at a specific stage.",
       "fieldConfig": {
@@ -438,7 +585,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 15
       },
       "id": 5,
       "targets": [
@@ -464,7 +611,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 15
       },
       "id": 6,
       "targets": [
@@ -495,7 +642,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 18
+        "y": 23
       },
       "id": 7,
       "targets": [
@@ -526,7 +673,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 18
+        "y": 23
       },
       "id": 8,
       "targets": [
@@ -557,7 +704,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 26
+        "y": 31
       },
       "id": 9,
       "targets": [
@@ -597,7 +744,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 34
+        "y": 39
       },
       "id": 15,
       "options": {
@@ -633,7 +780,7 @@
         "h": 4,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 47
       },
       "id": 10,
       "options": {
