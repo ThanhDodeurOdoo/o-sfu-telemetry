@@ -91,6 +91,27 @@ groups:
       - record: osfu:local_forwarding_efficiency_active_5m
         expr: osfu:local_forwarding_efficiency_ratio_5m and (osfu:rtp_ingress_packets_rate_5m > 10)
 
+      - record: osfu:media_quality_samples_rate_5m
+        expr: sum by (sample) (rate(osfu_media_quality_samples_total[5m]))
+
+      - record: osfu:media_quality_peer_rtt_p95_5m
+        expr: histogram_quantile(0.95, sum by (le) (rate(osfu_media_quality_rtt_seconds_bucket{sample="peer"}[5m])))
+
+      - record: osfu:media_quality_media_rtt_p95_5m
+        expr: histogram_quantile(0.95, sum by (le) (rate(osfu_media_quality_rtt_seconds_bucket{sample=~"media_ingress|media_egress"}[5m])))
+
+      - record: osfu:media_quality_ingress_loss_ppm_average_5m
+        expr: sum(rate(osfu_media_quality_loss_ppm_observed_total{direction="ingress"}[5m])) / clamp_min(sum(rate(osfu_media_quality_loss_observations_total{direction="ingress"}[5m])), 0.001)
+
+      - record: osfu:media_quality_egress_loss_ppm_average_5m
+        expr: sum(rate(osfu_media_quality_loss_ppm_observed_total{direction="egress"}[5m])) / clamp_min(sum(rate(osfu_media_quality_loss_observations_total{direction="egress"}[5m])), 0.001)
+
+      - record: osfu:media_quality_bwe_bps_average_5m
+        expr: sum(rate(osfu_media_quality_bwe_bps_observed_total[5m])) / clamp_min(sum(rate(osfu_media_quality_bwe_observations_total[5m])), 0.001)
+
+      - record: osfu:media_quality_egress_jitter_average_5m
+        expr: sum(rate(osfu_media_quality_jitter_rtp_timestamp_units_observed_total[5m])) / clamp_min(sum(rate(osfu_media_quality_jitter_observations_total[5m])), 0.001)
+
       - record: osfu:budget_solver_outcomes_rate_5m
         expr: sum by (outcome) (rate(osfu_budget_solver_outcomes_total[5m]))
 

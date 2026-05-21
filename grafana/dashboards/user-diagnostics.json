@@ -54,7 +54,7 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 5,
+        "w": 4,
         "x": 0,
         "y": 0
       },
@@ -124,8 +124,8 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 5,
-        "x": 5,
+        "w": 4,
+        "x": 4,
         "y": 0
       },
       "id": 2,
@@ -191,7 +191,7 @@
       "gridPos": {
         "h": 6,
         "w": 4,
-        "x": 10,
+        "x": 8,
         "y": 0
       },
       "id": 3,
@@ -261,7 +261,7 @@
       "gridPos": {
         "h": 6,
         "w": 4,
-        "x": 14,
+        "x": 12,
         "y": 0
       },
       "id": 4,
@@ -325,8 +325,8 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 6,
-        "x": 18,
+        "w": 8,
+        "x": 16,
         "y": 0
       },
       "id": 5,
@@ -379,6 +379,41 @@
               "selector": "recordingState.recording",
               "text": "Recording",
               "type": "string"
+            },
+            {
+              "selector": "user.transport.qualitySummary.sampledMetricsAvailable",
+              "text": "Sampled",
+              "type": "string"
+            },
+            {
+              "selector": "user.transport.qualitySummary.rttMs",
+              "text": "RttMs",
+              "type": "number"
+            },
+            {
+              "selector": "user.transport.qualitySummary.ingressLossPpm",
+              "text": "IngressLossPpm",
+              "type": "number"
+            },
+            {
+              "selector": "user.transport.qualitySummary.egressLossPpm",
+              "text": "EgressLossPpm",
+              "type": "number"
+            },
+            {
+              "selector": "user.transport.qualitySummary.latestBweBps",
+              "text": "BweBps",
+              "type": "number"
+            },
+            {
+              "selector": "user.transport.qualitySummary.egressJitterRtpTimestampUnits",
+              "text": "JitterRtpTs",
+              "type": "number"
+            },
+            {
+              "selector": "user.transport.qualitySummary.sampleCount",
+              "text": "Samples",
+              "type": "number"
             }
           ],
           "refId": "A",
@@ -392,7 +427,7 @@
           }
         }
       ],
-      "title": "Live User Summary",
+      "title": "Live User Transport Summary",
       "type": "table"
     },
     {

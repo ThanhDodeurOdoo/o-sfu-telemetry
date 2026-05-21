@@ -146,3 +146,21 @@ groups:
         annotations:
           summary: "o-sfu has DTLS users without RTP ingress"
           description: "Recent DTLS-connected users are not turning into RTP ingress, which points at publish-side media attachment or network-path issues."
+
+      - alert: OSFUMediaQualityRttHigh
+        expr: osfu:media_quality_peer_rtt_p95_5m > 0.75 and sum(osfu:media_quality_samples_rate_5m) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "o-sfu sampled peer RTT is elevated"
+          description: "Server-side sampled peer RTT p95 is above 750 ms while media-quality samples are present."
+
+      - alert: OSFUMediaQualityLossHigh
+        expr: (osfu:media_quality_ingress_loss_ppm_average_5m > 50000 or osfu:media_quality_egress_loss_ppm_average_5m > 50000) and sum(osfu:media_quality_samples_rate_5m) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "o-sfu sampled media loss is elevated"
+          description: "Server-side sampled ingress or egress packet loss is above 5 percent while media-quality samples are present."

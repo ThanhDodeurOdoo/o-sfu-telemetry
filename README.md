@@ -22,7 +22,7 @@ ever-growing debug file.
 
 - `docker-compose.yml`: local LGTM-style operator stack plus blackbox and Alertmanager
 - `prometheus/`: scrape config, recording rules, alert rules, and the optional host-metrics example
-- `grafana/`: provisioned datasources plus dashboards for control-plane, transport lifecycle, media path, receiver budget adaptation, recording, and staging canary checks
+- `grafana/`: provisioned datasources plus dashboards for control-plane, transport lifecycle, media path, sampled media quality, receiver budget adaptation, recording and staging canary checks
 - `alertmanager/`: default grouping and routing stub for the reference alerts
 - `blackbox/`: probe modules for `GET /v1/noop`
 - `otel-collector/`: OTLP and filelog collector pipeline that forwards traces to Tempo and JSON logs to Loki
@@ -276,18 +276,86 @@ Grafana provisions three datasources out of the box:
    - `Join Success Ratio` stays healthy during staged joins
    - `Connected Transports` rises after the canary join
    - `Local Forwarding Efficiency` rises during live media
+   - sampled peer RTT and sampled loss stay close to the staged network baseline once media flows
    - receiver budget cards show whether adaptation is degrading, pausing, resuming, or intentionally staying over budget for protected media
-5. Open the `o-sfu Media Path` dashboard during simulcast validation. The receiver budget section should explain whether media pressure is normal selected-layer adaptation, whole-route policy pauses, recovery resumes, or protected-over-budget room policy.
+5. Open the `o-sfu Media Path` dashboard during simulcast validation. The sampled quality section should show peer RTT, media RTT, ingress or egress loss, peer BWE and egress jitter beside the existing packet-path plus receiver-budget signals.
 6. Open the `o-sfu Room Graph` dashboard, select a room from the active-room table, then select a user from the room-user table. The room graph shows the whole room topology, while the user graph shows that user's inbound and outbound media paths through media-worker nodes, source nodes, and peer users. Use it to inspect the exact receiver BWE estimate, selected receiver budget, active route count, selected bitrate, pause reason, and over-budget exception reason behind the low-cardinality Prometheus signals.
 7. Open Grafana Explore with the `Loki` datasource and inspect the structured JSON log fields such as `event`, `room_id`, `user_id`, and `trace_id`.
 8. Open Grafana Explore with the `Tempo` datasource and confirm the control-plane spans arrive for the same canary user.
+
+## Sampled media-quality signals
+
+Sampled media quality is server-side transport telemetry emitted by `o-sfu`
+through str0m stats events. It is controlled by
+`TELEMETRY_MEDIA_QUALITY_INTERVAL_MS`, defaults to one sample window every 5
+seconds and can be disabled with `0`. It is not browser `getStats` data. It
+does not include browser render quality, device capture quality, decoder
+behavior or end-user perception.
+
+Prometheus receives only aggregate labels:
+
+- `sample`: `peer`, `media_ingress` or `media_egress`
+- `direction`: `ingress` or `egress` for loss only
+
+There are no room, user, session, source or RID labels. This keeps the metrics
+safe for long retention and dashboard-wide alerting. Per-user context stays in
+the diagnostics endpoint and appears in the `o-sfu User Diagnostics` dashboard
+under `qualitySummary`.
+
+The sampled quality rules expose these operator signals:
+
+- `osfu:media_quality_samples_rate_5m` shows whether sampled stats are arriving.
+  A zero value usually means sampling is disabled, no transport is active or no
+  media flow has produced a stats event yet.
+- `osfu:media_quality_peer_rtt_p95_5m` is the p95 peer transport RTT over the
+  recent sample window. Use it as the broadest server-visible latency signal.
+- `osfu:media_quality_media_rtt_p95_5m` is the p95 RTT from media ingress and
+  egress stats. Use it beside peer RTT to see whether RTT pressure is also
+  visible in media feedback.
+- `osfu:media_quality_ingress_loss_ppm_average_5m` is average packet loss for
+  media entering `o-sfu`. It points first at publisher upload paths, publisher
+  network conditions or the server ingress edge.
+- `osfu:media_quality_egress_loss_ppm_average_5m` is average packet loss for
+  media leaving `o-sfu` toward receivers as exposed by sampled transport stats.
+  It points first at receiver downlink paths, server egress pressure or relay
+  fan-out pressure.
+- `osfu:media_quality_bwe_bps_average_5m` is the average peer bandwidth estimate
+  exposed by str0m. Treat it as a capacity trend, not as the exact application
+  send bitrate.
+- `osfu:media_quality_egress_jitter_average_5m` is remote egress jitter in RTP
+  timestamp units. It is intentionally not converted to milliseconds because
+  the server-side sample does not infer codec clock rates.
+
+Loss values use parts per million. `10000` means 1 percent loss and `50000`
+means 5 percent loss. Dashboard panels divide those values by `1000000` when
+they display loss as a fraction.
+
+Read the dashboard panels as rollout and regression indicators rather than as a
+complete user-experience diagnosis:
+
+- high peer RTT with low loss usually means latency pressure on the transport
+  path.
+- high ingress loss usually means publisher-side upload trouble or ingress edge
+  pressure.
+- high egress loss usually means receiver-side downlink trouble, egress pressure
+  or relay fan-out pressure.
+- falling BWE together with rising RTT or loss usually means congestion.
+- rising jitter with stable loss usually means packet timing variability. Keep
+  it in RTP timestamp units and compare trends inside the same codec context.
+
+The warning alerts are conservative canary signals. `OSFUMediaQualityRttHigh`
+fires when sampled peer RTT p95 stays above 750 ms while sampled traffic is
+present. `OSFUMediaQualityLossHigh` fires when average ingress or egress loss
+stays above 5 percent while sampled media traffic is present. Use those alerts
+to decide where to inspect next, then combine them with transport lifecycle,
+media-path, room graph, user diagnostics and logs.
 
 ## Alerts and recording rules
 
 The reference Prometheus config now ships:
 
-- recording rules for join success ratio, websocket startup failure rate, websocket outbound queue pressure, transport disconnect churn per active user, transport cleanup recovery, local forwarding efficiency and receiver budget solver outcome rates
-- alerts for low join success ratio, websocket startup failures, websocket outbound queue overflow, diagnostics probe failures, normalized transport disconnect churn, unrecovered transport cleanup failures, routing pressure, relay overload and low local forwarding efficiency
+- recording rules for join success ratio, websocket startup failure rate, websocket outbound queue pressure, transport disconnect churn per active user, transport cleanup recovery, local forwarding efficiency, sampled media quality and receiver budget solver outcome rates
+- alerts for low join success ratio, websocket startup failures, websocket outbound queue overflow, diagnostics probe failures, normalized transport disconnect churn, unrecovered transport cleanup failures, routing pressure, relay overload, low local forwarding efficiency and sampled media-quality degradation
 
 These derived rules are intended for operator dashboards and canary validation.
 They should stay derived from runtime-owned metrics instead of introducing extra
@@ -335,8 +403,8 @@ Before using it outside a controlled environment:
 
 - `control-plane.json`: HTTP, websocket admission, diagnostics probe, startup, outbound queue pressure and latency views
 - `transport-lifecycle.json`: transport health, ICE, DTLS, cleanup recovery, and user lifetime views
-- `media-path.json`: RTP ingress, forwarding, routing pressure, and route-control views
+- `media-path.json`: RTP ingress, forwarding, routing pressure, route-control and sampled media-quality views
 - `recording.json`: recording action outcomes, active captures, and recording fan-out
-- `staging-canary.json`: join success, canary readiness, disconnect churn, and forwarding efficiency
+- `staging-canary.json`: join success, canary readiness, sampled media quality, disconnect churn and forwarding efficiency
 - `room-graph.json`: diagnostics-backed active-room selection, room topology, room-user selection, per-user media-path topology, and source-selection views
-- `user-diagnostics.json`: user-id drill-down for retained Loki logs plus live diagnostics tables and optional room-scoped media graph
+- `user-diagnostics.json`: user-id drill-down for retained Loki logs plus live transport-quality diagnostics tables and optional room-scoped media graph
