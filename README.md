@@ -1,5 +1,11 @@
 # o-sfu telemetry defaults
 
+> [!WARNING]
+> This repository was written with AI assistance:
+> - Research and documentation parsing has been done with "Gemini Deep research"
+> - Text formatting has been done with Siri writing tools
+> - Grafana graphs have been written with the assitance of google gemini
+
 This repository carries the optional reference observability stack for
 [`o-sfu`](https://github.com/ThanhDodeurOdoo/o-sfu). It mirrors the runtime
 contract owned by the server:
