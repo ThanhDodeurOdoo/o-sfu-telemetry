@@ -278,7 +278,7 @@ Grafana provisions three datasources out of the box:
    - `Local Forwarding Efficiency` rises during live media
    - sampled peer RTT and sampled loss stay close to the staged network baseline once media flows
    - receiver budget cards show whether adaptation is degrading, pausing, resuming, or intentionally staying over budget for protected media
-5. Open the `o-sfu Media Path` dashboard during simulcast validation. The sampled quality section should show peer RTT, media RTT, ingress or egress loss, peer BWE and egress jitter beside the existing packet-path plus receiver-budget signals.
+5. Open the `o-sfu Media Path` dashboard during simulcast validation. The sampled quality section should show peer RTT, media RTT, ingress or egress loss, peer BWE and egress jitter beside the existing packet-path, decoder-refresh and receiver-budget signals.
 6. Open the `o-sfu Room Graph` dashboard, select a room from the active-room table, then select a user from the room-user table. The room graph shows the whole room topology, while the user graph shows that user's inbound and outbound media paths through media-worker nodes, source nodes, and peer users. Use it to inspect the exact receiver BWE estimate, selected receiver budget, active route count, selected bitrate, pause reason, and over-budget exception reason behind the low-cardinality Prometheus signals.
 7. Open Grafana Explore with the `Loki` datasource and inspect the structured JSON log fields such as `event`, `room_id`, `user_id`, and `trace_id`.
 8. Open Grafana Explore with the `Tempo` datasource and confirm the control-plane spans arrive for the same canary user.
@@ -350,11 +350,33 @@ stays above 5 percent while sampled media traffic is present. Use those alerts
 to decide where to inspect next, then combine them with transport lifecycle,
 media-path, room graph, user diagnostics and logs.
 
+## Decoder-refresh and keyframe request signals
+
+Decoder refreshes are packet-path observations emitted when `o-sfu` sees a
+frame that can make a decoder recover. The `scope` label is bounded:
+
+- `rid`: the packet carried a RID and can refresh a selected simulcast layer.
+- `source`: the packet did not carry a RID and is only source-wide.
+
+The media-path dashboard shows `osfu:rtp_decoder_refresh_rate_5m` beside
+`osfu:rtc_keyframe_requests_forwarded_rate_5m` and
+`osfu:rtc_keyframe_requests_absorbed_rate_5m`. Those request counters come from
+route-control decisions, so they include consumer RTCP feedback and internal
+selected-RID refresh requests. During a viewer freeze with RTP still flowing, a
+rising request rate without RID decoder refreshes points at producer recovery
+or packet loss around the selected simulcast layer. A low request rate points
+first at missing downstream feedback, stale routes or a browser-side recovery
+gap.
+
+Per-source and per-RID ages stay out of Prometheus because those identifiers
+are high cardinality. They are exposed by the `o-sfu` diagnostics endpoint on
+source encodings as `lastPacketAgeMs` and `lastKeyframeAgeMs`.
+
 ## Alerts and recording rules
 
 The reference Prometheus config now ships:
 
-- recording rules for join success ratio, websocket startup failure rate, websocket outbound queue pressure, transport disconnect churn per active user, transport cleanup recovery, local forwarding efficiency, sampled media quality and receiver budget solver outcome rates
+- recording rules for join success ratio, websocket startup failure rate, websocket outbound queue pressure, transport disconnect churn per active user, transport cleanup recovery, local forwarding efficiency, decoder refreshes, keyframe requests, sampled media quality and receiver budget solver outcome rates
 - alerts for low join success ratio, websocket startup failures, websocket outbound queue overflow, diagnostics probe failures, normalized transport disconnect churn, unrecovered transport cleanup failures, routing pressure, relay overload, low local forwarding efficiency and sampled media-quality degradation
 
 These derived rules are intended for operator dashboards and canary validation.
