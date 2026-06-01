@@ -1133,6 +1133,121 @@
           "sort": "none"
         }
       }
+    },
+    {
+      "id": 27,
+      "title": "Decoder Refreshes",
+      "type": "timeseries",
+      "description": "Rate of RTP packets that can refresh a decoder. RID-scoped refreshes are the signal to inspect when selected simulcast layers freeze while RTP is still flowing.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 83
+      },
+      "targets": [
+        {
+          "expr": "osfu:rtp_decoder_refresh_rate_5m",
+          "refId": "A",
+          "legendFormat": "{{scope}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 28,
+      "title": "Keyframe Requests",
+      "type": "timeseries",
+      "description": "Rate of route-control keyframe requests that escape or are absorbed by coalescing. Use it beside decoder refreshes to see whether frozen viewers and internal RID refreshes are asking for recovery frames.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 83
+      },
+      "targets": [
+        {
+          "expr": "osfu:rtc_keyframe_requests_forwarded_rate_5m",
+          "refId": "A",
+          "legendFormat": "forwarded"
+        },
+        {
+          "expr": "osfu:rtc_keyframe_requests_absorbed_rate_5m",
+          "refId": "B",
+          "legendFormat": "absorbed"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      }
     }
   ],
   "refresh": "15s",
