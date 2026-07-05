@@ -86,7 +86,7 @@ services:
       - /var/lib/docker:/var/lib/docker:ro
 
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.123.0
+    image: otel/opentelemetry-collector-contrib:0.155.0
     depends_on:
       - loki
       - tempo
