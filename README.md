@@ -176,6 +176,11 @@ reverse-proxy route still blocks `/metrics` and `/internal/diagnostics/...`.
 `o-sfu` should emit structured JSON logs to stdout/stderr. The runtime or process
 manager owns log file rotation and retention at the source:
 
+- `o-sfu`: set `TELEMETRY_LOG_FORMAT=json` so stdout/stderr contains one JSON
+  object per line
+- deployment: expose that JSON stream as rotated `*.jsonl` files
+- telemetry stack: set `O_SFU_LOG_DIR` to the directory containing those files
+
 - systemd/journald: keep logs in the journal and export slices with
   `journalctl`.
 - Docker: use the runtime JSON logs with `max-size` and `max-file`.
@@ -183,6 +188,37 @@ manager owns log file rotation and retention at the source:
   from the node log path.
 - direct files: write to a rotated directory such as `/var/log/o-sfu` and point
   `O_SFU_LOG_DIR` at that directory.
+
+The tested single-VPS Docker setup writes the collector source by sharing the
+telemetry log directory with the SFU container and appending stdout/stderr with
+`tee`:
+
+```yaml
+services:
+  o-sfu:
+    volumes:
+      - /opt/o-sfu-telemetry/data/logs:/var/log/o-sfu
+    command:
+      - sh
+      - -lc
+      - o-sfu 2>&1 | tee -a /var/log/o-sfu/o-sfu.jsonl
+```
+
+`tee -a` only appends. Add a host logrotate rule so the JSONL source cannot grow
+without bound:
+
+```conf
+/opt/o-sfu-telemetry/data/logs/o-sfu.jsonl {
+    size 20M
+    rotate 5
+    missingok
+    notifempty
+    copytruncate
+    compress
+    delaycompress
+    su root root
+}
+```
 
 The OpenTelemetry Collector tails `*.jsonl` files from `O_SFU_LOG_DIR`, starts at
 the end for new files, and stores file offsets in `data/otelcol` so collector
