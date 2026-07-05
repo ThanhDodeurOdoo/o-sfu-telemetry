@@ -46,7 +46,7 @@ services:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
 
   blackbox-exporter:
-    image: prom/blackbox-exporter:v0.26.0
+    image: prom/blackbox-exporter:v0.28.0
     command:
       - --config.file=/etc/blackbox_exporter/config.yml
     extra_hosts:
