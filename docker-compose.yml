@@ -103,7 +103,7 @@ services:
       - ./data/otelcol:/var/lib/otelcol
 
   loki:
-    image: grafana/loki:3.4.2
+    image: grafana/loki:3.7.3
     command:
       - -config.file=/etc/loki/config.yaml
     ports:
