@@ -7,5 +7,9 @@ version: 2
 updates:
   - package-ecosystem: "docker-compose" # See documentation for possible values
     directory: "/" # Location of package manifests
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "[IMP] compose:"
     schedule:
       interval: "weekly"
