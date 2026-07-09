@@ -6,7 +6,7 @@ x-logging: &default-logging
 
 services:
   prometheus:
-    image: prom/prometheus:v3.2.1
+    image: prom/prometheus:v3.2.1@sha256:6927e0919a144aa7616fd0137d4816816d42f6b816de3af269ab065250859a62
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
@@ -25,23 +25,20 @@ services:
       - ../../data/prometheus:/prometheus
 
   grafana:
-    image: grafana/grafana-oss:11.4.0
+    image: ${GRAFANA_IMAGE:?set GRAFANA_IMAGE}
     depends_on:
       - prometheus
       - loki
       - tempo
     environment:
+      DIAGNOSTICS_AUTH_TOKEN: ${DIAGNOSTICS_AUTH_TOKEN:?set DIAGNOSTICS_AUTH_TOKEN}
       GF_AUTH_ANONYMOUS_ENABLED: "false"
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/operations.json
-      GF_INSTALL_PLUGINS: yesoreyeram-infinity-datasource
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD}
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_COOKIE_SECURE: "true"
       GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:?set GRAFANA_ROOT_URL}
       GF_SERVER_SERVE_FROM_SUB_PATH: "true"
-    env_file:
-      - path: /etc/o-sfu/o-sfu.env
-        required: false
     expose:
       - "3000"
     logging: *default-logging
@@ -56,7 +53,7 @@ services:
       - ./grafana-infinity.yaml:/etc/grafana/provisioning/datasources/infinity.yaml:ro
 
   alertmanager:
-    image: prom/alertmanager:v0.28.1
+    image: prom/alertmanager:v0.28.1@sha256:27c475db5fb156cab31d5c18a4251ac7ed567746a2483ff264516437a39b15ba
     command:
       - --config.file=/etc/alertmanager/alertmanager.yml
     expose:
@@ -65,11 +62,13 @@ services:
     networks:
       - o-sfu
     restart: unless-stopped
+    secrets:
+      - alertmanager_webhook_url
     volumes:
       - ../../alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
 
   blackbox-exporter:
-    image: prom/blackbox-exporter:v0.26.0
+    image: prom/blackbox-exporter:v0.26.0@sha256:92e05d5fe0df01d3980518dc42f07b778a8997048b57392ebc7f7391ebd7bb06
     entrypoint:
       - /bin/sh
       - -ec
@@ -77,9 +76,8 @@ services:
       - |
         sed "s|__DIAGNOSTICS_AUTH_TOKEN__|$${DIAGNOSTICS_AUTH_TOKEN}|g" /etc/blackbox_exporter/config.template.yml > /tmp/blackbox.yml
         exec /bin/blackbox_exporter --config.file=/tmp/blackbox.yml
-    env_file:
-      - path: /etc/o-sfu/o-sfu.env
-        required: false
+    environment:
+      DIAGNOSTICS_AUTH_TOKEN: ${DIAGNOSTICS_AUTH_TOKEN:?set DIAGNOSTICS_AUTH_TOKEN}
     expose:
       - "9115"
     logging: *default-logging
@@ -90,7 +88,7 @@ services:
       - ./blackbox.yml.template:/etc/blackbox_exporter/config.template.yml:ro
 
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.123.0
+    image: otel/opentelemetry-collector-contrib:0.123.0@sha256:e39311df1f3d941923c00da79ac7ba6269124a870ee87e3c3ad24d60f8aee4d2
     depends_on:
       - loki
       - tempo
@@ -104,13 +102,14 @@ services:
     networks:
       - o-sfu
     restart: unless-stopped
+    user: "0:0"
     volumes:
       - ../../otel-collector/config.yaml:/etc/otelcol-contrib/config.yaml:ro
-      - ${O_SFU_LOG_DIR:-../../data/logs}:/var/log/o-sfu:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - ../../data/otelcol:/var/lib/otelcol
 
   loki:
-    image: grafana/loki:3.4.2
+    image: grafana/loki:3.4.2@sha256:58a6c186ce78ba04d58bfe2a927eff296ba733a430df09645d56cdc158f3ba08
     command:
       - -config.file=/etc/loki/config.yaml
     expose:
@@ -124,7 +123,7 @@ services:
       - ../../data/loki:/var/lib/loki
 
   tempo:
-    image: grafana/tempo:2.9.0
+    image: grafana/tempo:2.9.0@sha256:65a5789759435f1ef696f1953258b9bbdb18eb571d5ce711ff812d2e128288a4
     command:
       - -config.file=/etc/tempo/config.yaml
     expose:
@@ -142,3 +141,7 @@ networks:
   o-sfu:
     external: true
     name: o-sfu_default
+
+secrets:
+  alertmanager_webhook_url:
+    file: ${ALERTMANAGER_WEBHOOK_URL_FILE:?set ALERTMANAGER_WEBHOOK_URL_FILE}
