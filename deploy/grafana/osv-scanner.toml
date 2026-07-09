@@ -1,0 +1,22 @@
+[[PackageOverrides]]
+name = "github.com/(aws/aws-sdk-go|grafana/grafana|grafana/grafana-infinity-datasource|grafana/tempo|openfga/openfga)"
+nameIsRegex = true
+ecosystem = "Go"
+vulnerability.ignore = true
+effectiveUntil = 2026-08-09
+reason = "current released Grafana image or Infinity plugin still ships this dependency, the workflow fails once a newer release exists"
+
+[[PackageOverrides]]
+name = "(go.opentelemetry.io/otel(/sdk)?|golang.org/x/(crypto|net|sys)|software.sslmate.com/src/go-pkcs12|stdlib)"
+nameIsRegex = true
+ecosystem = "Go"
+vulnerability.ignore = true
+effectiveUntil = 2026-08-09
+reason = "current released Grafana image or Infinity plugin still ships this dependency, the workflow fails once a newer release exists"
+
+[[PackageOverrides]]
+name = "(busybox|curl|openssl)"
+nameIsRegex = true
+vulnerability.ignore = true
+effectiveUntil = 2026-08-09
+reason = "current released Grafana image still ships this OS package, the workflow fails once a newer release exists"
