@@ -68,7 +68,7 @@ services:
       - ../../alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
 
   blackbox-exporter:
-    image: prom/blackbox-exporter:v0.26.0@sha256:92e05d5fe0df01d3980518dc42f07b778a8997048b57392ebc7f7391ebd7bb06
+    image: prom/blackbox-exporter:v0.28.0@sha256:e753ff9f3fc458d02cca5eddab5a77e1c175eee484a8925ac7d524f04366c2fc
     entrypoint:
       - /bin/sh
       - -ec
