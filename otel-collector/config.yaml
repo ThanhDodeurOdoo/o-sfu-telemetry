@@ -5,7 +5,23 @@ receivers:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
-  filelog:
+  filelog/docker:
+    include:
+      - /var/lib/docker/containers/*/*-json.log
+    start_at: end
+    storage: file_storage
+    include_file_path: true
+    operators:
+      - type: container
+        format: docker
+        add_metadata_from_filepath: false
+      - type: filter
+        expr: 'attributes.attrs == nil || attributes.attrs["com.odoo.sfu.component"] != "server"'
+      - type: remove
+        field: attributes.attrs
+      - type: json_parser
+
+  filelog/jsonl:
     include:
       - /var/log/o-sfu/*.jsonl
     start_at: end
@@ -54,7 +70,8 @@ service:
         - otlphttp/tempo
     logs:
       receivers:
-        - filelog
+        - filelog/docker
+        - filelog/jsonl
       processors:
         - memory_limiter
         - resource/o-sfu-logs

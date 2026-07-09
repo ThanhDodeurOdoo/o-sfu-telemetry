@@ -9,3 +9,6 @@ route:
 
 receivers:
   - name: default
+    webhook_configs:
+      - url_file: /run/secrets/alertmanager_webhook_url
+        send_resolved: true

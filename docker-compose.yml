@@ -1,6 +1,6 @@
 services:
   prometheus:
-    image: prom/prometheus:v3.2.1
+    image: prom/prometheus:v3.13.0@sha256:c6b27ea434f8389bfe233fbc7be381cf50587c286e871bc842008f5a1b1908a7
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
@@ -18,7 +18,10 @@ services:
       - ./data/prometheus:/prometheus
 
   grafana:
-    image: grafana/grafana-oss:11.4.0
+    image: ${GRAFANA_IMAGE:?set GRAFANA_IMAGE}
+    build:
+      context: .
+      dockerfile: deploy/grafana/Dockerfile
     depends_on:
       - prometheus
       - loki
@@ -26,7 +29,6 @@ services:
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD}
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/operations.json
-      GF_INSTALL_PLUGINS: yesoreyeram-infinity-datasource
     ports:
       - "127.0.0.1:3000:3000"
     restart: unless-stopped
@@ -36,17 +38,19 @@ services:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
 
   alertmanager:
-    image: prom/alertmanager:v0.28.1
+    image: prom/alertmanager:v0.33.1@sha256:9e082985f56f4c8c9f724e18f2288c6708f472e56a5286b8863d080434ea065d
     command:
       - --config.file=/etc/alertmanager/alertmanager.yml
     ports:
       - "127.0.0.1:9093:9093"
     restart: unless-stopped
+    secrets:
+      - alertmanager_webhook_url
     volumes:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
 
   blackbox-exporter:
-    image: prom/blackbox-exporter:v0.26.0
+    image: prom/blackbox-exporter:v0.28.0@sha256:e753ff9f3fc458d02cca5eddab5a77e1c175eee484a8925ac7d524f04366c2fc
     command:
       - --config.file=/etc/blackbox_exporter/config.yml
     extra_hosts:
@@ -58,7 +62,7 @@ services:
       - ./blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
 
   node-exporter:
-    image: prom/node-exporter:v1.9.1
+    image: prom/node-exporter:v1.9.1@sha256:d00a542e409ee618a4edc67da14dd48c5da66726bbd5537ab2af9c1dfc442c8a
     profiles:
       - linux-infra
     ports:
@@ -70,7 +74,7 @@ services:
       - /:/host:ro,rslave
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.52.1
+    image: gcr.io/cadvisor/cadvisor:v0.52.1@sha256:f40e65878e25c2e78ea037f73a449527a0fb994e303dc3e34cb6b187b4b91435
     profiles:
       - linux-infra
     ports:
@@ -86,7 +90,7 @@ services:
       - /var/lib/docker:/var/lib/docker:ro
 
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.123.0
+    image: otel/opentelemetry-collector-contrib:0.156.0@sha256:125bdbeb7590cc1952c5b3430ecf14063568980c2c93d5b38676cc0446ed8108
     depends_on:
       - loki
       - tempo
@@ -103,7 +107,7 @@ services:
       - ./data/otelcol:/var/lib/otelcol
 
   loki:
-    image: grafana/loki:3.4.2
+    image: grafana/loki:3.7.3@sha256:70b9f699fc9bb868b62f1cfd4f787dfa50242f1fd92e6089787d5d7daea75fe8
     command:
       - -config.file=/etc/loki/config.yaml
     ports:
@@ -114,7 +118,7 @@ services:
       - ./data/loki:/var/lib/loki
 
   tempo:
-    image: grafana/tempo:2.9.0
+    image: grafana/tempo:3.0.2@sha256:cda87c212d8c584dc0b89e337e7ed648a5100feb657e5d528480ee4fa03dbbe3
     command:
       - -config.file=/etc/tempo/config.yaml
     ports:
@@ -123,3 +127,7 @@ services:
     volumes:
       - ./tempo/config.yaml:/etc/tempo/config.yaml:ro
       - ./data/tempo:/var/tempo
+
+secrets:
+  alertmanager_webhook_url:
+    file: ${ALERTMANAGER_WEBHOOK_URL_FILE:-./alertmanager/webhook-url.example}
