@@ -32,6 +32,7 @@ ever-growing debug file.
 - `alertmanager/`: default grouping and routing stub for the reference alerts
 - `blackbox/`: probe modules for `GET /v1/noop`
 - `otel-collector/`: OTLP and filelog collector pipeline that forwards traces to Tempo and JSON logs to Loki
+- `deploy/grafana/`: CI-built Grafana image with the Infinity datasource plugin baked in
 - `loki/`: local Loki config for structured OTLP log ingestion
 - `tempo/`: local Tempo config for OTLP trace ingestion
 - `data/`: bind-mounted local state for logs, collector offsets, Prometheus, Loki, Grafana, and Tempo
@@ -46,9 +47,8 @@ cp .env.example .env
 ```
 
 Set `GRAFANA_ADMIN_PASSWORD` to a non-default value. The default
-`O_SFU_LOG_DIR=./data/logs` is a local fallback for rotated JSON log files. In a
-service deployment, point `O_SFU_LOG_DIR` at the directory where the process
-manager or container runtime exposes rotated `o-sfu` JSON logs.
+`O_SFU_LOG_DIR=./data/logs` is a local fallback for manual JSONL replay files.
+The VPS deployment reads Docker `json-file` logs directly.
 
 Start `o-sfu` on the host with JSON logs and OTLP traces enabled. Do not pipe it
 through `tee` as the primary retention mechanism:
@@ -68,7 +68,7 @@ Then bring up the reference stack:
 
 ```bash
 cd /Volumes/X9-Pro/odoo-dev/o-sfu-telemetry
-docker compose up
+docker compose up --build
 ```
 
 The compose stack uses `host.docker.internal` with a host-gateway mapping so the
@@ -79,151 +79,60 @@ reachable remotely.
 
 ## Running on the SFU VPS
 
-The `deploy/sfu-vps` profile is for a VPS where `o-sfu` already runs through the
-server compose stack and a trusted reverse proxy terminates TLS. It does not
-publish Prometheus, Loki, Tempo, Alertmanager or the collector to the public
-internet. Grafana is served through the existing reverse proxy under `/grafana`.
+Use [DEPLOYMENT.md](./DEPLOYMENT.md) for the VPS operator runbook.
 
-The profile is reverse-proxy agnostic. The proxy only needs to route
-`/grafana*` to `grafana:3000` on the shared Docker network. The example below
-uses Caddy because that is the tested single-VPS setup.
-
-The profile keeps the dashboard URLs compatible with the local stack by making
-the `o-sfu` container own the `host.docker.internal` network alias on the shared
-Docker network.
-
-In `/opt/o-sfu/compose.yml`, add the alias to the `o-sfu` service:
-
-```yaml
-  o-sfu:
-    networks:
-      default:
-        aliases:
-          - host.docker.internal
-```
-
-Add the collector endpoint to `/etc/o-sfu/o-sfu.env`:
-
-```bash
-sudo sh -c 'grep -q "^TELEMETRY_OTLP_ENDPOINT=" /etc/o-sfu/o-sfu.env || echo "TELEMETRY_OTLP_ENDPOINT=http://otel-collector:4318" >> /etc/o-sfu/o-sfu.env'
-```
-
-If the server stack uses Caddy, update `/opt/o-sfu/Caddyfile`:
-
-```caddyfile
-<SFU_URL_DOMAIN> {
-    @blocked path /metrics /internal/diagnostics/*
-    respond @blocked 404
-
-    handle /grafana* {
-        reverse_proxy grafana:3000
-    }
-
-    reverse_proxy o-sfu:8070
-}
-```
-
-Start or restart the server stack:
-
-```bash
-cd /opt/o-sfu
-sudo docker compose up -d
-```
-
-Clone this repository on the VPS and create the telemetry environment file:
-
-```bash
-sudo mkdir -p /opt/o-sfu-telemetry
-sudo chown -R "$USER:$USER" /opt/o-sfu-telemetry
-git clone https://github.com/ThanhDodeurOdoo/o-sfu-telemetry.git /opt/o-sfu-telemetry
-cd /opt/o-sfu-telemetry
-cp deploy/sfu-vps/.env.example deploy/sfu-vps/.env
-```
-
-Set a real Grafana password and keep the root URL aligned with the reverse-proxy
-path:
-
-```bash
-sed -i 's/^GRAFANA_ADMIN_PASSWORD=.*/GRAFANA_ADMIN_PASSWORD=<long-grafana-password>/' deploy/sfu-vps/.env
-sed -i 's|^GRAFANA_ROOT_URL=.*|GRAFANA_ROOT_URL=https://<SFU_URL_DOMAIN>/grafana/|' deploy/sfu-vps/.env
-```
-
-Start the telemetry stack:
-
-```bash
-docker compose --env-file deploy/sfu-vps/.env --file deploy/sfu-vps/docker-compose.yml up -d
-```
-
-Reload the reverse proxy after Grafana joins the shared network. With the tested
-Caddy stack:
-
-```bash
-cd /opt/o-sfu
-sudo docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
-```
-
-Grafana is then available at:
-
-```text
-https://<SFU_URL_DOMAIN>/grafana/
-```
-
-Prometheus scrapes `o-sfu` through the private Docker network. The public
-reverse-proxy route still blocks `/metrics` and `/internal/diagnostics/...`.
+That guide is the canonical deployment path for running this stack beside an
+NGINX-fronted `o-sfu` deployment. It keeps Prometheus, Loki, Tempo,
+Alertmanager, blackbox exporter and the collector private. It exposes Grafana
+only through the operator access path under `/grafana/` and keeps the SFU
+`AUTH_KEY` out of telemetry containers.
 
 ## Log ingestion model
 
-`o-sfu` should emit structured JSON logs to stdout/stderr. The runtime or process
-manager owns log file rotation and retention at the source:
+`o-sfu` should emit structured JSON logs to stdout/stderr. The runtime owns log
+rotation and retention at the source:
 
 - `o-sfu`: set `TELEMETRY_LOG_FORMAT=json` so stdout/stderr contains one JSON
   object per line
-- deployment: expose that JSON stream as rotated `*.jsonl` files
-- telemetry stack: set `O_SFU_LOG_DIR` to the directory containing those files
-
-- systemd/journald: keep logs in the journal and export slices with
-  `journalctl`.
-- Docker: use the runtime JSON logs with `max-size` and `max-file`.
+- Docker VPS: use the `json-file` logging driver with `max-size`, `max-file`
+  and `labels: "com.odoo.sfu.component"`
+- telemetry VPS: mount `/var/lib/docker/containers` read-only into the
+  collector
+- systemd/journald: keep logs in the journal and export slices with `journalctl`
 - Kubernetes: let the node/container runtime rotate container logs and ship them
-  from the node log path.
-- direct files: write to a rotated directory such as `/var/log/o-sfu` and point
-  `O_SFU_LOG_DIR` at that directory.
+  from the node log path
+- local replay: write a bounded `*.jsonl` file under `data/logs`
 
-The tested single-VPS Docker setup writes the collector source by sharing the
-telemetry log directory with the SFU container and appending stdout/stderr with
-`tee`:
+the VPS Docker setup labels the `o-sfu` container and lets Docker own the log
+files:
 
 ```yaml
+x-logging: &bounded-logs
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+    labels: "com.odoo.sfu.component"
+
 services:
   o-sfu:
-    volumes:
-      - /opt/o-sfu-telemetry/data/logs:/var/log/o-sfu
-    command:
-      - sh
-      - -lc
-      - o-sfu 2>&1 | tee -a /var/log/o-sfu/o-sfu.jsonl
+    labels:
+      com.odoo.sfu.component: server
+    logging: *bounded-logs
 ```
 
-`tee -a` only appends. Add a host logrotate rule so the JSONL source cannot grow
-without bound:
+The OpenTelemetry Collector parses Docker's outer log envelope, keeps only log
+records with `com.odoo.sfu.component=server`, then parses the inner `o-sfu`
+JSON log body. It stores file offsets in `data/otelcol` so collector restarts do not
+replay the same logs.
 
-```conf
-/opt/o-sfu-telemetry/data/logs/o-sfu.jsonl {
-    size 20M
-    rotate 5
-    missingok
-    notifempty
-    copytruncate
-    compress
-    delaycompress
-    su root root
-}
-```
+The local `data/logs` directory remains available for manual replay, but it is
+not the production retention mechanism.
 
-The OpenTelemetry Collector tails `*.jsonl` files from `O_SFU_LOG_DIR`, starts at
-the end for new files, and stores file offsets in `data/otelcol` so collector
-restarts do not replay the same logs. The local `data/logs` directory remains
-available for manual replay, but it is not the production retention mechanism.
+Alertmanager routes alerts to the webhook URL stored in
+`ALERTMANAGER_WEBHOOK_URL_FILE`. The committed example URL is only for local
+configuration validation. Production deployments must provide a real operator
+notification endpoint.
 
 For a local replay file:
 

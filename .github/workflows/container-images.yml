@@ -1,0 +1,190 @@
+name: Container Images
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - docker-compose.yml
+      - deploy/sfu-vps/docker-compose.yml
+      - deploy/grafana/Dockerfile
+      - deploy/grafana/osv-scanner.toml
+      - alertmanager/alertmanager.yml
+      - alertmanager/webhook-url.example
+      - .env.example
+      - deploy/sfu-vps/.env.example
+      - .github/workflows/container-images.yml
+  push:
+    branches: [master]
+    paths:
+      - docker-compose.yml
+      - deploy/sfu-vps/docker-compose.yml
+      - deploy/grafana/Dockerfile
+      - deploy/grafana/osv-scanner.toml
+      - alertmanager/alertmanager.yml
+      - alertmanager/webhook-url.example
+      - .env.example
+      - deploy/sfu-vps/.env.example
+      - .github/workflows/container-images.yml
+  schedule:
+    - cron: "20 8 * * 2"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  grafana-image:
+    runs-on: ubuntu-latest
+    env:
+      OSV_SCANNER_BIN: /tmp/osv-scanner-bin/osv-scanner
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Resolve image name
+        id: image
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          ref="${GITHUB_REF_NAME//\//-}"
+          echo "name=ghcr.io/${owner}/o-sfu-telemetry-grafana" >> "$GITHUB_OUTPUT"
+          echo "ref=${ref}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.26.x"
+
+      - name: Install OSV-Scanner
+        run: |
+          mkdir -p "$(dirname "$OSV_SCANNER_BIN")"
+          GOBIN="$(dirname "$OSV_SCANNER_BIN")" go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8
+
+      - name: Require current Grafana releases
+        run: |
+          grafana_version="$(
+            ruby -rjson -ropen-uri -e 'puts JSON.parse(URI.open("https://api.github.com/repos/grafana/grafana/releases/latest").read).fetch("tag_name").delete_prefix("v")'
+          )"
+          infinity_version="$(
+            ruby -rjson -ropen-uri -e 'data = JSON.parse(URI.open("https://grafana.com/api/plugins/yesoreyeram-infinity-datasource/versions").read); versions = data.is_a?(Array) ? data : data.fetch("items"); puts versions.fetch(0).fetch("version")'
+          )"
+          grep -q "FROM grafana/grafana:${grafana_version}@" deploy/grafana/Dockerfile
+          grep -q "ARG GRAFANA_INFINITY_VERSION=${infinity_version}" deploy/grafana/Dockerfile
+
+      - name: Build Grafana image
+        run: |
+          docker build \
+            --file deploy/grafana/Dockerfile \
+            --tag "${{ steps.image.outputs.name }}:${{ steps.image.outputs.ref }}" \
+            --tag "${{ steps.image.outputs.name }}:sha-${GITHUB_SHA}" \
+            .
+
+      - name: Scan Grafana image contents with OSV
+        run: |
+          "$OSV_SCANNER_BIN" scan image --config deploy/grafana/osv-scanner.toml "${{ steps.image.outputs.name }}:${{ steps.image.outputs.ref }}"
+
+      - name: Login to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Grafana image
+        if: github.event_name != 'pull_request'
+        run: |
+          docker push "${{ steps.image.outputs.name }}:${{ steps.image.outputs.ref }}"
+          docker push "${{ steps.image.outputs.name }}:sha-${GITHUB_SHA}"
+
+  osv-image-scan:
+    runs-on: ubuntu-latest
+    env:
+      OSV_SCANNER_BIN: /tmp/osv-scanner-bin/osv-scanner
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Resolve compose image overrides
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          ref="${GITHUB_REF_NAME//\//-}"
+          echo "GRAFANA_IMAGE=ghcr.io/${owner}/o-sfu-telemetry-grafana:${ref}" >> "$GITHUB_ENV"
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.26.x"
+
+      - name: Install OSV-Scanner
+        run: |
+          mkdir -p "$(dirname "$OSV_SCANNER_BIN")"
+          GOBIN="$(dirname "$OSV_SCANNER_BIN")" go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8
+
+      - name: Extract compose image references
+        run: |
+          {
+            docker compose --env-file .env.example config --images
+            docker compose --profile linux-infra --env-file .env.example config --images
+            docker compose --env-file deploy/sfu-vps/.env.example --file deploy/sfu-vps/docker-compose.yml config --images
+          } | sort -u > images.txt
+          cat images.txt
+
+      - name: Require digest-pinned image references
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          grafana_image="ghcr.io/${owner}/o-sfu-telemetry-grafana:"
+          pin_status=0
+          while IFS= read -r image
+          do
+            case "$image" in
+              *@sha256:*) ;;
+              "$grafana_image"*) ;;
+              *)
+                echo "image is not digest-pinned: $image"
+                pin_status=1
+                ;;
+            esac
+          done < images.txt
+          exit "$pin_status"
+
+      - name: Reject runtime Grafana plugin installs
+        run: |
+          if {
+            docker compose --env-file .env.example config
+            docker compose --profile linux-infra --env-file .env.example config
+            docker compose --env-file deploy/sfu-vps/.env.example --file deploy/sfu-vps/docker-compose.yml config
+          } | grep -q 'GF_INSTALL_PLUGINS'
+          then
+            echo "Grafana plugins must be baked into deploy/grafana/Dockerfile"
+            exit 1
+          fi
+
+      - name: Scan image contents with OSV
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          grafana_image="ghcr.io/${owner}/o-sfu-telemetry-grafana:"
+          scan_status=0
+          while IFS= read -r image
+          do
+            [ -n "$image" ] || continue
+            case "$image" in
+              "$grafana_image"*)
+                echo "skipping first-party Grafana image because grafana-image scans it"
+                continue
+                ;;
+            esac
+            echo "::group::$image"
+            if ! "$OSV_SCANNER_BIN" scan image "$image"
+            then
+              scan_status=1
+            fi
+            echo "::endgroup::"
+          done < images.txt
+          exit "$scan_status"
