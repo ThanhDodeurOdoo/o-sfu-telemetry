@@ -56,7 +56,7 @@ jobs:
           echo "ref=${ref}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v6.5.0
         with:
           go-version: "1.26.x"
 
@@ -118,7 +118,7 @@ jobs:
           echo "GRAFANA_IMAGE=ghcr.io/${owner}/o-sfu-telemetry-grafana:${ref}" >> "$GITHUB_ENV"
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v6.5.0
         with:
           go-version: "1.26.x"
 
