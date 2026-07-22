@@ -250,8 +250,8 @@ Prometheus receives only aggregate labels:
 
 There are no room, user, session, source or RID labels. This keeps the metrics
 safe for long retention and dashboard-wide alerting. Per-user context stays in
-the diagnostics endpoint and appears in the `o-sfu User Diagnostics` dashboard
-under `qualitySummary`.
+the room-scoped diagnostics endpoint and appears in the `o-sfu User Diagnostics`
+dashboard under `qualitySummary`.
 
 The sampled quality rules expose these operator signals:
 
@@ -380,4 +380,4 @@ Before using it outside a controlled environment:
 - `recording.json`: recording action outcomes, active captures, and recording fan-out
 - `staging-canary.json`: join success, canary readiness, sampled media quality, disconnect churn and forwarding efficiency
 - `room-graph.json`: diagnostics-backed active-room selection, room topology, room-user selection, per-user media-path topology, and source-selection views
-- `user-diagnostics.json`: user-id drill-down for retained Loki logs plus live transport-quality diagnostics tables and optional room-scoped media graph
+- `user-diagnostics.json`: room and user drill-down for retained lifecycle events plus current transport-quality diagnostics tables and optional media graph
