@@ -420,7 +420,7 @@
           "root_selector": "",
           "source": "url",
           "type": "json",
-          "url": "http://host.docker.internal:8070/internal/diagnostics/users/${user_id}",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/rooms/${room_id:percentencode}/users/${user_id:percentencode}",
           "url_options": {
             "data": "",
             "method": "GET"
@@ -705,22 +705,11 @@
     },
     {
       "datasource": {
-        "type": "yesoreyeram-infinity-datasource",
-        "uid": "infinity"
+        "type": "loki",
+        "uid": "loki"
       },
-      "description": "Bounded live diagnostics events recorded for the user while the live room still exists.",
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "inspect": false
-          }
-        },
-        "overrides": []
-      },
+      "description": "Retained structured lifecycle events for the selected room and user.",
+      "fieldConfig": null,
       "gridPos": {
         "h": 9,
         "w": 24,
@@ -729,75 +718,37 @@
       },
       "id": 11,
       "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": true,
-            "displayName": "Timestamp"
-          }
-        ]
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
       },
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "timestamp",
-              "text": "Timestamp",
-              "type": "string"
-            },
-            {
-              "selector": "event",
-              "text": "Event",
-              "type": "string"
-            },
-            {
-              "selector": "roomId",
-              "text": "Room",
-              "type": "string"
-            },
-            {
-              "selector": "userId",
-              "text": "User",
-              "type": "string"
-            },
-            {
-              "selector": "connectionId",
-              "text": "Connection",
-              "type": "number"
-            },
-            {
-              "selector": "mediaWorkerId",
-              "text": "Worker",
-              "type": "number"
-            },
-            {
-              "selector": "transportMediaId",
-              "text": "Media",
-              "type": "number"
-            }
-          ],
-          "refId": "A",
-          "root_selector": "recentEvents",
-          "source": "url",
-          "type": "json",
-          "url": "http://host.docker.internal:8070/internal/diagnostics/users/${user_id}",
-          "url_options": {
-            "data": "",
-            "method": "GET"
-          }
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{service_name=\"o-sfu\"} | json | room_id=${room_id:doublequote} | event=\"room.created\"",
+          "queryType": "range",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{service_name=\"o-sfu\"} | json | room_id=${room_id:doublequote} | user_id=${user_id:doublequote} | event=~\"user\\\\.joined|user\\\\.closed|user\\\\.disconnected|publish\\\\.committed|publication\\\\.activity_changed|subscription\\\\.activity_changed|subscribe\\\\.succeeded|transport\\\\.health\\\\.changed\"",
+          "queryType": "range",
+          "refId": "B"
         }
       ],
-      "title": "Live Diagnostics Events",
-      "type": "table"
+      "title": "Retained Lifecycle Events",
+      "type": "logs"
     },
     {
       "datasource": {
@@ -874,7 +825,7 @@
           "root_selector": "user.publications",
           "source": "url",
           "type": "json",
-          "url": "http://host.docker.internal:8070/internal/diagnostics/users/${user_id}",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/rooms/${room_id:percentencode}/users/${user_id:percentencode}",
           "url_options": {
             "data": "",
             "method": "GET"
@@ -974,7 +925,7 @@
           "root_selector": "user.subscriptions",
           "source": "url",
           "type": "json",
-          "url": "http://host.docker.internal:8070/internal/diagnostics/users/${user_id}",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/rooms/${room_id:percentencode}/users/${user_id:percentencode}",
           "url_options": {
             "data": "",
             "method": "GET"
