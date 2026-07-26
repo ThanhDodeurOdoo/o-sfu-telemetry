@@ -88,7 +88,7 @@ services:
       - ./blackbox.yml.template:/etc/blackbox_exporter/config.template.yml:ro
 
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.156.0@sha256:125bdbeb7590cc1952c5b3430ecf14063568980c2c93d5b38676cc0446ed8108
+    image: otel/opentelemetry-collector-contrib:0.156.0-386@sha256:7f291db7d21b2135c2e75858c87e69d82e83ed61ea611b97e29e80ba2d056a9e
     depends_on:
       - loki
       - tempo
