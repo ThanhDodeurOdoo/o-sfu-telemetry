@@ -81,8 +81,8 @@
               "type": "number"
             },
             {
-              "selector": "pressure.packetLoopLagMs",
-              "text": "LagMs",
+              "selector": "pressure.packetLoopDelayMs",
+              "text": "DelayMs",
               "type": "number"
             },
             {
