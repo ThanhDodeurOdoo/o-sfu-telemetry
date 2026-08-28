@@ -48,7 +48,9 @@ cp .env.example .env
 
 Set `GRAFANA_ADMIN_PASSWORD` to a non-default value. The default
 `O_SFU_LOG_DIR=./data/logs` is a local fallback for manual JSONL replay files.
-The VPS deployment reads Docker `json-file` logs directly.
+The VPS deployment reads Docker `json-file` logs directly. Keep
+`DIAGNOSTICS_AUTH_TOKEN` equal to the token passed to the local server. The
+committed `examplepassword` value is only for this host-local example.
 
 Start `o-sfu` on the host with JSON logs and OTLP traces enabled. Do not pipe it
 through `tee` as the primary retention mechanism:
@@ -73,9 +75,15 @@ docker compose up --build
 
 The compose stack uses `host.docker.internal` with a host-gateway mapping so the
 containers can scrape and receive OTLP data from a host-run `o-sfu` process.
+Prometheus reads the diagnostics token from a service-scoped Compose secret.
 Service ports are bound to `127.0.0.1` by default; put Grafana or the telemetry
 endpoints behind your deployment's normal access-control layer if they must be
 reachable remotely.
+
+The reference targets assume the stack and `o-sfu` share one trusted host. Do
+not attach untrusted workloads to their container network or send the bearer
+token to a remote plaintext target. Use a private TLS endpoint or an
+authenticated encrypted overlay when the scraper is on another host.
 
 ## Running on the SFU VPS
 
@@ -220,7 +228,7 @@ Grafana provisions three datasources out of the box:
 ## Validation flow
 
 1. Confirm `GET /v1/noop` succeeds on the host-run `o-sfu`.
-2. Confirm `GET /internal/diagnostics/summary` succeeds with `Authorization: Bearer examplepassword`.
+2. Confirm `GET /v1/stats`, `GET /metrics` and `GET /internal/diagnostics/summary` succeed with `Authorization: Bearer examplepassword`.
 3. Check Prometheus target health for the `o-sfu` scrape, `o-sfu-noop`, and `o-sfu-diagnostics` probes.
 4. Open the `o-sfu Staging Canary` dashboard and verify:
    - `Noop Probe` stays at `1`
@@ -366,7 +374,7 @@ This repository is still a reference stack, not a complete production platform.
 Before using it outside a controlled environment:
 
 - replace the example diagnostics token in `blackbox/blackbox.yml` and
-  `grafana/provisioning/datasources/infinity.yaml`
+  `grafana/provisioning/datasources/infinity.yaml` plus `.env`
 - put Grafana and backend APIs behind your normal authentication and TLS layer
 - move durable Loki and Tempo storage to object storage
 - decide retention periods from operational requirements

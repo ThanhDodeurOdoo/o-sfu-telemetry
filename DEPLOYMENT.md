@@ -28,6 +28,7 @@ public routes:
 
 ```text
 /grafana/ -> allowed behind normal operator access control
+/v1/stats -> blocked
 /metrics -> blocked
 /internal/diagnostics/... -> blocked
 ```
@@ -55,14 +56,14 @@ root traces are sampled at 5 percent and child spans follow the parent decision
 logs and metrics remain the primary alerting source because a sampled-out trace
 will not be present in Tempo
 
-the diagnostics token must be the same value used by Grafana and blackbox
-exporter
+the diagnostics token must be the same value used by Prometheus, Grafana and
+blackbox exporter
 
 the `deploy/sfu-vps` compose profile reads that token from its own
 `deploy/sfu-vps/.env` file
 
-do not mount `/etc/o-sfu/o-sfu.env` into Grafana or blackbox exporter because it
-also contains `AUTH_KEY`
+do not mount `/etc/o-sfu/o-sfu.env` into Prometheus, Grafana or blackbox
+exporter because it also contains `AUTH_KEY`
 
 one safe way to merge the telemetry variables into the SFU env file:
 
@@ -101,6 +102,11 @@ sudo docker network inspect o-sfu_default >/dev/null
 
 the telemetry dashboards and probes use `host.docker.internal:8070` as the
 private SFU address
+
+this profile supports a same-host deployment only. Do not carry the bearer
+token to a remote plaintext target or attach untrusted workloads to
+`o-sfu_default`. Use a private TLS endpoint or an authenticated encrypted
+overlay when Prometheus runs on another host
 
 make the `o-sfu` service own that alias on the shared Docker network:
 
@@ -194,8 +200,10 @@ chmod 600 deploy/sfu-vps/.env
 
 store the generated Grafana password in the deployment secret store
 
-the reference VPS profile still passes the Grafana password and diagnostics
-token as container environment variables for simple bootstrap
+the reference VPS profile passes the Grafana password and diagnostics token to
+Grafana plus blackbox exporter as container environment variables for simple
+bootstrap. Prometheus receives the same token as a service-scoped Compose
+secret
 
 production operators should replace that path with file backed secrets or their
 deployment secret manager
@@ -278,6 +286,10 @@ keep the public SFU protections in the same NGINX server:
 
 ```nginx
 location = /metrics {
+    return 404;
+}
+
+location = /v1/stats {
     return 404;
 }
 
@@ -437,11 +449,16 @@ validate private SFU access from the shared Docker network:
 ```bash
 DIAG_TOKEN="$(sudo sed -n 's/^DIAGNOSTICS_AUTH_TOKEN=//p' /etc/o-sfu/o-sfu.env | tail -n1)"
 
-sudo docker run --rm --network o-sfu_default curlimages/curl:8.10.1 \
-  -i http://host.docker.internal:8070/metrics
+printf 'header = "Authorization: Bearer %s"\n' "${DIAG_TOKEN}" | \
+  sudo docker run --rm -i --network o-sfu_default curlimages/curl:8.10.1 \
+    -i -K - http://host.docker.internal:8070/metrics
 
 sudo docker run --rm --network o-sfu_default curlimages/curl:8.10.1 \
   -i http://host.docker.internal:8070/v1/noop
+
+printf 'header = "Authorization: Bearer %s"\n' "${DIAG_TOKEN}" | \
+  sudo docker run --rm -i --network o-sfu_default curlimages/curl:8.10.1 \
+    -i -K - http://host.docker.internal:8070/v1/stats
 
 printf 'header = "Authorization: Bearer %s"\n' "${DIAG_TOKEN}" | \
   sudo docker run --rm -i --network o-sfu_default curlimages/curl:8.10.1 \
@@ -453,6 +470,7 @@ expected:
 ```text
 private /metrics -> 200
 private /v1/noop -> 200
+private /v1/stats -> 200
 private diagnostics -> 200
 ```
 
@@ -461,6 +479,7 @@ validate the public edge:
 ```bash
 curl -i https://<sfu-domain>/grafana/
 curl -i https://<sfu-domain>/v1/noop
+curl -i https://<sfu-domain>/v1/stats
 curl -i https://<sfu-domain>/metrics
 curl -i https://<sfu-domain>/internal/diagnostics/summary
 ```
@@ -470,6 +489,7 @@ expected:
 ```text
 public /grafana/ -> configured operator-auth challenge, Grafana login or redirect
 public /v1/noop -> 200 with {"result":"ok"}
+public /v1/stats -> 404
 public /metrics -> 404
 public diagnostics -> 404
 ```
@@ -502,9 +522,10 @@ network:
 - `o-sfu` has the `host.docker.internal` network alias
 - host NGINX deployments publish `o-sfu` HTTP only on `127.0.0.1:8070`
 - `o-sfu` can resolve `otel-collector`
-- Prometheus can scrape private `/metrics`
+- Prometheus can scrape private `/metrics` with bearer auth
 - blackbox exporter can probe private `/v1/noop`
 - blackbox exporter can probe private diagnostics with bearer auth
+- public NGINX still blocks `/v1/stats`
 - public NGINX still blocks `/metrics`
 - public NGINX still blocks `/internal/diagnostics/...`
 
@@ -528,7 +549,8 @@ collector:
 - `o-sfu` uses Docker `json-file` logging
 - `o-sfu` has the `com.odoo.sfu.component=server` Docker label
 - the `json-file` logging options include `labels: "com.odoo.sfu.component"`
-- telemetry containers receive only `DIAGNOSTICS_AUTH_TOKEN`, not the full SFU env file
+- Prometheus receives `DIAGNOSTICS_AUTH_TOKEN` as a service-scoped secret
+- telemetry containers do not receive the full SFU env file
 - collector can export traces to Tempo
 - collector can export logs to Loki
 - filelog offsets persist under `data/otelcol`
@@ -550,7 +572,7 @@ validation:
 - Grafana login works
 - dashboards load without datasource errors
 - Prometheus, blackbox, Loki and Tempo datasources are healthy
-- public metrics and diagnostics remain blocked
+- public stats, metrics and diagnostics remain blocked
 
 ## environment variables
 
@@ -562,7 +584,7 @@ telemetry compose:
 | `GRAFANA_ADMIN_USER` | `admin` | Grafana administrator login |
 | `GRAFANA_ADMIN_PASSWORD` | required | Grafana administrator password |
 | `GRAFANA_ROOT_URL` | required | public Grafana URL, including `/grafana/` |
-| `DIAGNOSTICS_AUTH_TOKEN` | required | diagnostics bearer token passed only to Grafana and blackbox exporter |
+| `DIAGNOSTICS_AUTH_TOKEN` | required | observation bearer token mounted into Prometheus and passed to Grafana plus blackbox exporter |
 | `ALERTMANAGER_WEBHOOK_URL_FILE` | required | host file containing the operator notification webhook URL |
 | `PROMETHEUS_RETENTION_TIME` | `15d` | Prometheus time retention |
 | `PROMETHEUS_RETENTION_SIZE` | `2GB` | Prometheus TSDB block retention target, not a full disk cap |
@@ -574,4 +596,4 @@ required `o-sfu` variables for telemetry:
 | `TELEMETRY_LOG_FORMAT` | `json` | emits one JSON object per log line |
 | `TELEMETRY_DEPLOYMENT_ENVIRONMENT` | `production` | enables production trace sampling |
 | `TELEMETRY_OTLP_ENDPOINT` | `http://otel-collector:4318` | collector OTLP HTTP receiver |
-| `DIAGNOSTICS_AUTH_TOKEN` | secret | bearer token for private diagnostics dashboards and probes |
+| `DIAGNOSTICS_AUTH_TOKEN` | secret | bearer token for private stats, metrics, diagnostics dashboards and probes |
