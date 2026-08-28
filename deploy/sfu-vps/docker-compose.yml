@@ -18,6 +18,8 @@ services:
     networks:
       - o-sfu
     restart: unless-stopped
+    secrets:
+      - o_sfu_diagnostics_token
     volumes:
       - ../../prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
       - ../../prometheus/recording-rules.yml:/etc/prometheus/recording-rules.yml:ro
@@ -145,3 +147,5 @@ networks:
 secrets:
   alertmanager_webhook_url:
     file: ${ALERTMANAGER_WEBHOOK_URL_FILE:?set ALERTMANAGER_WEBHOOK_URL_FILE}
+  o_sfu_diagnostics_token:
+    environment: DIAGNOSTICS_AUTH_TOKEN
