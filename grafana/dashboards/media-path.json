@@ -909,6 +909,7 @@
       "type": "timeseries"
     },
     {
+      "description": "95th percentile round-trip time sampled across active sessions. Compares transport-layer STUN/ICE peer round-trip latency against media-layer RTCP round-trip latency.",
       "id": 23,
       "title": "Sampled RTT p95",
       "type": "timeseries",
@@ -968,6 +969,7 @@
       }
     },
     {
+      "description": "Sampled packet loss fraction entering (ingress from publishers) and leaving (egress to receivers) the SFU. Highlights publisher upload path degradation versus receiver downlink congestion.",
       "id": 24,
       "title": "Sampled Loss Fraction",
       "type": "timeseries",
@@ -1027,6 +1029,7 @@
       }
     },
     {
+      "description": "Average receiver bandwidth estimation calculated by congestion control across active sessions. Indicates downstream network capacity trends used by the budget solver.",
       "id": 25,
       "title": "Sampled BWE Average",
       "type": "timeseries",
@@ -1081,6 +1084,7 @@
       }
     },
     {
+      "description": "Average inter-arrival packet jitter reported by remote receivers in RTCP Receiver Reports. Expressed in raw RTP timestamp units to track timing variance across downstream network paths without inferring codec clock rates.",
       "id": 26,
       "title": "Sampled Egress Jitter",
       "type": "timeseries",

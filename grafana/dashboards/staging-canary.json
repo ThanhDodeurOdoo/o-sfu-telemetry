@@ -426,6 +426,7 @@
       "type": "stat"
     },
     {
+      "description": "95th percentile peer round-trip time sampled during canary validation. High RTT indicates transport latency pressure on connected clients.",
       "id": 16,
       "title": "Peer RTT p95",
       "type": "stat",
@@ -475,6 +476,7 @@
       }
     },
     {
+      "description": "Average packet loss fraction on publisher uploads to the canary instance. Spikes point to publisher uplink issues or ingress network edge degradation.",
       "id": 17,
       "title": "Ingress Loss",
       "type": "stat",
@@ -524,6 +526,7 @@
       }
     },
     {
+      "description": "Average packet loss fraction on subscriber downlinks from the canary instance. Spikes indicate receiver congestion or server egress network pressure.",
       "id": 18,
       "title": "Egress Loss",
       "type": "stat",

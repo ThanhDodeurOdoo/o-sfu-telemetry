@@ -46,7 +46,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "The number of HTTP requests currently being processed by the server. High numbers might indicate the server is struggling to keep up with API requests.",
+      "description": "The number of active HTTP API requests currently being processed by the server, excluding internal telemetry scrapers.",
       "fieldConfig": {
         "defaults": {
           "unit": "none"
@@ -75,7 +75,7 @@
       },
       "targets": [
         {
-          "expr": "sum(osfu_http_inflight_requests)",
+          "expr": "sum(osfu_http_inflight_requests{route!=\"metrics\"})",
           "refId": "A"
         }
       ],
@@ -84,7 +84,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "A simple health check that verifies if the server's basic API is responsive. 1 means the server is responding, 0 means it is likely frozen or down.",
+      "description": "A simple health check that verifies if the server basic API is responsive. 1 means the server is responding, 0 means it is likely frozen or down.",
       "fieldConfig": {
         "defaults": {
           "unit": "bool"
@@ -122,7 +122,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "A more advanced health check that verifies if the internal diagnostic systems are functioning correctly. This ensures that the telemetry you see is accurate.",
+      "description": "A health check that verifies if the internal diagnostic systems are functioning correctly.",
       "fieldConfig": {
         "defaults": {
           "unit": "bool"
@@ -160,54 +160,97 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Shows why WebSocket connections are being rejected (e.g., wrong credentials or server too busy). Each color represents a different rejection reason.",
+      "description": "Throughput of HTTP API requests broken down by route endpoint.",
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps"
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
         "x": 0,
         "y": 5
       },
-      "id": 5,
+      "id": 14,
       "targets": [
         {
-          "expr": "sum by (close_code) (rate(osfu_ws_handshake_rejections_total[5m]))",
-          "legendFormat": "{{close_code}}",
+          "expr": "rate(osfu_http_noop_requests_total[5m])",
+          "legendFormat": "noop",
           "refId": "A"
+        },
+        {
+          "expr": "rate(osfu_http_stats_requests_total[5m])",
+          "legendFormat": "stats",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(osfu_http_room_requests_total[5m])",
+          "legendFormat": "room",
+          "refId": "C"
+        },
+        {
+          "expr": "rate(osfu_http_disconnect_requests_total[5m])",
+          "legendFormat": "disconnect",
+          "refId": "D"
+        },
+        {
+          "expr": "rate(osfu_http_metrics_requests_total[5m])",
+          "legendFormat": "metrics",
+          "refId": "E"
         }
       ],
-      "title": "Handshake Rejections by Close Code",
+      "title": "HTTP Requests by Route",
       "type": "timeseries"
     },
     {
       "datasource": "Prometheus",
-      "description": "Tracks why active user sessions are ending. Common reasons include 'Normal Closure' or 'Network Timeout'. This helps identify stability issues.",
+      "description": "Rate of HTTP responses by status outcome on channel join and disconnect routes.",
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps"
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
+        "w": 8,
+        "x": 8,
         "y": 5
       },
-      "id": 6,
+      "id": 15,
       "targets": [
         {
-          "expr": "sum by (reason) (rate(osfu_ws_user_loop_exits_total[5m]))",
-          "legendFormat": "{{reason}}",
+          "expr": "sum by (status) (rate(osfu_http_room_responses_total[5m]))",
+          "legendFormat": "room: {{status}}",
           "refId": "A"
+        },
+        {
+          "expr": "sum by (status) (rate(osfu_http_disconnect_responses_total[5m]))",
+          "legendFormat": "disconnect: {{status}}",
+          "refId": "B"
         }
       ],
-      "title": "User Loop Exits by Reason",
+      "title": "HTTP Response Statuses",
       "type": "timeseries"
     },
     {
@@ -215,15 +258,24 @@
       "description": "Measures how long the server takes to respond to 95% of HTTP requests. Lower is better; sudden spikes indicate performance bottlenecks.",
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 13
+        "w": 8,
+        "x": 16,
+        "y": 5
       },
       "id": 7,
       "targets": [
@@ -238,17 +290,61 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Shows the time it takes for 95% of users to complete the initial connection handshake and authentication. High values lead to a 'slow' feel when joining.",
+      "description": "Rate of client WebSocket connections progressing through handshake, credentials, and room join stages.",
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
+        "w": 8,
+        "x": 0,
+        "y": 13
+      },
+      "id": 16,
+      "targets": [
+        {
+          "expr": "sum by (stage) (rate(osfu_ws_connections_total[5m]))",
+          "legendFormat": "{{stage}}",
+          "refId": "A"
+        }
+      ],
+      "title": "WebSocket Connection Stages",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Shows the time it takes for 95% of users to complete the initial connection handshake and authentication. High values lead to a slow feel when joining.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
         "y": 13
       },
       "id": 8,
@@ -274,7 +370,147 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "The number of users currently broadcasting their camera, microphone, or screen. This is the 'Input' side of the media flow.",
+      "description": "Shows why WebSocket connections are being rejected (e.g. wrong credentials or server too busy). Each color represents a different rejection reason.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 13
+      },
+      "id": 5,
+      "targets": [
+        {
+          "expr": "sum by (close_code) (rate(osfu_ws_handshake_rejections_total[5m]))",
+          "legendFormat": "{{close_code}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Handshake Rejections by Close Code",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Tracks why active user sessions are ending. Common reasons include client close or heartbeat timeout.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 21
+      },
+      "id": 6,
+      "targets": [
+        {
+          "expr": "sum by (reason) (rate(osfu_ws_user_loop_exits_total[5m]))",
+          "legendFormat": "{{reason}}",
+          "refId": "A"
+        }
+      ],
+      "title": "User Loop Exits by Reason",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "The number of messages waiting to be sent to users browsers. If this grows, it means the server is sending data faster than the users networks can receive it.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 21
+      },
+      "id": 12,
+      "targets": [
+        {
+          "expr": "osfu:ws_outbound_queue_depth",
+          "legendFormat": "queued messages",
+          "refId": "A"
+        }
+      ],
+      "title": "Websocket Outbound Queue Depth",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "The rate at which the server is forced to disconnect slow users because their message queue became too full. This protects server memory.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 21
+      },
+      "id": 13,
+      "targets": [
+        {
+          "expr": "osfu:ws_outbound_queue_overflow_rate_5m",
+          "legendFormat": "overflow rate",
+          "refId": "A"
+        }
+      ],
+      "title": "Websocket Outbound Queue Overflow Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "The number of users currently broadcasting their camera, microphone, or screen. This is the Input side of media flow.",
       "fieldConfig": {
         "defaults": {
           "unit": "none"
@@ -285,7 +521,7 @@
         "h": 5,
         "w": 6,
         "x": 0,
-        "y": 21
+        "y": 29
       },
       "id": 9,
       "options": {
@@ -312,7 +548,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "The number of individual media streams being received by users. This is the 'Output' side and represents the actual bandwidth being consumed.",
+      "description": "The number of individual media streams being received by users. This is the Output side and represents bandwidth consumption.",
       "fieldConfig": {
         "defaults": {
           "unit": "none"
@@ -323,7 +559,7 @@
         "h": 5,
         "w": 6,
         "x": 6,
-        "y": 21
+        "y": 29
       },
       "id": 10,
       "options": {
@@ -353,15 +589,24 @@
       "description": "A timeline view comparing how many people are broadcasting (publications) versus how many people are watching (subscriptions).",
       "fieldConfig": {
         "defaults": {
-          "unit": "none"
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 5,
         "w": 12,
         "x": 12,
-        "y": 21
+        "y": 29
       },
       "id": 11,
       "targets": [
@@ -380,56 +625,44 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
-      "description": "The number of messages waiting to be sent to users' browsers. If this grows, it means the server is sending data faster than the users' networks can receive it.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "none"
-        },
-        "overrides": []
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
       },
+      "description": "Recent HTTP API requests, WebSocket upgrades, handshakes, and terminations from structured logs. Shows client remote IP, route, user ID, status code, and latency.",
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 12,
+        "w": 24,
         "x": 0,
-        "y": 29
+        "y": 34
       },
-      "id": 12,
+      "id": 17,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
       "targets": [
         {
-          "expr": "osfu:ws_outbound_queue_depth",
-          "legendFormat": "queued messages",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "direction": "backward",
+          "editorMode": "code",
+          "expr": "{service_name=\"o-sfu\"} |~ \"(?i)http|ws|route|request\" | json",
+          "maxLines": 100,
+          "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "Websocket Outbound Queue Depth",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "The rate at which the server is forced to disconnect 'slow' users because their message queue became too full. This protects the server's memory.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 29
-      },
-      "id": 13,
-      "targets": [
-        {
-          "expr": "osfu:ws_outbound_queue_overflow_rate_5m",
-          "legendFormat": "overflow rate",
-          "refId": "A"
-        }
-      ],
-      "title": "Websocket Outbound Queue Overflow Rate",
-      "type": "timeseries"
+      "title": "Signaling Access Logs",
+      "type": "logs"
     }
   ],
   "refresh": "15s",
@@ -449,6 +682,6 @@
   "timezone": "",
   "title": "o-sfu Control Plane",
   "uid": "osfu-control-plane",
-  "version": 3,
+  "version": 4,
   "weekStart": ""
 }
