@@ -82,17 +82,11 @@ groups:
       - record: osfu:transport_disconnect_churn_per_user_5m
         expr: sum(rate(osfu_transport_health_transitions_total{from="connected",to="disconnected"}[5m])) / clamp_min(sum(osfu_transport_users_active), 1)
 
-      - record: osfu:transport_cleanup_retry_rate_5m
-        expr: sum(rate(osfu_transport_cleanup_retries_total[5m]))
-
-      - record: osfu:transport_cleanup_retry_success_rate_5m
-        expr: sum(rate(osfu_transport_cleanup_retry_successes_total[5m]))
-
       - record: osfu:transport_cleanup_failure_rate_5m
         expr: sum(rate(osfu_transport_cleanup_failures_total[5m]))
 
       - record: osfu:transport_cleanup_unrecovered_failure_rate_5m
-        expr: sum(rate(osfu_transport_cleanup_failures_total{kind!="shutdown"}[5m]))
+        expr: sum(rate(osfu_transport_cleanup_failures_total{kind="terminal"}[5m]))
 
       - record: osfu:local_forwarding_efficiency_ratio_5m
         expr: clamp_max(osfu:rtp_local_forward_packets_rate_5m / clamp_min(osfu:rtp_ingress_packets_rate_5m, 0.001), 1)
@@ -132,9 +126,6 @@ groups:
 
       - record: osfu:budget_solver_resumed_rate_5m
         expr: sum(rate(osfu_budget_solver_outcomes_total{outcome="resumed"}[5m]))
-
-      - record: osfu:budget_solver_protected_over_budget_rate_5m
-        expr: sum(rate(osfu_budget_solver_outcomes_total{outcome="protected_over_budget"}[5m]))
 
       - record: osfu:routing_pressure_rate_5m
         expr: sum(rate(osfu_rtc_datagram_fallback_scans_total[5m]))

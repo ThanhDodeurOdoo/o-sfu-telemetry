@@ -71,23 +71,18 @@ services:
 
   blackbox-exporter:
     image: prom/blackbox-exporter:v0.28.0@sha256:e753ff9f3fc458d02cca5eddab5a77e1c175eee484a8925ac7d524f04366c2fc
-    entrypoint:
-      - /bin/sh
-      - -ec
     command:
-      - |
-        sed "s|__DIAGNOSTICS_AUTH_TOKEN__|$${DIAGNOSTICS_AUTH_TOKEN}|g" /etc/blackbox_exporter/config.template.yml > /tmp/blackbox.yml
-        exec /bin/blackbox_exporter --config.file=/tmp/blackbox.yml
-    environment:
-      DIAGNOSTICS_AUTH_TOKEN: ${DIAGNOSTICS_AUTH_TOKEN:?set DIAGNOSTICS_AUTH_TOKEN}
+      - --config.file=/etc/blackbox_exporter/config.yml
     expose:
       - "9115"
     logging: *default-logging
     networks:
       - o-sfu
     restart: unless-stopped
+    secrets:
+      - o_sfu_diagnostics_token
     volumes:
-      - ./blackbox.yml.template:/etc/blackbox_exporter/config.template.yml:ro
+      - ../../blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.156.0@sha256:125bdbeb7590cc1952c5b3430ecf14063568980c2c93d5b38676cc0446ed8108

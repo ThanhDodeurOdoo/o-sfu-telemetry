@@ -199,7 +199,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "How often the canary server is adjusting video quality. This shows if the new version's bandwidth-management logic is active.",
+      "description": "Total rate of committed receiver video route degradation, pause and resume transitions during canary validation.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -223,7 +223,7 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 6,
+        "w": 8,
         "x": 0,
         "y": 5
       },
@@ -248,12 +248,12 @@
           "refId": "A"
         }
       ],
-      "title": "Budget Decisions/s",
+      "title": "Video Route Transitions/s",
       "type": "stat"
     },
     {
       "datasource": "Prometheus",
-      "description": "The rate at which the canary server is pausing video streams due to poor network. If this is much higher than the stable version, the new code may be too aggressive.",
+      "description": "Rate of committed receiver video routes entering a policy pause during canary validation. Inspect user diagnostics for budget, layout or layer availability reasons.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -281,8 +281,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 6,
-        "x": 6,
+        "w": 8,
+        "x": 8,
         "y": 5
       },
       "id": 12,
@@ -306,12 +306,12 @@
           "refId": "A"
         }
       ],
-      "title": "Budget Pauses/s",
+      "title": "Policy Pauses/s",
       "type": "stat"
     },
     {
       "datasource": "Prometheus",
-      "description": "The rate at which the canary server is restoring paused streams. This proves that the 'auto-healing' logic in the new version is functional.",
+      "description": "Rate of committed receiver video routes clearing an existing policy pause during canary validation.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -335,8 +335,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 6,
-        "x": 12,
+        "w": 8,
+        "x": 16,
         "y": 5
       },
       "id": 13,
@@ -360,65 +360,7 @@
           "refId": "A"
         }
       ],
-      "title": "Budget Resumes/s",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "Shows when the canary server is prioritizing specific media (like active speakers) over bandwidth limits. Ensures the 'human priority' logic is working.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0.02
-              },
-              {
-                "color": "red",
-                "value": 0.1
-              }
-            ]
-          },
-          "decimals": 2
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 18,
-        "y": 5
-      },
-      "id": 14,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "expr": "sum(rate(osfu_budget_solver_outcomes_total{outcome=\"protected_over_budget\"}[$__rate_interval]))",
-          "refId": "A"
-        }
-      ],
-      "title": "Protected Exceptions/s",
+      "title": "Policy Resumes/s",
       "type": "stat"
     },
     {
@@ -723,7 +665,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "A combined view showing how the canary's automatic quality logic reacts to users' manual requests. This verifies the 'brain' of the new version.",
+      "description": "Compares committed receiver video route transitions by outcome with accepted encoding-selector updates during canary validation.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -762,7 +704,7 @@
       "targets": [
         {
           "expr": "sum by (outcome) (rate(osfu_budget_solver_outcomes_total[$__rate_interval]))",
-          "legendFormat": "budget: {{outcome}}",
+          "legendFormat": "transition: {{outcome}}",
           "refId": "A"
         },
         {
@@ -771,7 +713,7 @@
           "refId": "B"
         }
       ],
-      "title": "Budget Adaptation During Canary",
+      "title": "Video Route Transitions During Canary",
       "type": "timeseries"
     },
     {

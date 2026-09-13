@@ -300,7 +300,7 @@
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"
       },
-      "description": "Live diagnostics lookup for the selected user. The panel is empty when the user is no longer indexed in a live room.",
+      "description": "Diagnostics lookup for the selected user. The panel is empty when the user is no longer indexed in a room. SoftPauseRemainingMs is blank when no receiver soft-pause deadline is recorded. Its value is rounded down to whole milliseconds and clamped to zero after expiry.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -413,6 +413,11 @@
             {
               "selector": "user.transport.qualitySummary.sampleCount",
               "text": "Samples",
+              "type": "number"
+            },
+            {
+              "selector": "user.transport.videoSoftPauseRemainingMs",
+              "text": "SoftPauseRemainingMs",
               "type": "number"
             }
           ],
@@ -708,7 +713,7 @@
         "type": "loki",
         "uid": "loki"
       },
-      "description": "Retained structured lifecycle events for the selected room and user.",
+      "description": "Retained room creation, destruction and bulk-disconnect events plus lifecycle events for the selected user in that room.",
       "fieldConfig": null,
       "gridPos": {
         "h": 9,
@@ -733,7 +738,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{service_name=\"o-sfu\"} | json | room_id=${room_id:doublequote} | event=\"room.created\"",
+          "expr": "{service_name=\"o-sfu\"} | json | room_id=${room_id:doublequote} | event=~\"room\\\\.created|room\\\\.destroyed|users\\\\.bulk_disconnected\"",
           "queryType": "range",
           "refId": "A"
         },
@@ -840,7 +845,7 @@
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"
       },
-      "description": "Current subscriptions and receiver-side selection state for the live user.",
+      "description": "Current subscriptions and receiver-side selection state. Upgrade columns are empty when no upgrade is pending. UpgradeEncoding is only present for an encoding target. UpgradeRemainingMs is rounded down to whole milliseconds and clamped to zero after expiry.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -919,6 +924,21 @@
               "selector": "selection.policyPauseReason",
               "text": "Pause",
               "type": "string"
+            },
+            {
+              "selector": "selection.pendingUpgrade.selector",
+              "text": "UpgradeSelector",
+              "type": "string"
+            },
+            {
+              "selector": "selection.pendingUpgrade.encodingId",
+              "text": "UpgradeEncoding",
+              "type": "number"
+            },
+            {
+              "selector": "selection.pendingUpgrade.remainingMs",
+              "text": "UpgradeRemainingMs",
+              "type": "number"
             }
           ],
           "refId": "A",

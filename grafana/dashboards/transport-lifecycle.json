@@ -231,7 +231,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Shows the server's attempts to 'clean up' abandoned resources after a disconnection. A high success rate here means the server is effectively preventing memory leaks.",
+      "description": "Rate of terminal failures while closing sessions, removing media or releasing relay routes. All current samples use kind=terminal.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops"
@@ -240,39 +240,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 24,
         "x": 0,
-        "y": 21
-      },
-      "id": 8,
-      "targets": [
-        {
-          "expr": "osfu:transport_cleanup_retry_rate_5m",
-          "legendFormat": "retry attempts/s",
-          "refId": "A"
-        },
-        {
-          "expr": "osfu:transport_cleanup_retry_success_rate_5m",
-          "legendFormat": "retry successes/s",
-          "refId": "B"
-        }
-      ],
-      "title": "Cleanup Retry Recovery",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "Identifies specific types of errors that occurred while trying to close old connections. This helps developers find bugs in the session shutdown logic.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
         "y": 21
       },
       "id": 9,
@@ -283,7 +252,7 @@
           "refId": "A"
         }
       ],
-      "title": "Cleanup Failures by Kind",
+      "title": "Terminal Cleanup Failures",
       "type": "timeseries"
     }
   ],

@@ -11,4 +11,4 @@ datasources:
       allowedHosts:
         - "http://host.docker.internal:8070"
     secureJsonData:
-      httpHeaderValue1: 'Bearer examplepassword'
+      httpHeaderValue1: 'Bearer $DIAGNOSTICS_AUTH_TOKEN'

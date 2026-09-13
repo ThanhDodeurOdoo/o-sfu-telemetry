@@ -29,6 +29,7 @@ services:
       - loki
       - tempo
     environment:
+      DIAGNOSTICS_AUTH_TOKEN: ${DIAGNOSTICS_AUTH_TOKEN:?set DIAGNOSTICS_AUTH_TOKEN}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD}
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/operations.json
     ports:
@@ -60,6 +61,8 @@ services:
     ports:
       - "127.0.0.1:9115:9115"
     restart: unless-stopped
+    secrets:
+      - o_sfu_diagnostics_token
     volumes:
       - ./blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
 

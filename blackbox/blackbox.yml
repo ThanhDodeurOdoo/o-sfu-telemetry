@@ -11,5 +11,7 @@ modules:
     http:
       method: GET
       preferred_ip_protocol: ip4
-      headers:
-        Authorization: Bearer examplepassword
+      # Match the token used by the protected metrics scrape in both profiles.
+      authorization:
+        type: Bearer
+        credentials_file: /run/secrets/o_sfu_diagnostics_token

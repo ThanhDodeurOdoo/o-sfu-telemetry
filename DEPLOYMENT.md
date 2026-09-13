@@ -201,9 +201,9 @@ chmod 600 deploy/sfu-vps/.env
 store the generated Grafana password in the deployment secret store
 
 the reference VPS profile passes the Grafana password and diagnostics token to
-Grafana plus blackbox exporter as container environment variables for simple
-bootstrap. Prometheus receives the same token as a service-scoped Compose
-secret
+Grafana as container environment variables for simple bootstrap. Prometheus
+and blackbox receive the same token as a service-scoped Compose secret.
+Both profiles use `blackbox/blackbox.yml` without token substitution in YAML
 
 production operators should replace that path with file backed secrets or their
 deployment secret manager
@@ -549,7 +549,7 @@ collector:
 - `o-sfu` uses Docker `json-file` logging
 - `o-sfu` has the `com.odoo.sfu.component=server` Docker label
 - the `json-file` logging options include `labels: "com.odoo.sfu.component"`
-- Prometheus receives `DIAGNOSTICS_AUTH_TOKEN` as a service-scoped secret
+- Prometheus and blackbox receive `DIAGNOSTICS_AUTH_TOKEN` as a service-scoped secret
 - telemetry containers do not receive the full SFU env file
 - collector can export traces to Tempo
 - collector can export logs to Loki
@@ -584,7 +584,7 @@ telemetry compose:
 | `GRAFANA_ADMIN_USER` | `admin` | Grafana administrator login |
 | `GRAFANA_ADMIN_PASSWORD` | required | Grafana administrator password |
 | `GRAFANA_ROOT_URL` | required | public Grafana URL, including `/grafana/` |
-| `DIAGNOSTICS_AUTH_TOKEN` | required | observation bearer token mounted into Prometheus and passed to Grafana plus blackbox exporter |
+| `DIAGNOSTICS_AUTH_TOKEN` | required | observation bearer token mounted into Prometheus and blackbox and passed to Grafana |
 | `ALERTMANAGER_WEBHOOK_URL_FILE` | required | host file containing the operator notification webhook URL |
 | `PROMETHEUS_RETENTION_TIME` | `15d` | Prometheus time retention |
 | `PROMETHEUS_RETENTION_SIZE` | `2GB` | Prometheus TSDB block retention target, not a full disk cap |

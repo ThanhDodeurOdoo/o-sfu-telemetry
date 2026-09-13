@@ -12,7 +12,7 @@ contract owned by the server:
 
 - Prometheus scrapes `/metrics`
 - blackbox probes `GET /v1/noop`
-- blackbox probes `GET /internal/diagnostics/summary` with the example diagnostics token
+- blackbox probes `GET /internal/diagnostics/summary` with the configured diagnostics token
 - Grafana ships the default dashboards
 - the OpenTelemetry Collector accepts OTLP traces and tails JSON logs
 - Loki stores structured logs
@@ -30,7 +30,7 @@ ever-growing debug file.
 - `prometheus/`: scrape config, recording rules, alert rules, and the optional host-metrics example
 - `grafana/`: provisioned datasources plus dashboards for control-plane, transport lifecycle, media path, sampled media quality, receiver budget adaptation, recording and staging canary checks
 - `alertmanager/`: default grouping and routing stub for the reference alerts
-- `blackbox/`: probe modules for `GET /v1/noop`
+- `blackbox/`: shared probe modules for `GET /v1/noop` and protected diagnostics
 - `otel-collector/`: OTLP and filelog collector pipeline that forwards traces to Tempo and JSON logs to Loki
 - `deploy/grafana/`: CI-built Grafana image with the Infinity datasource plugin baked in
 - `loki/`: local Loki config for structured OTLP log ingestion
@@ -61,7 +61,7 @@ cd /Volumes/X9-Pro/odoo-dev/o-sfu
 AUTH_KEY="$(openssl rand -base64 32)" \
 PUBLIC_IP=192.0.2.10 \
 TELEMETRY_LOG_FORMAT=json \
-TELEMETRY_OTLP_ENDPOINT=http://host.docker.internal:4318 \
+TELEMETRY_OTLP_ENDPOINT=http://127.0.0.1:4318 \
 DIAGNOSTICS_AUTH_TOKEN=examplepassword \
 cargo run --release -p o-sfu
 ```
@@ -73,9 +73,13 @@ cd /Volumes/X9-Pro/odoo-dev/o-sfu-telemetry
 docker compose up --build
 ```
 
-The compose stack uses `host.docker.internal` with a host-gateway mapping so the
-containers can scrape and receive OTLP data from a host-run `o-sfu` process.
-Prometheus reads the diagnostics token from a service-scoped Compose secret.
+The compose stack uses `host.docker.internal` with a host-gateway mapping so
+containers can scrape the host-run `o-sfu` process. The host sends OTLP traces
+to the collector's published `127.0.0.1:4318` port.
+Prometheus and blackbox read the diagnostics token from a service-scoped
+Compose secret. Grafana receives the same token through its environment.
+Set `DIAGNOSTICS_AUTH_TOKEN` in `.env` and on the server to the same value.
+Recreate these services after changing it so their credentials stay aligned.
 Service ports are bound to `127.0.0.1` by default; put Grafana or the telemetry
 endpoints behind your deployment's normal access-control layer if they must be
 reachable remotely.
@@ -150,7 +154,7 @@ cd /Volumes/X9-Pro/odoo-dev/o-sfu
 AUTH_KEY="$(openssl rand -base64 32)" \
 PUBLIC_IP=192.0.2.10 \
 TELEMETRY_LOG_FORMAT=json \
-TELEMETRY_OTLP_ENDPOINT=http://host.docker.internal:4318 \
+TELEMETRY_OTLP_ENDPOINT=http://127.0.0.1:4318 \
 DIAGNOSTICS_AUTH_TOKEN=examplepassword \
 cargo run --release -p o-sfu > ../o-sfu-telemetry/data/logs/o-sfu.jsonl 2>&1
 ```
@@ -228,7 +232,7 @@ Grafana provisions three datasources out of the box:
 ## Validation flow
 
 1. Confirm `GET /v1/noop` succeeds on the host-run `o-sfu`.
-2. Confirm `GET /v1/stats`, `GET /metrics` and `GET /internal/diagnostics/summary` succeed with `Authorization: Bearer examplepassword`.
+2. Confirm `GET /v1/stats`, `GET /metrics` and `GET /internal/diagnostics/summary` succeed with `Authorization: Bearer <DIAGNOSTICS_AUTH_TOKEN>`.
 3. Check Prometheus target health for the `o-sfu` scrape, `o-sfu-noop`, and `o-sfu-diagnostics` probes.
 4. Open the `o-sfu Staging Canary` dashboard and verify:
    - `Noop Probe` stays at `1`
@@ -236,9 +240,9 @@ Grafana provisions three datasources out of the box:
    - `Connected Transports` rises after the canary join
    - `Local Forwarding Efficiency` rises during live media
    - sampled peer RTT and sampled loss stay close to the staged network baseline once media flows
-   - receiver budget cards show whether adaptation is degrading, pausing, resuming, or intentionally staying over budget for protected media
+   - receiver budget cards count committed receiver video route degradation, pause and resume transitions
 5. Open the `o-sfu Media Path` dashboard during simulcast validation. The sampled quality section should show peer RTT, media RTT, ingress or egress loss, peer BWE and egress jitter beside the existing packet-path, decoder-refresh and receiver-budget signals.
-6. Open the `o-sfu Room Graph` dashboard, select a room from the active-room table, then select a user from the room-user table. The room graph shows the whole room topology, while the user graph shows that user's inbound and outbound media paths through media-worker nodes, source nodes, and peer users. Use it to inspect the exact receiver BWE estimate, selected receiver budget, active route count, selected bitrate, pause reason, and over-budget exception reason behind the low-cardinality Prometheus signals.
+6. Open the `o-sfu Room Graph` dashboard, select a room from the active-room table, then select a user from the room-user table. The room graph shows the whole room topology, while the user graph shows that user's inbound and outbound media paths through media-worker nodes, source nodes, and peer users. Use it to inspect the exact receiver BWE estimate, selected receiver budget, active route count, selected bitrate and pause reason behind the low-cardinality Prometheus signals.
 7. Open Grafana Explore with the `Loki` datasource and inspect the structured JSON log fields such as `event`, `room_id`, `user_id`, and `trace_id`.
 8. Open Grafana Explore with the `Tempo` datasource and confirm the control-plane spans arrive for the same canary user.
 
@@ -335,8 +339,8 @@ source encodings as `lastPacketAgeMs` and `lastKeyframeAgeMs`.
 
 The reference Prometheus config now ships:
 
-- recording rules for join success ratio, websocket startup failure rate, websocket outbound queue pressure, transport disconnect churn per active user, transport cleanup recovery, local forwarding efficiency, decoder refreshes, keyframe requests, sampled media quality and receiver budget solver outcome rates
-- alerts for low join success ratio, websocket startup failures, websocket outbound queue overflow, diagnostics probe failures, normalized transport disconnect churn, unrecovered transport cleanup failures, routing pressure, relay overload, low local forwarding efficiency and sampled media-quality degradation
+- recording rules for join success ratio, websocket startup failure rate, websocket outbound queue pressure, transport disconnect churn per active user, terminal transport cleanup failures, local forwarding efficiency, decoder refreshes, keyframe requests, sampled media quality and committed receiver video route transition rates
+- alerts for low join success ratio, websocket startup failures, websocket outbound queue overflow, diagnostics probe failures, normalized transport disconnect churn, recurring terminal transport cleanup failures, routing pressure, relay overload, low local forwarding efficiency and sampled media-quality degradation
 
 These derived rules are intended for operator dashboards and canary validation.
 They should stay derived from runtime-owned metrics instead of introducing extra
@@ -373,8 +377,7 @@ point for a local override.
 This repository is still a reference stack, not a complete production platform.
 Before using it outside a controlled environment:
 
-- replace the example diagnostics token in `blackbox/blackbox.yml` and
-  `grafana/provisioning/datasources/infinity.yaml` plus `.env`
+- set the same non-example `DIAGNOSTICS_AUTH_TOKEN` in `.env` and on `o-sfu`
 - put Grafana and backend APIs behind your normal authentication and TLS layer
 - move durable Loki and Tempo storage to object storage
 - decide retention periods from operational requirements
@@ -383,9 +386,9 @@ Before using it outside a controlled environment:
 ## Dashboard inventory
 
 - `control-plane.json`: HTTP, websocket admission, diagnostics probe, startup, outbound queue pressure and latency views
-- `transport-lifecycle.json`: transport health, ICE, DTLS, cleanup recovery, and user lifetime views
+- `transport-lifecycle.json`: transport health, ICE, DTLS, terminal cleanup failures and user lifetime views
 - `media-path.json`: RTP ingress, forwarding, routing pressure, route-control and sampled media-quality views
 - `recording.json`: recording action outcomes, active captures, and recording fan-out
 - `staging-canary.json`: join success, canary readiness, sampled media quality, disconnect churn and forwarding efficiency
 - `room-graph.json`: diagnostics-backed active-room selection, room topology, room-user selection, per-user media-path topology, and source-selection views
-- `user-diagnostics.json`: room and user drill-down for retained lifecycle events plus current transport-quality diagnostics tables and optional media graph
+- `user-diagnostics.json`: room and user drill-down for retained lifecycle events, transport quality, optional soft-pause and pending-upgrade timers and media graph

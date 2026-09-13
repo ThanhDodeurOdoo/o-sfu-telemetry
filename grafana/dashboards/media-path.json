@@ -174,7 +174,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "The number of times per second the server adjusts video quality to match users' bandwidth. Constant movement is normal as network conditions change.",
+      "description": "Total rate of committed receiver video route degradation, pause and resume transitions.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -198,7 +198,7 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 6,
+        "w": 8,
         "x": 0,
         "y": 24
       },
@@ -223,12 +223,12 @@
           "refId": "A"
         }
       ],
-      "title": "Adaptation Decisions/s",
+      "title": "Video Route Transitions/s",
       "type": "stat"
     },
     {
       "datasource": "Prometheus",
-      "description": "The rate at which the server temporarily stops sending video to a user because their connection is too poor. This prevents the user's connection from completely failing.",
+      "description": "Rate of committed receiver video routes entering a policy pause. Inspect user diagnostics for budget, layout or layer availability reasons.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -256,8 +256,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 6,
-        "x": 6,
+        "w": 8,
+        "x": 8,
         "y": 24
       },
       "id": 8,
@@ -281,12 +281,12 @@
           "refId": "A"
         }
       ],
-      "title": "Paused Routes/s",
+      "title": "Policy Pauses/s",
       "type": "stat"
     },
     {
       "datasource": "Prometheus",
-      "description": "The rate at which previously paused video streams are restored once a user's network connection improves. This shows the system's ability to 'heal' itself.",
+      "description": "Rate of committed receiver video routes clearing an existing policy pause.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -310,8 +310,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 6,
-        "x": 12,
+        "w": 8,
+        "x": 16,
         "y": 24
       },
       "id": 9,
@@ -335,70 +335,12 @@
           "refId": "A"
         }
       ],
-      "title": "Recovery Resumes/s",
+      "title": "Policy Resumes/s",
       "type": "stat"
     },
     {
       "datasource": "Prometheus",
-      "description": "Shows when the server intentionally ignores bandwidth limits to keep a 'critical' stream (like an active speaker) visible. This prioritizes human conversation over technical limits.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0.02
-              },
-              {
-                "color": "red",
-                "value": 0.1
-              }
-            ]
-          },
-          "decimals": 2
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 18,
-        "y": 24
-      },
-      "id": 10,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "expr": "sum(rate(osfu_budget_solver_outcomes_total{outcome=\"protected_over_budget\"}[$__rate_interval]))",
-          "refId": "A"
-        }
-      ],
-      "title": "Protected Over Budget/s",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "A summary of how the server is currently managing bandwidth. It shows the balance between healthy video, quality-reduced video, and paused streams.",
+      "description": "Average rate of committed receiver video route transitions by outcome over the selected time range.",
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -452,12 +394,12 @@
           "refId": "A"
         }
       ],
-      "title": "Budget Solver Mix",
+      "title": "Video Route Transition Mix",
       "type": "bargauge"
     },
     {
       "datasource": "Prometheus",
-      "description": "A history of how the server's quality-adjustment decisions have changed over time. Use this to spot trends in network instability or server overload.",
+      "description": "Rate of committed receiver video route degradation, pause and resume transitions over time.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -500,12 +442,12 @@
           "refId": "A"
         }
       ],
-      "title": "Budget Solver Timeline",
+      "title": "Video Route Transition Rates",
       "type": "timeseries"
     },
     {
       "datasource": "Prometheus",
-      "description": "Compares manual quality choices (like a user picking 'High Quality') against the server's automatic budget decisions. This helps verify that automatic logic is not fighting against user intent.",
+      "description": "Compares accepted encoding-selector updates with committed receiver video route transitions and policy pauses.",
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -549,7 +491,7 @@
         },
         {
           "expr": "sum(rate(osfu_budget_solver_outcomes_total[$__rate_interval]))",
-          "legendFormat": "budget decisions",
+          "legendFormat": "route transitions",
           "refId": "B"
         },
         {
@@ -558,7 +500,7 @@
           "refId": "C"
         }
       ],
-      "title": "Selection Updates Versus Budget Actions",
+      "title": "Selector Updates and Route Transitions",
       "type": "timeseries"
     },
     {
@@ -570,7 +512,7 @@
       },
       "id": 14,
       "options": {
-        "content": "### Receiver budget policy\n\n- **degraded** means the receiver stayed active but was downswitched to a cheaper useful encoding.\n- **paused** means the subscription still exists, but room policy withheld a whole route to stay within budget.\n- **resumed** means a policy-paused route was allowed back after stable budget recovery.\n- **protected_over_budget** means pinned, featured, readable-detail or active-speaker room policy intentionally won over the current BWE estimate.\n\nOpen **Room Graph** or the diagnostics user lookup to inspect the exact receiver BWE, selected budget, active route count, selected bitrate, pause reason, and exception reason.",
+        "content": "### Receiver video route transitions\n\n- **degraded** means an unpaused route switched to an encoding with a lower estimated bitrate.\n- **paused** means a route entered a room-policy pause, including budget pressure, layout restrictions or unavailable layers.\n- **resumed** means a route cleared an existing policy pause.\n\nThese rates count committed transitions. Open **Room Graph** or **User Diagnostics** to inspect receiver BWE, selected budget, route state and pause reason. **User Diagnostics** also shows the receiver soft-pause timer and pending upgrade target with its remaining hold time.",
         "mode": "markdown"
       },
       "title": "How to Read Receiver Budget Policy",
