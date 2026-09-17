@@ -1,66 +1,120 @@
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
-
 rule_files:
   - /etc/prometheus/alerts.yml
   - /etc/prometheus/recording-rules.yml
-
+  - /etc/prometheus/pipeline-alerts.yml
 alerting:
   alertmanagers:
     - static_configs:
         - targets:
             - alertmanager:9093
-
 scrape_configs:
   - job_name: o-sfu
     metrics_path: /metrics
     authorization:
       type: Bearer
       credentials_file: /run/secrets/o_sfu_diagnostics_token
-    static_configs:
-      - targets:
-          - host.docker.internal:8070
-
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/targets/*.json
+        refresh_interval: 30s
   - job_name: o-sfu-noop
     metrics_path: /probe
     params:
       module:
         - http_2xx
-      target:
-        - http://host.docker.internal:8070/v1/noop
-    static_configs:
-      - targets:
-          - blackbox-exporter:9115
     relabel_configs:
       - source_labels:
-          - __param_target
+          - __address__
         target_label: instance
+      - source_labels:
+          - __address__
+        target_label: __param_target
+        replacement: http://${1}/v1/noop
+      - source_labels:
+          - __param_target
+        target_label: probe_target
       - target_label: __address__
         replacement: blackbox-exporter:9115
-
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/targets/*.json
+        refresh_interval: 30s
   - job_name: o-sfu-diagnostics
     metrics_path: /probe
     params:
       module:
         - http_2xx_diagnostics
-      target:
-        - http://host.docker.internal:8070/internal/diagnostics/summary
-    static_configs:
-      - targets:
-          - blackbox-exporter:9115
     relabel_configs:
       - source_labels:
+          - __address__
+        target_label: instance
+      - source_labels:
+          - __address__
+        target_label: __param_target
+        replacement: http://${1}/internal/diagnostics/summary
+      - source_labels:
           - __param_target
+        target_label: probe_target
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/targets/*.json
+        refresh_interval: 30s
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - prometheus:9090
+  - job_name: otel-collector
+    static_configs:
+      - targets:
+          - otel-collector:8888
+  - job_name: loki
+    static_configs:
+      - targets:
+          - loki:3100
+  - job_name: tempo
+    static_configs:
+      - targets:
+          - tempo:3200
+  - job_name: telemetry-readiness
+    metrics_path: /probe
+    params:
+      module:
+        - http_2xx
+    static_configs:
+      - targets:
+          - http://prometheus:9090/-/ready
+        labels:
+          component: prometheus
+      - targets:
+          - http://otel-collector:13133/
+        labels:
+          component: otel-collector
+      - targets:
+          - http://loki:3100/ready
+        labels:
+          component: loki
+      - targets:
+          - http://tempo:3200/ready
+        labels:
+          component: tempo
+    relabel_configs:
+      - source_labels:
+          - __address__
+        target_label: __param_target
+      - source_labels:
+          - __address__
         target_label: instance
       - target_label: __address__
         replacement: blackbox-exporter:9115
-
   - job_name: node
     static_configs:
       - targets:
           - node-exporter:9100
-
   - job_name: cadvisor
     static_configs:
       - targets:

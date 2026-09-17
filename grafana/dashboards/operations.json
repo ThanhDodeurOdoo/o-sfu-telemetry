@@ -1,30 +1,54 @@
 {
   "annotations": {
-    "list": []
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "#5794F2",
+        "name": "Deployments and incidents",
+        "type": "dashboard"
+      }
+    ]
   },
   "editable": false,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "links": [
     {
-      "title": "Staging Canary",
+      "title": "Investigate",
+      "type": "dashboards",
+      "tags": [
+        "o-sfu"
+      ],
+      "asDropdown": true,
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
+    },
+    {
+      "title": "Canary Comparison",
       "type": "link",
-      "url": "/d/osfu-staging-canary/o-sfu-staging-canary?orgId=1&from=${__from}&to=${__to}"
+      "url": "/d/osfu-staging-canary/o-sfu-staging-canary?orgId=1&from=${__from}&to=${__to}&var-candidate_instance=${instance:percentencode}"
     },
     {
       "title": "Control Plane",
       "type": "link",
-      "url": "/d/osfu-control-plane/o-sfu-control-plane?orgId=1&from=${__from}&to=${__to}"
+      "url": "/d/osfu-control-plane/o-sfu-control-plane?orgId=1&from=${__from}&to=${__to}&${instance:queryparam}"
     },
     {
       "title": "Transport Lifecycle",
       "type": "link",
-      "url": "/d/osfu-transport-lifecycle/o-sfu-transport-lifecycle?orgId=1&from=${__from}&to=${__to}"
+      "url": "/d/osfu-transport-lifecycle/o-sfu-transport-lifecycle?orgId=1&from=${__from}&to=${__to}&${instance:queryparam}"
     },
     {
       "title": "Media Path",
       "type": "link",
-      "url": "/d/osfu-media-path/o-sfu-media-path?orgId=1&from=${__from}&to=${__to}"
+      "url": "/d/osfu-media-path/o-sfu-media-path?orgId=1&from=${__from}&to=${__to}&${instance:queryparam}"
     },
     {
       "title": "Log Health",
@@ -34,547 +58,1371 @@
   ],
   "panels": [
     {
-      "datasource": "Prometheus",
-      "description": "Shows the current o-sfu alert state. OK means no firing page or warning alert, Warning means at least one firing warning alert, and Critical means at least one firing page alert.",
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0.5
-              },
-              {
-                "color": "red",
-                "value": 1.5
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 4,
-        "x": 0,
-        "y": 0
-      },
       "id": 1,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "name"
-      },
-      "targets": [
-        {
-          "expr": "(label_replace(vector(2), \"state\", \"Critical\", \"\", \"\") and on() (max(ALERTS{alertname=~\"OSFU.*\",alertstate=\"firing\",severity=\"page\"} or vector(0)) > 0)) or ((label_replace(vector(1), \"state\", \"Warning\", \"\", \"\") and on() (max(ALERTS{alertname=~\"OSFU.*\",alertstate=\"firing\",severity=\"warning\"} or vector(0)) > 0)) unless on() (max(ALERTS{alertname=~\"OSFU.*\",alertstate=\"firing\",severity=\"page\"} or vector(0)) > 0)) or (label_replace(vector(0), \"state\", \"OK\", \"\", \"\") unless on() (max(ALERTS{alertname=~\"OSFU.*\",alertstate=\"firing\",severity=~\"page|warning\"} or vector(0)) > 0))",
-          "instant": true,
-          "legendFormat": "{{state}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Alert Status",
-      "type": "stat"
-    },
-    {
+      "title": "Alert state",
+      "type": "stat",
+      "description": "No firing alerts is shown only with fresh SFU metrics and successful probes. Unverified means those observations are unavailable.",
       "datasource": "Prometheus",
-      "description": "Identifies which part of the system is currently failing. It scans through Admission, ICE/DTLS, Media, and Routing to find the 'first' point where users are dropping off, helping you focus your debugging.",
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "blue",
-                "value": 0.5
-              },
-              {
-                "color": "yellow",
-                "value": 1.5
-              },
-              {
-                "color": "orange",
-                "value": 3.5
-              },
-              {
-                "color": "red",
-                "value": 5.5
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
       "gridPos": {
-        "h": 7,
-        "w": 6,
-        "x": 4,
-        "y": 0
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 5
       },
-      "id": 2,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "name"
-      },
-      "targets": [
-        {
-          "expr": "topk(1, label_replace(vector(7 * scalar(osfu:operator_boundary_routing)), \"boundary\", \"Routing\", \"\", \"\") or label_replace(vector(6 * scalar(osfu:operator_boundary_churn)), \"boundary\", \"Churn\", \"\", \"\") or label_replace(vector(5 * scalar(osfu:operator_boundary_forwarding)), \"boundary\", \"Forwarding\", \"\", \"\") or label_replace(vector(4 * scalar(osfu:operator_boundary_publisher_media)), \"boundary\", \"Publisher Media\", \"\", \"\") or label_replace(vector(3 * scalar(osfu:operator_boundary_ice_dtls)), \"boundary\", \"ICE/DTLS\", \"\", \"\") or label_replace(vector(2 * scalar(osfu:operator_boundary_admission)), \"boundary\", \"Admission\", \"\", \"\") or label_replace(vector(1 * scalar(osfu:operator_boundary_no_recent_traffic)), \"boundary\", \"No Recent Traffic\", \"\", \"\") or label_replace(vector(0), \"boundary\", \"Healthy\", \"\", \"\"))",
-          "instant": true,
-          "legendFormat": "{{boundary}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Primary Failure Boundary",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "The estimated number of users who successfully joined a room but failed to establish a secure media connection in the last 15 minutes. High numbers indicate a significant connectivity problem.",
       "fieldConfig": {
         "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 1
-              },
-              {
-                "color": "red",
-                "value": 3
-              }
-            ]
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "thresholds"
           },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 4,
-        "x": 10,
-        "y": 0
-      },
-      "id": 3,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        }
-      },
-      "targets": [
-        {
-          "expr": "osfu:joined_minus_dtls_15m",
-          "instant": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Affected Users",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "The rate at which users are trying to join rooms. A value of zero means the server is currently idle. If this is high but 'Joined' signals are low, it indicates a failure in authentication or admission.",
-      "fieldConfig": {
-        "defaults": {
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "blue",
                 "value": null
-              },
-              {
-                "color": "green",
-                "value": 0.05
               }
             ]
           },
-          "unit": "reqps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 4,
-        "x": 14,
-        "y": 0
-      },
-      "id": 4,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        }
-      },
-      "targets": [
-        {
-          "expr": "osfu:ws_join_attempts_rate_5m",
-          "instant": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Recent Join Attempts/s",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "A detailed list of all currently active or pending alerts. Use this to see the specific technical errors (like 'High CPU' or 'Network Failure') that are contributing to a non-healthy state.",
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
             },
-            "inspect": false
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "Unverified",
+                  "color": "#8E8E8E"
+                },
+                "1": {
+                  "text": "No firing alerts",
+                  "color": "green"
+                },
+                "2": {
+                  "text": "Warning",
+                  "color": "orange"
+                },
+                "3": {
+                  "text": "Critical",
+                  "color": "red"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "",
+          "expr": "osfu:operator_alert_status{instance=~\"$instance\"}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Metrics scrape",
+      "type": "stat",
+      "description": "A successful SFU scrape observed within 60 seconds. No series means unavailable.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Failed or stale",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Fresh",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "",
+          "expr": "osfu:metrics_available{instance=~\"$instance\"}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "title": "API probe",
+      "type": "stat",
+      "description": "Current /v1/noop probe result. Missing or stale exporter samples are unavailable.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                },
+                "0": {
+                  "text": "Failed",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Successful",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "",
+          "expr": "osfu:noop_probe_status{instance=~\"$instance\"}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Diagnostics probe",
+      "type": "stat",
+      "description": "Current authenticated diagnostics probe result.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                },
+                "0": {
+                  "text": "Failed",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Successful",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "",
+          "expr": "osfu:diagnostics_probe_status{instance=~\"$instance\"}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 12,
+      "title": "Room activity",
+      "type": "stat",
+      "description": "Idle means zero current room users with a fresh metrics scrape. Existing calls remain active even with no recent joins.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 8,
+        "y": 5,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                },
+                "0": {
+                  "text": "Idle",
+                  "color": "#8E8E8E"
+                },
+                "1": {
+                  "text": "Users present",
+                  "color": "blue"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "",
+          "expr": "osfu:operator_activity_status{instance=~\"$instance\"}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 13,
+      "title": "Current room users",
+      "type": "stat",
+      "description": "Room users include sessions still establishing their RTC transport.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 16,
+        "y": 5,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "",
+          "expr": "(sum by (instance) (osfu_users_active{instance=~\"$instance\"})) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Observed boundaries",
+      "type": "state-timeline",
+      "description": "Each boundary is evaluated independently. Admission and ICE/DTLS need at least 15 relevant events in five minutes. A threshold breach is evidence to investigate, not an identified root cause.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 14,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                },
+                "0": {
+                  "text": "Insufficient activity",
+                  "color": "#8E8E8E"
+                },
+                "1": {
+                  "text": "No threshold breach",
+                  "color": "green"
+                },
+                "2": {
+                  "text": "Degraded",
+                  "color": "orange"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "{{boundary}}",
+          "expr": "osfu:operator_boundary_status{instance=~\"$instance\"}"
+        }
+      ],
+      "options": {
+        "mergeValues": true,
+        "showValue": "auto",
+        "alignValue": "left",
+        "rowHeight": 0.8,
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "links": [
+        {
+          "title": "Inspect control plane",
+          "url": "/d/osfu-control-plane?from=${__from}&to=${__to}&${instance:queryparam}",
+          "targetBlank": false
+        },
+        {
+          "title": "Inspect transport",
+          "url": "/d/osfu-transport-lifecycle?from=${__from}&to=${__to}&${instance:queryparam}",
+          "targetBlank": false
+        },
+        {
+          "title": "Inspect media",
+          "url": "/d/osfu-media-path?from=${__from}&to=${__to}&${instance:queryparam}",
+          "targetBlank": false
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Pending and firing alerts",
+      "type": "table",
+      "description": "Pending alerts have not reached their hold duration. An empty table means no matching alerts, not proof of healthy telemetry.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 14,
+        "y": 10,
+        "w": 10,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "wrapText": true
           }
         },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 6,
-        "x": 18,
-        "y": 0
-      },
-      "id": 5,
-      "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "showHeader": true,
-        "sortBy": [
+        "overrides": [
           {
-            "desc": true,
-            "displayName": "Value"
+            "matcher": {
+              "id": "byName",
+              "options": "Severity"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 85
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "State"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 85
+              }
+            ]
           }
         ]
       },
       "targets": [
         {
-          "expr": "ALERTS{alertname=~\"OSFU.*\",alertstate=~\"pending|firing\"}",
-          "format": "table",
+          "refId": "A",
+          "legendFormat": "",
+          "expr": "ALERTS{instance=~\"$instance\",alertname=~\"OSFU.*\",alertstate=~\"pending|firing\"}",
           "instant": true,
-          "refId": "A"
+          "format": "table"
         }
       ],
-      "title": "Alert State",
-      "type": "table"
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "links": [
+        {
+          "title": "Inspect warning and error logs",
+          "url": "/d/osfu-log-health?from=${__from}&to=${__to}",
+          "targetBlank": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "Value": true,
+              "instance": true
+            },
+            "indexByName": {
+              "severity": 0,
+              "alertname": 1,
+              "alertstate": 2
+            },
+            "renameByName": {
+              "severity": "Severity",
+              "alertname": "Alert",
+              "alertstate": "State"
+            }
+          }
+        }
+      ]
     },
     {
+      "id": 7,
+      "title": "Connection events in the last 5 minutes",
+      "type": "timeseries",
+      "description": "Rolling event counts share one window. Retries, reconnects and window boundaries mean these are not matched session cohorts.",
       "datasource": "Prometheus",
-      "description": "Shows the raw number of users or packets reaching each stage of the connection. By comparing the bars, you can see exactly where the 'flow' of users or data is being interrupted.",
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 12,
+        "h": 8
+      },
       "fieldConfig": {
         "defaults": {
-          "mappings": [],
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "blue",
                 "value": null
               }
             ]
           },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 12,
-        "x": 0,
-        "y": 7
-      },
-      "id": 6,
-      "options": {
-        "displayMode": "basic",
-        "minVizHeight": 10,
-        "minVizWidth": 0,
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showUnfilled": false,
-        "valueMode": "color"
-      },
-      "targets": [
-        {
-          "expr": "sum(increase(osfu_ws_connections_total{stage=\"accepted\"}[15m]))",
-          "instant": true,
-          "legendFormat": "Accepted (15m)",
-          "refId": "A"
-        },
-        {
-          "expr": "sum(increase(osfu_ws_connections_total{stage=\"credentials_received\"}[15m]))",
-          "instant": true,
-          "legendFormat": "Credentials (15m)",
-          "refId": "B"
-        },
-        {
-          "expr": "sum(increase(osfu_ws_connections_total{stage=\"joined\"}[15m]))",
-          "instant": true,
-          "legendFormat": "Joined (15m)",
-          "refId": "C"
-        },
-        {
-          "expr": "sum(increase(osfu_transport_ice_state_changes_total{state=\"checking\"}[15m]))",
-          "instant": true,
-          "legendFormat": "ICE checking (15m)",
-          "refId": "D"
-        },
-        {
-          "expr": "sum(increase(osfu_transport_ice_state_changes_total{state=\"completed\"}[15m]))",
-          "instant": true,
-          "legendFormat": "ICE completed (15m)",
-          "refId": "E"
-        },
-        {
-          "expr": "sum(increase(osfu_transport_dtls_connected_total[15m]))",
-          "instant": true,
-          "legendFormat": "DTLS connected (15m)",
-          "refId": "F"
-        },
-        {
-          "expr": "osfu:rtp_ingress_packets_rate_5m",
-          "instant": true,
-          "legendFormat": "RTP ingress packets/s",
-          "refId": "G"
-        },
-        {
-          "expr": "osfu:rtp_local_forward_packets_rate_5m",
-          "instant": true,
-          "legendFormat": "local_rtc forwarding packets/s",
-          "refId": "H"
-        }
-      ],
-      "title": "Funnel Signals",
-      "type": "bargauge"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "The percentage of users who successfully moved from one stage to the next. For example, '64%' means 36% of users were lost at that specific step. High values (close to 100%) indicate a healthy pipeline.",
-      "fieldConfig": {
-        "defaults": {
           "mappings": [
             {
+              "type": "special",
               "options": {
-                "match": "null",
+                "match": "null+nan",
                 "result": {
-                  "text": "N/A"
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
                 }
-              },
-              "type": "special"
+              }
             }
           ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "accepted",
+          "expr": "osfu:ws_accepted_events_5m{instance=~\"$instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "credentials",
+          "expr": "osfu:ws_credentials_received_events_5m{instance=~\"$instance\"}"
+        },
+        {
+          "refId": "C",
+          "legendFormat": "joined",
+          "expr": "osfu:ws_joined_events_5m{instance=~\"$instance\"}"
+        },
+        {
+          "refId": "D",
+          "legendFormat": "DTLS connected",
+          "expr": "(sum by (instance) (increase(osfu_transport_dtls_connected_total{instance=~\"$instance\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Media throughput",
+      "type": "timeseries",
+      "description": "Forwarding counts one operation per destination. Receive-only calls and policy-selected layers can legitimately have different ingress and forwarding rates.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 19,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "pps",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "blue",
                 "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0.6
-              },
-              {
-                "color": "green",
-                "value": 0.9
               }
             ]
           },
-          "unit": "percentunit"
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
         },
         "overrides": []
       },
-      "gridPos": {
-        "h": 10,
-        "w": 12,
-        "x": 12,
-        "y": 7
-      },
-      "id": 7,
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "ingress packets/s",
+          "expr": "osfu:rtp_ingress_packets_rate_5m{instance=~\"$instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "local forwards/s",
+          "expr": "osfu:rtp_local_forward_packets_rate_5m{instance=~\"$instance\"}"
+        }
+      ],
       "options": {
-        "displayMode": "basic",
-        "minVizHeight": 10,
-        "minVizWidth": 0,
-        "orientation": "horizontal",
-        "reduceOptions": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
           "calcs": [
             "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Join / DTLS event gap \u00b7 15m",
+      "type": "stat",
+      "description": "Joined events minus DTLS-connected events in the same rolling window. Signed aggregate imbalance, not an affected-user count.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 27,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "",
+          "expr": "osfu:join_dtls_event_gap_15m{instance=~\"$instance\"}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
           ],
           "fields": "",
           "values": false
         },
-        "showUnfilled": false,
-        "valueMode": "color"
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 10,
+      "title": "Local forwards per ingress packet",
+      "type": "stat",
+      "description": "Fanout multiplicity can exceed one. It is not packet-delivery efficiency. Zero ingress has no defined ratio.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 6,
+        "y": 27,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:x",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
       },
       "targets": [
         {
-          "expr": "osfu:ws_credentials_after_accept_ratio_5m and (osfu:recent_join_traffic_5m > 0)",
-          "instant": true,
-          "legendFormat": "Credentials / accepted",
-          "refId": "A"
-        },
-        {
-          "expr": "osfu:ws_join_after_credentials_ratio_5m and (osfu:ws_credentials_rate_5m > 0.05)",
-          "instant": true,
-          "legendFormat": "Joined / credentials",
-          "refId": "B"
-        },
-        {
-          "expr": "osfu:ice_check_after_join_ratio_5m and (osfu:ws_joined_rate_5m > 0.05)",
-          "instant": true,
-          "legendFormat": "ICE checking / joined",
-          "refId": "C"
-        },
-        {
-          "expr": "osfu:transport_establishment_ratio_active_5m",
-          "instant": true,
-          "legendFormat": "ICE completed / checking",
-          "refId": "D"
-        },
-        {
-          "expr": "osfu:dtls_after_ice_completion_ratio_5m and (osfu:transport_ice_completed_rate_5m > 0.05)",
-          "instant": true,
-          "legendFormat": "DTLS / ICE completed",
-          "refId": "E"
-        },
-        {
-          "expr": "osfu:publisher_media_after_dtls_ratio_5m and (osfu:transport_dtls_connected_rate_5m > 0.05)",
-          "instant": true,
-          "legendFormat": "Ingress after DTLS",
-          "refId": "F"
-        },
-        {
-          "expr": "osfu:local_forwarding_efficiency_active_5m",
-          "instant": true,
-          "legendFormat": "local_rtc / ingress",
-          "refId": "G"
+          "refId": "A",
+          "legendFormat": "",
+          "expr": "osfu:local_forwarding_fanout_ratio_5m{instance=~\"$instance\"}",
+          "instant": true
         }
       ],
-      "title": "Funnel Drop-off Ratios",
-      "type": "bargauge"
-    },
-    {
-      "gridPos": {
-        "h": 6,
-        "w": 6,
-        "x": 0,
-        "y": 17
-      },
-      "id": 8,
       "options": {
-        "content": "<p>Use this when websocket joins fail before steady-state.</p><ul><li><code>osfu:ws_join_success_ratio_active_5m</code></li><li><code>osfu:ws_startup_failures_rate_5m</code></li><li><code>osfu:ws_handshake_rejections_rate_5m</code></li></ul><p><a href=\"/d/osfu-control-plane/o-sfu-control-plane?orgId=1&from=${__from}&to=${__to}\">Open control-plane dashboard</a></p>",
-        "mode": "html"
-      },
-      "title": "Admission",
-      "type": "text"
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
     },
     {
+      "id": 14,
+      "title": "Closed sessions \u00b7 5m",
+      "type": "stat",
+      "description": "Number of closed RTC sessions observed in the last five minutes. This is the denominator for short-session shares.",
+      "datasource": "Prometheus",
       "gridPos": {
-        "h": 6,
-        "w": 6,
-        "x": 6,
-        "y": 17
-      },
-      "id": 9,
-      "options": {
-        "content": "<p>Use this when signaling succeeds but transport establishment lags.</p><ul><li><code>osfu:ws_joined_rate_5m</code></li><li><code>osfu:transport_establishment_ratio_active_5m</code></li><li><code>osfu:dtls_after_join_ratio_5m</code></li></ul><p><a href=\"/d/osfu-transport-lifecycle/o-sfu-transport-lifecycle?orgId=1&from=${__from}&to=${__to}\">Open transport-lifecycle dashboard</a></p>",
-        "mode": "html"
-      },
-      "title": "ICE/DTLS",
-      "type": "text"
-    },
-    {
-      "gridPos": {
-        "h": 6,
-        "w": 6,
         "x": 12,
-        "y": 17
+        "y": 27,
+        "w": 6,
+        "h": 5
       },
-      "id": 10,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "",
+          "expr": "osfu:transport_closed_sessions_5m{instance=~\"$instance\"}",
+          "instant": true
+        }
+      ],
       "options": {
-        "content": "<p>Use this when DTLS is up but media ingress or local forwarding disappears.</p><ul><li><code>osfu:rtp_ingress_packets_rate_5m</code></li><li><code>osfu:rtp_local_forward_packets_rate_5m</code></li><li><code>osfu:local_forwarding_efficiency_active_5m</code></li></ul><p><a href=\"/d/osfu-media-path/o-sfu-media-path?orgId=1&from=${__from}&to=${__to}\">Open media-path dashboard</a></p>",
-        "mode": "html"
-      },
-      "title": "Media Path",
-      "type": "text"
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
     },
     {
+      "id": 15,
+      "title": "RTT observations \u00b7 5m",
+      "type": "stat",
+      "description": "Peer RTT observation count. An RTT percentile without observations is unavailable.",
+      "datasource": "Prometheus",
       "gridPos": {
-        "h": 6,
-        "w": 6,
         "x": 18,
-        "y": 17
+        "y": 27,
+        "w": 6,
+        "h": 5
       },
-      "id": 11,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "",
+          "expr": "osfu:media_quality_peer_rtt_observations_5m{instance=~\"$instance\"}",
+          "instant": true
+        }
+      ],
       "options": {
-        "content": "<p>Keep the current canary cards for focused verification and longer trend reading.</p><ul><li>Noop probe</li><li>Join success ratio</li><li>Connected transports</li><li>Local forwarding efficiency</li></ul><p><a href=\"/d/osfu-staging-canary/o-sfu-staging-canary?orgId=1&from=${__from}&to=${__to}\">Open staging-canary dashboard</a></p>",
-        "mode": "html"
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 16,
+      "title": "Observation freshness",
+      "type": "timeseries",
+      "description": "Age of the last stored scrape/probe observation. Health decisions require samples no older than 60 seconds.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 8,
+        "h": 8
       },
-      "title": "Canary",
-      "type": "text"
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "metrics",
+          "expr": "osfu:metrics_scrape_age_seconds{instance=~\"$instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "API probe",
+          "expr": "osfu:noop_probe_age_seconds{instance=~\"$instance\"}"
+        },
+        {
+          "refId": "C",
+          "legendFormat": "diagnostics probe",
+          "expr": "osfu:diagnostics_probe_age_seconds{instance=~\"$instance\"}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "title": "Protective limits",
+      "type": "timeseries",
+      "description": "Protective limits contain excess work. Session closes are user-visible effects. Inspect transport and media diagnostics when these rise.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 8,
+        "y": 32,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "RTCP ingress drops/s",
+          "expr": "osfu:rtcp_ingress_budget_drops_rate_5m{instance=~\"$instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "output budget exhaustions/s",
+          "expr": "osfu:output_budget_exhaustions_rate_5m{instance=~\"$instance\"}"
+        },
+        {
+          "refId": "C",
+          "legendFormat": "output budget session closes/s",
+          "expr": "osfu:output_budget_session_closes_rate_5m{instance=~\"$instance\"}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 18,
+      "title": "Short closed-session share",
+      "type": "timeseries",
+      "description": "Shares of closed sessions, not current users. A short session is not necessarily a failed session. Inspect exit reasons and the closed-session count.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 16,
+        "y": 32,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "at most 10s",
+          "expr": "osfu:transport_short_sessions_le10s_ratio_5m{instance=~\"$instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "at most 60s",
+          "expr": "osfu:transport_short_sessions_le60s_ratio_5m{instance=~\"$instance\"}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Investigation path",
+      "type": "text",
+      "gridPos": {
+        "x": 0,
+        "y": 40,
+        "w": 24,
+        "h": 4
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "Verify the scrape and probes first. Inspect every degraded boundary, then open Control Plane for admission and exits, Transport Lifecycle for short sessions or Media Path for drops and protection. Use room and user diagnostics to confirm a session-level cause."
+      }
     }
   ],
   "refresh": "15s",
@@ -585,7 +1433,24 @@
     "operations"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "name": "instance",
+        "label": "SFU instance",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": {
+          "query": "label_values(up{job=\"o-sfu\"}, instance)",
+          "refId": "StandardVariableQuery"
+        },
+        "definition": "label_values(up{job=\"o-sfu\"}, instance)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": false,
+        "includeAll": false,
+        "options": []
+      }
+    ]
   },
   "time": {
     "from": "now-6h",
@@ -594,6 +1459,7 @@
   "timezone": "",
   "title": "o-sfu Operations",
   "uid": "osfu-operations",
-  "version": 1,
-  "weekStart": ""
+  "version": 2,
+  "weekStart": "",
+  "description": "Start with observation health, inspect independent failure signals and follow the affected subsystem. All metrics are scoped to one SFU instance."
 }

@@ -27,7 +27,7 @@ ever-growing debug file.
 ## Layout
 
 - `docker-compose.yml`: local LGTM-style operator stack plus blackbox and Alertmanager
-- `prometheus/`: scrape config, recording rules, alert rules, and the optional host-metrics example
+- `prometheus/`: shared target inventory, scrape configs, recording rules, alert rules and the optional host-metrics example
 - `grafana/`: provisioned datasources plus dashboards for control-plane, transport lifecycle, media path, sampled media quality, receiver budget adaptation, recording and staging canary checks
 - `alertmanager/`: default grouping and routing stub for the reference alerts
 - `blackbox/`: shared probe modules for `GET /v1/noop` and protected diagnostics
@@ -223,28 +223,102 @@ object store and set retention from incident-response requirements.
 - OTLP gRPC receiver: `localhost:4317`
 - OTLP HTTP receiver: `localhost:4318`
 
-Grafana provisions three datasources out of the box:
+Grafana provisions four datasources out of the box:
 
 - `Prometheus`
 - `Loki`
 - `Tempo`
+- `Infinity` for the configured SFU diagnostics endpoints
 
 ## Validation flow
 
 1. Confirm `GET /v1/noop` succeeds on the host-run `o-sfu`.
 2. Confirm `GET /v1/stats`, `GET /metrics` and `GET /internal/diagnostics/summary` succeed with `Authorization: Bearer <DIAGNOSTICS_AUTH_TOKEN>`.
 3. Check Prometheus target health for the `o-sfu` scrape, `o-sfu-noop`, and `o-sfu-diagnostics` probes.
-4. Open the `o-sfu Staging Canary` dashboard and verify:
-   - `Noop Probe` stays at `1`
-   - `Join Success Ratio` stays healthy during staged joins
-   - `Connected Transports` rises after the canary join
-   - `Local Forwarding Efficiency` rises during live media
-   - sampled peer RTT and sampled loss stay close to the staged network baseline once media flows
-   - receiver budget cards count committed receiver video route degradation, pause and resume transitions
-5. Open the `o-sfu Media Path` dashboard during simulcast validation. The sampled quality section should show peer RTT, media RTT, ingress or egress loss, peer BWE and egress jitter beside the existing packet-path, decoder-refresh and receiver-budget signals.
-6. Open the `o-sfu Room Graph` dashboard, select a room from the active-room table, then select a user from the room-user table. The room graph shows the whole room topology, while the user graph shows that user's inbound and outbound media paths through media-worker nodes, source nodes, and peer users. Use it to inspect the exact receiver BWE estimate, selected receiver budget, active route count, selected bitrate and pause reason behind the low-cardinality Prometheus signals.
-7. Open Grafana Explore with the `Loki` datasource and inspect the structured JSON log fields such as `event`, `room_id`, `user_id`, and `trace_id`.
-8. Open Grafana Explore with the `Tempo` datasource and confirm the control-plane spans arrive for the same canary user.
+4. Open `o-sfu Operations`. Confirm current metrics and both probes are available, then inspect each degraded boundary. Idle activity and missing evidence have separate states.
+5. Open `o-sfu Canary Comparison`. Select distinct baseline and candidate instances with comparable workloads. Compare event rates, quality observation counts, short closed-session shares and protection events. Add deployment or rollback markers with Grafana annotations.
+6. Open `o-sfu Media Path`. Quality observations and repair activity precede throughput. A missing quality value means no usable observations. Local forwards per ingress packet measure fanout and can exceed one.
+7. Open `o-sfu Room Graph`, select a room and then a user. Current diagnostics show source and encoding identity, delivery policy, packet age and keyframe age where available. These snapshots do not follow the historical time picker.
+8. Open `o-sfu User Diagnostics` for historical room/user failures and current transport state. INFO lifecycle records discover rooms independently of the selected warning filter. Roomless warnings remain separate from room-attributed evidence.
+9. Open `o-sfu Telemetry and Log Health`. Confirm collector intake and export, queue occupancy, service readiness and retained log activity. Zero application logs alone do not establish pipeline health.
+10. Follow a log's trace ID to Tempo when that trace was sampled and retained. Trace details link back to the matching structured logs.
+
+## Baseline and canary targets
+
+All three SFU scrape jobs read `prometheus/targets/*.json`. The default inventory
+contains `host.docker.internal:8070`. Both Compose profiles mount this directory.
+Prometheus discovers inventory edits without a restart.
+
+For a two-instance comparison, replace `prometheus/targets/local.json` with an
+edited copy of `prometheus/targets.canary.example.json`. Set the two addresses to
+reachable SFU HTTP listeners. Do not keep duplicate targets in another inventory
+file. The example remains outside the discovery directory until copied.
+
+Metrics and both probes use the same `instance="host:port"` label. Probes retain
+their full endpoint URL in `probe_target`. Recording rules preserve `instance`,
+so one healthy SFU cannot mask a failed candidate. The baseline and candidate
+selectors must identify different targets for a useful comparison. Optional
+`deployment_role` labels describe the inventory but do not select a target.
+
+This reference profile shares one `DIAGNOSTICS_AUTH_TOKEN` across its targets.
+Use separate authenticated scrape jobs and token files when targets require
+different credentials. The example uses HTTP inside the existing private
+observation network. Remote targets still need the protected transport described
+in [DEPLOYMENT.md](DEPLOYMENT.md).
+
+Room, user and worker HTTP diagnostics continue to query the configured Infinity
+server. The Prometheus instance picker does not redirect that datasource. Their
+panels state that scope. Configure an additional authenticated Infinity datasource
+and matching diagnostic URLs before inspecting another SFU through those views.
+
+## Evidence and unavailable states
+
+- Current health requires recent successful scrapes and probes. Missing scrapes do not become an OK state.
+- Connection-stage ratios compare aggregate events in the same window. They can exceed one near window boundaries and do not identify affected users.
+- The join/DTLS event gap is an aggregate difference. Confirm individual failures through room/user logs.
+- A low forwarding fanout can reflect subscription layout or delivery policy. It is not a packet-loss fraction.
+- Short-session shares count closed transport sessions. A short normal call contributes to the same histogram as a failed attempt.
+- Each quality field has its own observation count. Zero observations suppress its average or percentile.
+- A missing worker heartbeat is distinct from a reported zero delay. Worker pressure measures bounded mailbox utilization, not CPU usage.
+- Persistent recording is unsupported at the checked `o-sfu` revision `b60da1d5`. The recording board shows handled and rejected controls without implying capture or upload.
+
+Exact failed-user cohorts, browser freeze duration, quality sample age, historical
+worker pressure and recorder completion require additional server or browser
+instrumentation. These dashboards do not synthesize those measurements from
+unrelated counters.
+
+## Telemetry pipeline monitoring
+
+Prometheus scrapes itself, the collector, Loki and Tempo. Blackbox probes their
+readiness endpoints. Collector internal metrics listen on port `8888` only inside
+the Compose network. No additional host port is published.
+
+The pipeline board shows accepted and exported logs/spans, receiver refusals,
+failed sends and enqueues, queue occupancy, process memory and scrape age. Sending
+failures can retry. Enqueue failures can discard telemetry. Missing lazy counters
+remain unavailable until the collector observes the corresponding signal.
+
+Host filesystem capacity appears only when the optional Linux node-exporter
+profile and scrape are enabled. Match its mountpoint to the filesystem backing
+`data/`. Process memory and exporter queues do not measure available disk space.
+
+`prometheus/pipeline-alerts.yml` covers failed scrapes/readiness, recurring export
+failures, receiver refusals and queues above 80 percent capacity for five minutes.
+
+## Repository checks
+
+Run `scripts/check-telemetry.sh` with Docker and Python 3. It validates all Compose
+profiles, all dashboard layouts and PromQL expressions, the three Prometheus
+configurations and `tests/prometheus-rules.test.yml` using the pinned Prometheus
+image. The same command runs in the Compose CI workflow.
+
+The rule fixtures cover independent SFU instances, stale or failed scrapes,
+missing probes, idle traffic, fanout above one, zero observations, simultaneous
+degraded boundaries, short-session shares and collector export failures.
+
+Dashboard organization follows [Grafana's dashboard guidance](https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/best-practices/).
+Collector metrics use the documented [internal telemetry reader](https://opentelemetry.io/docs/collector/internal-telemetry/).
+Rule behavior uses [Prometheus rule tests](https://prometheus.io/docs/prometheus/latest/configuration/unit_testing_rules/).
 
 ## Sampled media-quality signals
 
@@ -339,8 +413,8 @@ source encodings as `lastPacketAgeMs` and `lastKeyframeAgeMs`.
 
 The reference Prometheus config now ships:
 
-- recording rules for join success ratio, websocket startup failure rate, websocket outbound queue pressure, transport disconnect churn per active user, terminal transport cleanup failures, local forwarding efficiency, decoder refreshes, keyframe requests, sampled media quality and committed receiver video route transition rates
-- alerts for low join success ratio, websocket startup failures, websocket outbound queue overflow, diagnostics probe failures, normalized transport disconnect churn, recurring terminal transport cleanup failures, routing pressure, relay overload, low local forwarding efficiency and sampled media-quality degradation
+- recording rules for join success ratio, websocket startup failure rate, websocket outbound queue pressure, transport disconnect churn per active user, terminal transport cleanup failures, local forwarding fanout, decoder refreshes, keyframe requests, sampled media quality and committed receiver video route transition rates
+- alerts for low join success ratio, websocket startup failures, websocket outbound queue overflow, diagnostics probe failures, normalized transport disconnect churn, recurring terminal transport cleanup failures, routing pressure, relay overload, protective output-budget closures and sampled media-quality degradation
 
 These derived rules are intended for operator dashboards and canary validation.
 They should stay derived from runtime-owned metrics instead of introducing extra
@@ -385,10 +459,14 @@ Before using it outside a controlled environment:
 
 ## Dashboard inventory
 
-- `control-plane.json`: HTTP, websocket admission, diagnostics probe, startup, outbound queue pressure and latency views
-- `transport-lifecycle.json`: transport health, ICE, DTLS, terminal cleanup failures and user lifetime views
-- `media-path.json`: RTP ingress, forwarding, routing pressure, route-control and sampled media-quality views
-- `recording.json`: recording action outcomes, active captures, and recording fan-out
-- `staging-canary.json`: join success, canary readiness, sampled media quality, disconnect churn and forwarding efficiency
-- `room-graph.json`: diagnostics-backed active-room selection, room topology, room-user selection, per-user media-path topology, and source-selection views
-- `user-diagnostics.json`: room and user drill-down for retained lifecycle events, transport quality, optional soft-pause and pending-upgrade timers and media graph
+- `operations.json`: current availability, concurrent failure boundaries and the investigation path
+- `control-plane.json`: HTTP, websocket admission, startup failures and outbound queue pressure
+- `transport-lifecycle.json`: transport health, ICE/DTLS events, short sessions and cleanup failures
+- `media-path.json`: sampled quality, repair, protection events, receiver adaptation and media throughput
+- `recording.json`: checked backend capability and handled/rejected recording controls
+- `staging-canary.json`: independent baseline/candidate measurements, workload and observation counts
+- `room-graph.json`: current room selection, room topology and user media paths
+- `user-diagnostics.json`: historical room/user failures and current transport/source/encoding details
+- `worker-load.json`: current missing heartbeats and queue pressure plus instance-scoped workload history
+- `log-health.json`: telemetry readiness, intake/export failures, queues and warning/error activity
+- `logs.json`: structured log search with room, user and trace context

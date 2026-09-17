@@ -7,21 +7,54 @@
   "graphTooltip": 0,
   "panels": [
     {
-      "datasource": "Prometheus",
-      "description": "The total number of rooms currently being recorded. Use this to monitor the load on the recording service.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "none"
-        },
-        "overrides": []
+      "id": 10,
+      "title": "Persistent Recording Is Unavailable in o-sfu b60da1d5",
+      "type": "text",
+      "options": {
+        "mode": "markdown",
+        "content": "The checked server revision disables the persistent recording backend and rejects room recording start and stop controls. Recording feature flags do not enable a storage backend.\n\nThis is a source-verified support statement for revision **b60da1d5**, not a runtime capability probe. The charts below show handled room controls. They do not establish media capture, artifact creation or upload success."
       },
       "gridPos": {
-        "h": 5,
-        "w": 8,
         "x": 0,
-        "y": 0
+        "y": 0,
+        "w": 24,
+        "h": 6
+      }
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Start and stop controls that reached room recording handlers during the last five minutes. Earlier protocol or permission rejections are outside this counter.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "decimals": 0,
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
       },
-      "id": 1,
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 12,
+        "h": 4
+      },
+      "id": 11,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -37,65 +70,47 @@
       },
       "targets": [
         {
-          "expr": "sum(osfu_recording_rooms_active)",
-          "refId": "A"
+          "expr": "(sum by (instance) (increase(osfu_recording_actions_total{instance=~\"$instance\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} handled controls",
+          "refId": "A",
+          "instant": true
         }
       ],
-      "title": "Active Recording Rooms",
+      "title": "Handled Recording Controls / 5m",
       "type": "stat"
     },
     {
       "datasource": "Prometheus",
-      "description": "The rate at which new recording requests are being successfully started. A value of zero means no new recordings have started recently.",
+      "description": "Room start and stop controls rejected during the last five minutes. Rejection is expected while the persistent recording backend is unavailable.",
       "fieldConfig": {
         "defaults": {
-          "unit": "ops"
+          "unit": "short",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
-        "w": 8,
-        "x": 8,
-        "y": 0
-      },
-      "id": 2,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        }
-      },
-      "targets": [
-        {
-          "expr": "sum(rate(osfu_recording_actions_total{action=\"start\",outcome=\"accepted\"}[5m]))",
-          "refId": "A"
-        }
-      ],
-      "title": "Accepted Starts/s",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "The rate at which recording requests (start, stop, etc.) are being denied by the server. Rising values usually indicate permission issues or server resource limits.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 8,
-        "x": 16,
-        "y": 0
+        "x": 12,
+        "y": 6,
+        "w": 12,
+        "h": 4
       },
       "id": 3,
       "options": {
@@ -113,95 +128,74 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(osfu_recording_actions_total{outcome=\"rejected\"}[5m]))",
-          "refId": "A"
+          "expr": "(sum by (instance, action) (increase(osfu_recording_actions_total{instance=~\"$instance\",outcome=\"rejected\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} {{action}}",
+          "refId": "A",
+          "instant": true
         }
       ],
-      "title": "Rejected Actions/s",
+      "title": "Rejected Recording Controls / 5m",
       "type": "stat"
     },
     {
-      "datasource": "Prometheus",
-      "description": "A timeline of all recording-related events. It shows the balance between 'start' and 'stop' requests and whether they were successful or failed.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Room recording control rates by action and outcome. Accepted/capture counters remain inactive at the checked server revision and are not storage health signals.",
       "fieldConfig": {
         "defaults": {
-          "unit": "ops"
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          }
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
         "x": 0,
-        "y": 5
+        "y": 10,
+        "w": 24,
+        "h": 8
       },
       "id": 4,
       "targets": [
         {
-          "expr": "sum by (action, outcome) (rate(osfu_recording_actions_total[5m]))",
-          "legendFormat": "{{action}} {{outcome}}",
+          "expr": "(sum by (instance, action, outcome) (rate(osfu_recording_actions_total{instance=~\"$instance\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} {{action}} {{outcome}}",
           "refId": "A"
         }
       ],
-      "title": "Recording Actions",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "Measures the raw amount of media data being sent to the recording engine. High values indicate the recording service is processing a lot of video/audio data.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops"
+      "title": "Room Recording Control Outcomes",
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
         },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 5
-      },
-      "id": 5,
-      "targets": [
-        {
-          "expr": "sum(rate(osfu_recording_captured_packets_total[1m]))",
-          "legendFormat": "captured packets/s",
-          "refId": "A"
-        },
-        {
-          "expr": "sum(rate(osfu_recording_captured_streams_total[5m]))",
-          "legendFormat": "captured streams/s",
-          "refId": "B"
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
         }
-      ],
-      "title": "Capture Throughput",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "Shows the number of media packets being copied specifically for recording purposes. This represents the 'extra work' the server does to support recording.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "pps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 13
-      },
-      "id": 6,
-      "targets": [
-        {
-          "expr": "sum(rate(osfu_rtp_forwarded_packets_total{destination=\"recording\"}[1m]))",
-          "legendFormat": "forwarded to recording/s",
-          "refId": "A"
-        }
-      ],
-      "title": "Recording Fan-out",
-      "type": "timeseries"
+      }
     }
   ],
   "refresh": "15s",
@@ -212,7 +206,33 @@
     "phase-2"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "name": "instance",
+        "label": "SFU instance",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "label_values(up{job=\"o-sfu\"}, instance)",
+          "refId": "instance"
+        },
+        "definition": "label_values(up{job=\"o-sfu\"}, instance)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": []
+      }
+    ]
   },
   "time": {
     "from": "now-6h",
@@ -222,5 +242,18 @@
   "title": "o-sfu Recording",
   "uid": "osfu-recording",
   "version": 1,
-  "weekStart": ""
+  "weekStart": "",
+  "links": [
+    {
+      "title": "Investigate",
+      "type": "dashboards",
+      "tags": [
+        "o-sfu"
+      ],
+      "asDropdown": true,
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
+    }
+  ]
 }

@@ -1,17 +1,43 @@
 {
   "annotations": {
-    "list": []
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "#5794F2",
+        "name": "Deployments and incidents",
+        "type": "dashboard"
+      }
+    ]
   },
   "editable": false,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "panels": [
     {
       "datasource": "Prometheus",
-      "description": "The total number of users currently connected to the server. Use this to monitor the overall load and reach of the system.",
+      "description": "Current room users, including sessions establishing RTC transport.",
       "fieldConfig": {
         "defaults": {
-          "unit": "none"
+          "unit": "none",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -29,7 +55,7 @@
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -37,8 +63,9 @@
       },
       "targets": [
         {
-          "expr": "sum(osfu_users_active)",
-          "refId": "A"
+          "expr": "(sum by (instance) (osfu_users_active{instance=~\"$instance\"})) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "refId": "A",
+          "instant": true
         }
       ],
       "title": "Active Users",
@@ -49,7 +76,20 @@
       "description": "The number of active HTTP API requests currently being processed by the server, excluding internal telemetry scrapers.",
       "fieldConfig": {
         "defaults": {
-          "unit": "none"
+          "unit": "none",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -67,7 +107,7 @@
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -75,8 +115,9 @@
       },
       "targets": [
         {
-          "expr": "sum(osfu_http_inflight_requests{route!=\"metrics\"})",
-          "refId": "A"
+          "expr": "(sum by (instance) (osfu_http_inflight_requests{instance=~\"$instance\",route!=\"metrics\"})) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "refId": "A",
+          "instant": true
         }
       ],
       "title": "HTTP Inflight",
@@ -87,7 +128,37 @@
       "description": "A simple health check that verifies if the server basic API is responsive. 1 means the server is responding, 0 means it is likely frozen or down.",
       "fieldConfig": {
         "defaults": {
-          "unit": "bool"
+          "unit": "none",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                },
+                "0": {
+                  "text": "Failed",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Successful",
+                  "color": "green"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -105,7 +176,7 @@
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -113,8 +184,9 @@
       },
       "targets": [
         {
-          "expr": "max(probe_success{job=\"o-sfu-noop\"})",
-          "refId": "A"
+          "expr": "osfu:noop_probe_status{instance=~\"$instance\"}",
+          "refId": "A",
+          "instant": true
         }
       ],
       "title": "Noop Probe",
@@ -125,7 +197,37 @@
       "description": "A health check that verifies if the internal diagnostic systems are functioning correctly.",
       "fieldConfig": {
         "defaults": {
-          "unit": "bool"
+          "unit": "none",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                },
+                "0": {
+                  "text": "Failed",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Successful",
+                  "color": "green"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -143,7 +245,7 @@
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -151,8 +253,9 @@
       },
       "targets": [
         {
-          "expr": "osfu:diagnostics_probe_success",
-          "refId": "A"
+          "expr": "osfu:diagnostics_probe_status{instance=~\"$instance\"}",
+          "refId": "A",
+          "instant": true
         }
       ],
       "title": "Diagnostics Probe",
@@ -172,7 +275,20 @@
             "pointSize": 5,
             "showPoints": "never",
             "spanNulls": false
-          }
+          },
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -185,27 +301,27 @@
       "id": 14,
       "targets": [
         {
-          "expr": "rate(osfu_http_noop_requests_total[5m])",
+          "expr": "(rate(osfu_http_noop_requests_total{instance=~\"$instance\"}[5m])) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "noop",
           "refId": "A"
         },
         {
-          "expr": "rate(osfu_http_stats_requests_total[5m])",
+          "expr": "(rate(osfu_http_stats_requests_total{instance=~\"$instance\"}[5m])) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "stats",
           "refId": "B"
         },
         {
-          "expr": "rate(osfu_http_room_requests_total[5m])",
+          "expr": "(rate(osfu_http_room_requests_total{instance=~\"$instance\"}[5m])) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "room",
           "refId": "C"
         },
         {
-          "expr": "rate(osfu_http_disconnect_requests_total[5m])",
+          "expr": "(rate(osfu_http_disconnect_requests_total{instance=~\"$instance\"}[5m])) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "disconnect",
           "refId": "D"
         },
         {
-          "expr": "rate(osfu_http_metrics_requests_total[5m])",
+          "expr": "(rate(osfu_http_metrics_requests_total{instance=~\"$instance\"}[5m])) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "metrics",
           "refId": "E"
         }
@@ -227,7 +343,20 @@
             "pointSize": 5,
             "showPoints": "never",
             "spanNulls": false
-          }
+          },
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -240,12 +369,12 @@
       "id": 15,
       "targets": [
         {
-          "expr": "sum by (status) (rate(osfu_http_room_responses_total[5m]))",
+          "expr": "(sum by (instance, status) (rate(osfu_http_room_responses_total{instance=~\"$instance\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "room: {{status}}",
           "refId": "A"
         },
         {
-          "expr": "sum by (status) (rate(osfu_http_disconnect_responses_total[5m]))",
+          "expr": "(sum by (instance, status) (rate(osfu_http_disconnect_responses_total{instance=~\"$instance\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "disconnect: {{status}}",
           "refId": "B"
         }
@@ -267,7 +396,20 @@
             "pointSize": 5,
             "showPoints": "never",
             "spanNulls": false
-          }
+          },
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -280,7 +422,7 @@
       "id": 7,
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum by (le, route) (rate(osfu_http_request_duration_seconds_bucket[10m])))",
+          "expr": "(histogram_quantile(0.95, sum by (instance, le, route) (rate(osfu_http_request_duration_seconds_bucket{instance=~\"$instance\"}[10m])))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "{{route}} p95",
           "refId": "A"
         }
@@ -302,7 +444,20 @@
             "pointSize": 5,
             "showPoints": "never",
             "spanNulls": false
-          }
+          },
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -315,17 +470,24 @@
       "id": 16,
       "targets": [
         {
-          "expr": "sum by (stage) (rate(osfu_ws_connections_total[5m]))",
+          "expr": "(sum by (instance, stage) (rate(osfu_ws_connections_total{instance=~\"$instance\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "{{stage}}",
           "refId": "A"
         }
       ],
       "title": "WebSocket Connection Stages",
-      "type": "timeseries"
+      "type": "timeseries",
+      "links": [
+        {
+          "title": "Inspect user diagnostics",
+          "url": "/d/osfu-user-diagnostics?from=${__from}&to=${__to}",
+          "targetBlank": false
+        }
+      ]
     },
     {
       "datasource": "Prometheus",
-      "description": "Shows the time it takes for 95% of users to complete the initial connection handshake and authentication. High values lead to a slow feel when joining.",
+      "description": "Percentiles of recorded startup durations across completed observations. Handshake measurements include readiness and rejection paths.",
       "fieldConfig": {
         "defaults": {
           "unit": "s",
@@ -337,7 +499,20 @@
             "pointSize": 5,
             "showPoints": "never",
             "spanNulls": false
-          }
+          },
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -350,17 +525,17 @@
       "id": 8,
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(osfu_ws_handshake_duration_seconds_bucket[10m]))",
+          "expr": "(histogram_quantile(0.95, sum by (instance, le) (rate(osfu_ws_handshake_duration_seconds_bucket{instance=~\"$instance\"}[10m])))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "handshake p95",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.95, rate(osfu_ws_auth_duration_seconds_bucket[10m]))",
+          "expr": "(histogram_quantile(0.95, sum by (instance, le) (rate(osfu_ws_auth_duration_seconds_bucket{instance=~\"$instance\"}[10m])))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "auth p95",
           "refId": "B"
         },
         {
-          "expr": "histogram_quantile(0.95, rate(osfu_ws_user_initialize_duration_seconds_bucket[10m]))",
+          "expr": "(histogram_quantile(0.95, sum by (instance, le) (rate(osfu_ws_user_initialize_duration_seconds_bucket{instance=~\"$instance\"}[10m])))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "user init p95",
           "refId": "C"
         }
@@ -382,7 +557,20 @@
             "pointSize": 5,
             "showPoints": "never",
             "spanNulls": false
-          }
+          },
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -395,13 +583,20 @@
       "id": 5,
       "targets": [
         {
-          "expr": "sum by (close_code) (rate(osfu_ws_handshake_rejections_total[5m]))",
+          "expr": "(sum by (instance, close_code) (rate(osfu_ws_handshake_rejections_total{instance=~\"$instance\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "{{close_code}}",
           "refId": "A"
         }
       ],
       "title": "Handshake Rejections by Close Code",
-      "type": "timeseries"
+      "type": "timeseries",
+      "links": [
+        {
+          "title": "Inspect user diagnostics",
+          "url": "/d/osfu-user-diagnostics?from=${__from}&to=${__to}",
+          "targetBlank": false
+        }
+      ]
     },
     {
       "datasource": "Prometheus",
@@ -417,7 +612,20 @@
             "pointSize": 5,
             "showPoints": "never",
             "spanNulls": false
-          }
+          },
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -430,13 +638,20 @@
       "id": 6,
       "targets": [
         {
-          "expr": "sum by (reason) (rate(osfu_ws_user_loop_exits_total[5m]))",
+          "expr": "(sum by (instance, reason) (rate(osfu_ws_user_loop_exits_total{instance=~\"$instance\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "{{reason}}",
           "refId": "A"
         }
       ],
       "title": "User Loop Exits by Reason",
-      "type": "timeseries"
+      "type": "timeseries",
+      "links": [
+        {
+          "title": "Inspect user diagnostics",
+          "url": "/d/osfu-user-diagnostics?from=${__from}&to=${__to}",
+          "targetBlank": false
+        }
+      ]
     },
     {
       "datasource": "Prometheus",
@@ -452,7 +667,20 @@
             "pointSize": 5,
             "showPoints": "never",
             "spanNulls": false
-          }
+          },
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -465,7 +693,7 @@
       "id": 12,
       "targets": [
         {
-          "expr": "osfu:ws_outbound_queue_depth",
+          "expr": "osfu:ws_outbound_queue_depth{instance=~\"$instance\"}",
           "legendFormat": "queued messages",
           "refId": "A"
         }
@@ -487,7 +715,20 @@
             "pointSize": 5,
             "showPoints": "never",
             "spanNulls": false
-          }
+          },
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -500,7 +741,7 @@
       "id": 13,
       "targets": [
         {
-          "expr": "osfu:ws_outbound_queue_overflow_rate_5m",
+          "expr": "osfu:ws_outbound_queue_overflow_rate_5m{instance=~\"$instance\"}",
           "legendFormat": "overflow rate",
           "refId": "A"
         }
@@ -510,10 +751,23 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "The number of users currently broadcasting their camera, microphone, or screen. This is the Input side of media flow.",
+      "description": "Committed or pending publication entries. One user can publish several media streams. This is not a publisher count.",
       "fieldConfig": {
         "defaults": {
-          "unit": "none"
+          "unit": "none",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -531,7 +785,7 @@
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -539,8 +793,9 @@
       },
       "targets": [
         {
-          "expr": "sum(osfu_publications_active)",
-          "refId": "A"
+          "expr": "(sum by (instance) (osfu_publications_active{instance=~\"$instance\"})) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "refId": "A",
+          "instant": true
         }
       ],
       "title": "Active Publications",
@@ -548,10 +803,23 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "The number of individual media streams being received by users. This is the Output side and represents bandwidth consumption.",
+      "description": "Committed or pending subscription entries. A subscription can be inactive or policy-paused and does not prove packet delivery.",
       "fieldConfig": {
         "defaults": {
-          "unit": "none"
+          "unit": "none",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -569,7 +837,7 @@
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -577,8 +845,9 @@
       },
       "targets": [
         {
-          "expr": "sum(osfu_subscriptions_active)",
-          "refId": "A"
+          "expr": "(sum by (instance) (osfu_subscriptions_active{instance=~\"$instance\"})) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "refId": "A",
+          "instant": true
         }
       ],
       "title": "Active Subscriptions",
@@ -586,7 +855,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "A timeline view comparing how many people are broadcasting (publications) versus how many people are watching (subscriptions).",
+      "description": "Counts of publication and subscription entries, including pending entries. These are not unique people or observed media delivery.",
       "fieldConfig": {
         "defaults": {
           "unit": "none",
@@ -598,7 +867,20 @@
             "pointSize": 5,
             "showPoints": "never",
             "spanNulls": false
-          }
+          },
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -611,12 +893,12 @@
       "id": 11,
       "targets": [
         {
-          "expr": "sum(osfu_publications_active)",
+          "expr": "(sum by (instance) (osfu_publications_active{instance=~\"$instance\"})) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "publications",
           "refId": "A"
         },
         {
-          "expr": "sum(osfu_subscriptions_active)",
+          "expr": "(sum by (instance) (osfu_subscriptions_active{instance=~\"$instance\"})) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "subscriptions",
           "refId": "B"
         }
@@ -629,7 +911,7 @@
         "type": "loki",
         "uid": "loki"
       },
-      "description": "Recent HTTP API requests, WebSocket upgrades, handshakes, and terminations from structured logs. Shows client remote IP, route, user ID, status code, and latency.",
+      "description": "Structured HTTP and WebSocket lifecycle events. Logs are service-wide because the current log resource does not expose the Prometheus instance label. Use room/user identifiers for precise correlation.",
       "gridPos": {
         "h": 12,
         "w": 24,
@@ -655,7 +937,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=\"o-sfu\"} |~ \"(?i)http|ws|route|request\" | json",
+          "expr": "{service_name=\"o-sfu\"} | json | event=~\"http\\\\..*|ws\\\\..*\"",
           "maxLines": 100,
           "queryType": "range",
           "refId": "A"
@@ -663,6 +945,148 @@
       ],
       "title": "Signaling Access Logs",
       "type": "logs"
+    },
+    {
+      "id": 18,
+      "title": "Signaling failures by kind",
+      "type": "timeseries",
+      "description": "Parse, unsupported-feature and send failures on the WebSocket signaling bus.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 46,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "{{kind}}",
+          "expr": "(sum by (instance, kind) (rate(osfu_ws_bus_failures_total{instance=~\"$instance\"}[$__rate_interval]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 19,
+      "title": "Startup failure stage",
+      "type": "timeseries",
+      "description": "Separates startup-send failures from user-initialization failures.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 46,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "{{kind}}",
+          "expr": "(sum by (instance, kind) (rate(osfu_ws_startup_failures_total{instance=~\"$instance\"}[$__rate_interval]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
     }
   ],
   "refresh": "15s",
@@ -673,7 +1097,24 @@
     "phase-2"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "name": "instance",
+        "label": "SFU instance",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": {
+          "query": "label_values(up{job=\"o-sfu\"}, instance)",
+          "refId": "StandardVariableQuery"
+        },
+        "definition": "label_values(up{job=\"o-sfu\"}, instance)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": false,
+        "includeAll": false,
+        "options": []
+      }
+    ]
   },
   "time": {
     "from": "now-6h",
@@ -682,6 +1123,19 @@
   "timezone": "",
   "title": "o-sfu Control Plane",
   "uid": "osfu-control-plane",
-  "version": 4,
-  "weekStart": ""
+  "version": 5,
+  "weekStart": "",
+  "links": [
+    {
+      "title": "Investigate",
+      "type": "dashboards",
+      "tags": [
+        "o-sfu"
+      ],
+      "asDropdown": true,
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
+    }
+  ]
 }

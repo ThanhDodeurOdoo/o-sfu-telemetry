@@ -1,0 +1,354 @@
+rule_files:
+  - ../prometheus/recording-rules.yml
+  - ../prometheus/alerts.yml
+  - ../prometheus/pipeline-alerts.yml
+evaluation_interval: 1m
+fuzzy_compare: true
+group_eval_order:
+  - o-sfu-derived
+  - o-sfu-phase-2
+  - o-sfu-phase-6
+  - telemetry-pipeline
+tests:
+  - name: Independent instances preserve idle missing and failed evidence
+    interval: 1m
+    input_series:
+      - series: up{job="o-sfu",instance="baseline:8070"}
+        values: 1x5
+      - series: up{job="o-sfu-noop",instance="baseline:8070"}
+        values: 1x5
+      - series: probe_success{job="o-sfu-noop",instance="baseline:8070"}
+        values: 1x5
+      - series: up{job="o-sfu-diagnostics",instance="baseline:8070"}
+        values: 1x5
+      - series: probe_success{job="o-sfu-diagnostics",instance="baseline:8070"}
+        values: 1x5
+      - series: osfu_users_active{instance="baseline:8070"}
+        values: 10x5
+      - series: osfu_ws_connections_total{instance="baseline:8070",stage="accepted"}
+        values: 0+6x5
+      - series: osfu_ws_connections_total{instance="baseline:8070",stage="credentials_received"}
+        values: 0+6x5
+      - series: osfu_ws_connections_total{instance="baseline:8070",stage="joined"}
+        values: 0+6x5
+      - series: osfu_transport_dtls_connected_total{instance="baseline:8070"}
+        values: 0+6x5
+      - series: osfu_rtp_packets_total{instance="baseline:8070",direction="ingress"}
+        values: 0+6000x5
+      - series: osfu_rtp_forwarded_packets_total{instance="baseline:8070",destination="local_rtc"}
+        values: 0+18000x5
+      - series: osfu_media_quality_loss_observations_total{instance="baseline:8070",direction="ingress"}
+        values: 0+6x5
+      - series: osfu_media_quality_loss_ppm_observed_total{instance="baseline:8070",direction="ingress"}
+        values: 0+60000x5
+      - series: osfu_transport_user_lifetime_seconds_count{instance="baseline:8070"}
+        values: 0+20x5
+      - series: osfu_transport_user_lifetime_seconds_bucket{instance="baseline:8070",le="10"}
+        values: 0+4x5
+      - series: osfu_transport_user_lifetime_seconds_bucket{instance="baseline:8070",le="60"}
+        values: 0+8x5
+      - series: osfu_rtc_rtcp_ingress_budget_drops_total{instance="baseline:8070"}
+        values: 0+0x5
+      - series: osfu_rtc_output_budget_exhaustions_total{instance="baseline:8070",limit="events"}
+        values: 0+0x5
+      - series: osfu_rtc_output_budget_session_closes_total{instance="baseline:8070"}
+        values: 0+0x5
+      - series: up{job="o-sfu",instance="candidate:8071"}
+        values: 1x5
+      - series: up{job="o-sfu-noop",instance="candidate:8071"}
+        values: 1x5
+      - series: probe_success{job="o-sfu-noop",instance="candidate:8071"}
+        values: 1x5
+      - series: up{job="o-sfu-diagnostics",instance="candidate:8071"}
+        values: 1x5
+      - series: probe_success{job="o-sfu-diagnostics",instance="candidate:8071"}
+        values: 1x5
+      - series: osfu_users_active{instance="candidate:8071"}
+        values: 10x5
+      - series: osfu_ws_connections_total{instance="candidate:8071",stage="accepted"}
+        values: 0+6x5
+      - series: osfu_ws_connections_total{instance="candidate:8071",stage="credentials_received"}
+        values: 0+6x5
+      - series: osfu_ws_connections_total{instance="candidate:8071",stage="joined"}
+        values: 0+3x5
+      - series: osfu_transport_dtls_connected_total{instance="candidate:8071"}
+        values: 0+1x5
+      - series: osfu_rtp_packets_total{instance="candidate:8071",direction="ingress"}
+        values: 0+6000x5
+      - series: osfu_rtp_forwarded_packets_total{instance="candidate:8071",destination="local_rtc"}
+        values: 0+12000x5
+      - series: osfu_media_quality_loss_observations_total{instance="candidate:8071",direction="ingress"}
+        values: 0+6x5
+      - series: osfu_media_quality_loss_ppm_observed_total{instance="candidate:8071",direction="ingress"}
+        values: 0+300000x5
+      - series: osfu_transport_user_lifetime_seconds_count{instance="candidate:8071"}
+        values: 0+20x5
+      - series: osfu_transport_user_lifetime_seconds_bucket{instance="candidate:8071",le="10"}
+        values: 0+4x5
+      - series: osfu_transport_user_lifetime_seconds_bucket{instance="candidate:8071",le="60"}
+        values: 0+8x5
+      - series: osfu_rtc_rtcp_ingress_budget_drops_total{instance="candidate:8071"}
+        values: 0+0x5
+      - series: osfu_rtc_output_budget_exhaustions_total{instance="candidate:8071",limit="events"}
+        values: 0+2x5
+      - series: osfu_rtc_output_budget_session_closes_total{instance="candidate:8071"}
+        values: 0+1x5
+      - series: up{job="o-sfu",instance="idle:8072"}
+        values: 1x5
+      - series: osfu_users_active{instance="idle:8072"}
+        values: '0x5'
+      - series: osfu_ws_connections_total{instance="idle:8072",stage="accepted"}
+        values: 0+0x5
+      - series: osfu_ws_connections_total{instance="idle:8072",stage="credentials_received"}
+        values: 0+0x5
+      - series: osfu_ws_connections_total{instance="idle:8072",stage="joined"}
+        values: 0+0x5
+      - series: osfu_transport_dtls_connected_total{instance="idle:8072"}
+        values: 0+0x5
+      - series: osfu_rtp_packets_total{instance="idle:8072",direction="ingress"}
+        values: 0+0x5
+      - series: osfu_rtp_forwarded_packets_total{instance="idle:8072",destination="local_rtc"}
+        values: 0+0x5
+      - series: osfu_media_quality_loss_observations_total{instance="idle:8072",direction="ingress"}
+        values: 0+0x5
+      - series: osfu_media_quality_loss_ppm_observed_total{instance="idle:8072",direction="ingress"}
+        values: 0+0x5
+      - series: osfu_transport_user_lifetime_seconds_count{instance="idle:8072"}
+        values: 0+0x5
+      - series: osfu_transport_user_lifetime_seconds_bucket{instance="idle:8072",le="10"}
+        values: 0+0x5
+      - series: osfu_transport_user_lifetime_seconds_bucket{instance="idle:8072",le="60"}
+        values: 0+0x5
+      - series: osfu_rtc_rtcp_ingress_budget_drops_total{instance="idle:8072"}
+        values: 0+0x5
+      - series: osfu_rtc_output_budget_exhaustions_total{instance="idle:8072",limit="events"}
+        values: 0+0x5
+      - series: osfu_rtc_output_budget_session_closes_total{instance="idle:8072"}
+        values: 0+0x5
+      - series: up{job="o-sfu",instance="failed:8073"}
+        values: '0x5'
+      - series: up{job="o-sfu-noop",instance="failed:8073"}
+        values: 1x5
+      - series: probe_success{job="o-sfu-noop",instance="failed:8073"}
+        values: '0x5'
+      - series: up{job="o-sfu-diagnostics",instance="failed:8073"}
+        values: 1x5
+      - series: probe_success{job="o-sfu-diagnostics",instance="failed:8073"}
+        values: '0x5'
+      - series: osfu_users_active{instance="failed:8073"}
+        values: 10x5
+      - series: osfu_ws_connections_total{instance="failed:8073",stage="accepted"}
+        values: 0+6x5
+      - series: osfu_ws_connections_total{instance="failed:8073",stage="credentials_received"}
+        values: 0+6x5
+      - series: osfu_ws_connections_total{instance="failed:8073",stage="joined"}
+        values: 0+6x5
+      - series: osfu_transport_dtls_connected_total{instance="failed:8073"}
+        values: 0+6x5
+      - series: osfu_rtp_packets_total{instance="failed:8073",direction="ingress"}
+        values: 0+6000x5
+      - series: osfu_rtp_forwarded_packets_total{instance="failed:8073",destination="local_rtc"}
+        values: 0+18000x5
+      - series: osfu_media_quality_loss_observations_total{instance="failed:8073",direction="ingress"}
+        values: 0+6x5
+      - series: osfu_media_quality_loss_ppm_observed_total{instance="failed:8073",direction="ingress"}
+        values: 0+60000x5
+      - series: osfu_transport_user_lifetime_seconds_count{instance="failed:8073"}
+        values: 0+20x5
+      - series: osfu_transport_user_lifetime_seconds_bucket{instance="failed:8073",le="10"}
+        values: 0+4x5
+      - series: osfu_transport_user_lifetime_seconds_bucket{instance="failed:8073",le="60"}
+        values: 0+8x5
+      - series: osfu_rtc_rtcp_ingress_budget_drops_total{instance="failed:8073"}
+        values: 0+0x5
+      - series: osfu_rtc_output_budget_exhaustions_total{instance="failed:8073",limit="events"}
+        values: 0+0x5
+      - series: osfu_rtc_output_budget_session_closes_total{instance="failed:8073"}
+        values: 0+0x5
+      - series: up{job="o-sfu",instance="stale:8074"}
+        values: 1 1 _x4
+      - series: osfu_users_active{instance="stale:8074"}
+        values: 10x5
+      - series: osfu_ws_connections_total{instance="stale:8074",stage="accepted"}
+        values: 0+6x5
+      - series: osfu_ws_connections_total{instance="stale:8074",stage="credentials_received"}
+        values: 0+6x5
+      - series: osfu_ws_connections_total{instance="stale:8074",stage="joined"}
+        values: 0+6x5
+      - series: osfu_transport_dtls_connected_total{instance="stale:8074"}
+        values: 0+6x5
+      - series: osfu_rtp_packets_total{instance="stale:8074",direction="ingress"}
+        values: 0+6000x5
+      - series: osfu_rtp_forwarded_packets_total{instance="stale:8074",destination="local_rtc"}
+        values: 0+18000x5
+      - series: osfu_media_quality_loss_observations_total{instance="stale:8074",direction="ingress"}
+        values: 0+6x5
+      - series: osfu_media_quality_loss_ppm_observed_total{instance="stale:8074",direction="ingress"}
+        values: 0+60000x5
+      - series: osfu_transport_user_lifetime_seconds_count{instance="stale:8074"}
+        values: 0+20x5
+      - series: osfu_transport_user_lifetime_seconds_bucket{instance="stale:8074",le="10"}
+        values: 0+4x5
+      - series: osfu_transport_user_lifetime_seconds_bucket{instance="stale:8074",le="60"}
+        values: 0+8x5
+      - series: osfu_rtc_rtcp_ingress_budget_drops_total{instance="stale:8074"}
+        values: 0+0x5
+      - series: osfu_rtc_output_budget_exhaustions_total{instance="stale:8074",limit="events"}
+        values: 0+0x5
+      - series: osfu_rtc_output_budget_session_closes_total{instance="stale:8074"}
+        values: 0+0x5
+    promql_expr_test:
+      - expr: osfu:metrics_available
+        eval_time: 5m
+        exp_samples:
+          - labels: osfu:metrics_available{instance="baseline:8070"}
+            value: 1
+          - labels: osfu:metrics_available{instance="candidate:8071"}
+            value: 1
+          - labels: osfu:metrics_available{instance="idle:8072"}
+            value: 1
+          - labels: osfu:metrics_available{instance="failed:8073"}
+            value: 0
+          - labels: osfu:metrics_available{instance="stale:8074"}
+            value: 0
+      - expr: osfu:metrics_available{instance="unknown:8075"}
+        eval_time: 5m
+        exp_samples: []
+      - expr: osfu:noop_probe_status
+        eval_time: 5m
+        exp_samples:
+          - labels: osfu:noop_probe_status{instance="baseline:8070"}
+            value: 1
+          - labels: osfu:noop_probe_status{instance="candidate:8071"}
+            value: 1
+          - labels: osfu:noop_probe_status{instance="idle:8072"}
+            value: -1
+          - labels: osfu:noop_probe_status{instance="failed:8073"}
+            value: 0
+          - labels: osfu:noop_probe_status{instance="stale:8074"}
+            value: -1
+      - expr: osfu:operator_activity_status
+        eval_time: 5m
+        exp_samples:
+          - labels: osfu:operator_activity_status{instance="baseline:8070"}
+            value: 1
+          - labels: osfu:operator_activity_status{instance="candidate:8071"}
+            value: 1
+          - labels: osfu:operator_activity_status{instance="idle:8072"}
+            value: 0
+          - labels: osfu:operator_activity_status{instance="failed:8073"}
+            value: -1
+          - labels: osfu:operator_activity_status{instance="stale:8074"}
+            value: -1
+      - expr: osfu:operator_alert_status{instance="idle:8072"}
+        eval_time: 1m
+        exp_samples:
+          - labels: osfu:operator_alert_status{instance="idle:8072"}
+            value: -1
+      - expr: osfu:ws_join_success_ratio_5m
+        eval_time: 5m
+        exp_samples:
+          - labels: osfu:ws_join_success_ratio_5m{instance="baseline:8070"}
+            value: 1
+          - labels: osfu:ws_join_success_ratio_5m{instance="candidate:8071"}
+            value: 0.5
+      - expr: osfu:local_forwarding_fanout_ratio_5m
+        eval_time: 5m
+        exp_samples:
+          - labels: osfu:local_forwarding_fanout_ratio_5m{instance="baseline:8070"}
+            value: 3
+          - labels: osfu:local_forwarding_fanout_ratio_5m{instance="candidate:8071"}
+            value: 2
+      - expr: osfu:media_quality_ingress_loss_ppm_average_5m
+        eval_time: 5m
+        exp_samples:
+          - labels: osfu:media_quality_ingress_loss_ppm_average_5m{instance="baseline:8070"}
+            value: 10000
+          - labels: osfu:media_quality_ingress_loss_ppm_average_5m{instance="candidate:8071"}
+            value: 50000
+      - expr: osfu:media_quality_ingress_loss_observations_5m{instance="idle:8072"}
+        eval_time: 5m
+        exp_samples:
+          - labels: osfu:media_quality_ingress_loss_observations_5m{instance="idle:8072"}
+            value: 0
+      - expr: osfu:transport_short_sessions_le10s_ratio_5m
+        eval_time: 5m
+        exp_samples:
+          - labels: osfu:transport_short_sessions_le10s_ratio_5m{instance="baseline:8070"}
+            value: 0.2
+          - labels: osfu:transport_short_sessions_le10s_ratio_5m{instance="candidate:8071"}
+            value: 0.2
+      - expr: osfu:transport_short_sessions_le60s_ratio_5m
+        eval_time: 5m
+        exp_samples:
+          - labels: osfu:transport_short_sessions_le60s_ratio_5m{instance="baseline:8070"}
+            value: 0.4
+          - labels: osfu:transport_short_sessions_le60s_ratio_5m{instance="candidate:8071"}
+            value: 0.4
+      - expr: osfu:operator_boundary_status{instance="candidate:8071",boundary=~"Admission|ICE / DTLS events|Protective limits"}
+        eval_time: 5m
+        exp_samples:
+          - labels: osfu:operator_boundary_status{instance="candidate:8071",boundary="Admission"}
+            value: 2
+          - labels: osfu:operator_boundary_status{instance="candidate:8071",boundary="ICE / DTLS events"}
+            value: 2
+          - labels: osfu:operator_boundary_status{instance="candidate:8071",boundary="Protective limits"}
+            value: 2
+      - expr: osfu:operator_boundary_status{instance="idle:8072",boundary="Admission"}
+        eval_time: 5m
+        exp_samples:
+          - labels: osfu:operator_boundary_status{instance="idle:8072",boundary="Admission"}
+            value: 0
+  - name: Pipeline failures survive simultaneous zero failure counters
+    interval: 1m
+    input_series:
+      - series: otelcol_exporter_send_failed_log_records{job="otel-collector",exporter="otlphttp/loki"}
+        values: 0+6x12
+      - series: otelcol_exporter_send_failed_spans{job="otel-collector",exporter="otlphttp/loki"}
+        values: '0x12'
+      - series: otelcol_exporter_enqueue_failed_log_records{job="otel-collector",exporter="otlphttp/loki"}
+        values: '0x12'
+      - series: otelcol_exporter_enqueue_failed_spans{job="otel-collector",exporter="otlphttp/loki"}
+        values: '0x12'
+    promql_expr_test:
+      - expr: ALERTS{alertname="TelemetryExportFailures",alertstate="firing"}
+        eval_time: 12m
+        exp_samples:
+          - labels: ALERTS{alertname="TelemetryExportFailures",alertstate="firing",exporter="otlphttp/loki",severity="warning"}
+            value: 1
+  - name: Exporter scrape failure cannot reuse a previous successful probe
+    interval: 1m
+    input_series:
+      - series: up{job="o-sfu",instance="baseline:8070"}
+        values: 1x5
+      - series: up{job="o-sfu-noop",instance="baseline:8070"}
+        values: 1 0x4
+      - series: probe_success{job="o-sfu-noop",instance="baseline:8070"}
+        values: 1 _x5
+    promql_expr_test:
+      - expr: osfu:noop_probe_status
+        eval_time: 1m
+        exp_samples:
+          - labels: osfu:noop_probe_status{instance="baseline:8070"}
+            value: -1
+  - name: Sub-event window differences do not fire an event-gap warning
+    interval: 1m
+    input_series:
+      - series: up{job="o-sfu",instance="baseline:8070"}
+        values: 1x30
+      - series: osfu_ws_connections_total{stage="joined",instance="baseline:8070"}
+        values: 0+6x30
+      - series: osfu_transport_dtls_connected_total{instance="baseline:8070"}
+        values: 0+5.9999999x30
+      - series: up{job="o-sfu",instance="candidate:8071"}
+        values: 1x30
+      - series: osfu_ws_connections_total{stage="joined",instance="candidate:8071"}
+        values: 0+6x30
+      - series: osfu_transport_dtls_connected_total{instance="candidate:8071"}
+        values: 0+5.5x30
+    promql_expr_test:
+      - expr: ALERTS{alertname="OSFUJoinedWithoutDtlsGrowth",alertstate="firing"}
+        eval_time: 30m
+        exp_samples:
+          - labels: ALERTS{alertname="OSFUJoinedWithoutDtlsGrowth",alertstate="firing",instance="candidate:8071",severity="warning"}
+            value: 1

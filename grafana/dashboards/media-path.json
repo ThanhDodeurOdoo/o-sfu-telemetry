@@ -7,170 +7,1276 @@
   "graphTooltip": 0,
   "panels": [
     {
-      "datasource": "Prometheus",
-      "description": "The volume of actual audio/video data entering (ingress) and leaving (egress) the server. Egress is usually much higher as one person broadcasting is sent to many viewers.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bps"
-        },
-        "overrides": []
-      },
+      "id": 100,
+      "title": "1. Media quality",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
       "gridPos": {
-        "h": 8,
-        "w": 12,
         "x": 0,
-        "y": 0
-      },
-      "id": 1,
-      "targets": [
-        {
-          "expr": "sum(rate(osfu_rtp_payload_bytes_total{direction=\"ingress\"}[1m])) * 8",
-          "legendFormat": "ingress",
-          "refId": "A"
-        },
-        {
-          "expr": "sum(rate(osfu_rtp_payload_bytes_total{direction=\"egress\"}[1m])) * 8",
-          "legendFormat": "egress",
-          "refId": "B"
-        }
-      ],
-      "title": "RTP Payload Bitrate",
-      "type": "timeseries"
+        "y": 0,
+        "w": 24,
+        "h": 1
+      }
     },
     {
-      "datasource": "Prometheus",
-      "description": "Tracks where packets are being sent after they reach the SFU. 'local_rtc' represents internal processing, while other labels represent physical network interfaces.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "pps"
-        },
-        "overrides": []
-      },
+      "description": "Sampled peer RTT and media RTT p95 over five minutes. Media combines ingress and egress observations. No observations or unavailable scrape data produces a gap.",
+      "id": 23,
+      "title": "Sampled RTT p95",
+      "type": "timeseries",
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      },
-      "id": 2,
-      "targets": [
-        {
-          "expr": "sum by (destination) (rate(osfu_rtp_forwarded_packets_total[1m]))",
-          "legendFormat": "{{destination}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Forwarded Packets by Destination",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "Shows which internal logic paths are being used to move data. This helps developers verify that the 'fast path' is being used for media instead of slower 'fallback' paths.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
         "x": 0,
-        "y": 8
+        "y": 1,
+        "w": 12,
+        "h": 7
       },
-      "id": 3,
       "targets": [
         {
-          "expr": "sum by (path) (rate(osfu_rtc_datagram_routes_total[5m]))",
-          "legendFormat": "{{path}}",
-          "refId": "A"
+          "expr": "osfu:media_quality_peer_rtt_p95_5m{instance=~\"$instance\"}",
+          "refId": "A",
+          "legendFormat": "{{instance}} peer"
+        },
+        {
+          "expr": "osfu:media_quality_media_rtt_p95_5m{instance=~\"$instance\"}",
+          "refId": "B",
+          "legendFormat": "{{instance}} media"
         }
       ],
-      "title": "RTC Datagram Routing Paths",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "A critical graph showing exactly why media data is being lost. 'No user' means the recipient left, 'Congestion' means the network is full, and 'Rate Limit' means the server is protecting itself.",
       "fieldConfig": {
         "defaults": {
-          "unit": "ops"
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "description": "Mean sampled ingress and egress loss fractions over five minutes. Samples can include peer and stream reports and are not weighted by packet volume. A gap means no observations or unavailable scrape data.",
+      "id": 24,
+      "title": "Sampled Loss Fraction",
+      "type": "timeseries",
       "gridPos": {
-        "h": 8,
-        "w": 12,
         "x": 12,
-        "y": 8
+        "y": 1,
+        "w": 12,
+        "h": 7
       },
-      "id": 4,
       "targets": [
         {
-          "expr": "sum by (reason) (rate(osfu_rtc_datagram_drops_total[5m]))",
-          "legendFormat": "{{reason}}",
-          "refId": "A"
+          "expr": "osfu:media_quality_ingress_loss_ppm_average_5m{instance=~\"$instance\"} / 1000000",
+          "refId": "A",
+          "legendFormat": "{{instance}} ingress"
+        },
+        {
+          "expr": "osfu:media_quality_egress_loss_ppm_average_5m{instance=~\"$instance\"} / 1000000",
+          "refId": "B",
+          "legendFormat": "{{instance}} egress"
         }
       ],
-      "title": "RTC Datagram Drops",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "Measures how hard the server is working to find valid recipients for incoming media. Sudden spikes here can indicate high CPU usage and potential lag.",
       "fieldConfig": {
         "defaults": {
-          "unit": "ops"
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percentunit",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "description": "Mean sampled peer egress bandwidth estimate over five minutes. This is an observation average and does not describe the worst receiver. A gap means no BWE observations or unavailable scrape data.",
+      "id": 25,
+      "title": "Sampled BWE Average",
+      "type": "timeseries",
       "gridPos": {
-        "h": 8,
-        "w": 12,
         "x": 0,
-        "y": 16
+        "y": 8,
+        "w": 12,
+        "h": 7
       },
-      "id": 5,
       "targets": [
         {
-          "expr": "sum(rate(osfu_rtc_datagram_fallback_scans_total[5m]))",
-          "legendFormat": "fallback scans/s",
-          "refId": "A"
-        },
-        {
-          "expr": "sum(rate(osfu_rtc_datagram_scan_users_total[5m]))",
-          "legendFormat": "scanned users/s",
-          "refId": "B"
+          "expr": "osfu:media_quality_bwe_bps_average_5m{instance=~\"$instance\"}",
+          "refId": "A",
+          "legendFormat": "{{instance}} peer bwe"
         }
       ],
-      "title": "Routing Pressure",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "Shows the result of internal routing decisions (e.g., 'Success', 'Skipped', or 'Error'). Use this to verify that media is being routed correctly to every subscriber.",
       "fieldConfig": {
         "defaults": {
-          "unit": "ops"
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bps",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 16
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
-      "id": 6,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "description": "Mean sampled remote egress jitter in raw RTP timestamp units. Values can mix codec clock rates and are not milliseconds. A gap means no jitter observations or unavailable scrape data.",
+      "id": 26,
+      "title": "Sampled Egress Jitter",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 7
+      },
       "targets": [
         {
-          "expr": "sum by (outcome) (rate(osfu_rtc_route_control_total[5m]))",
-          "legendFormat": "{{outcome}}",
-          "refId": "A"
+          "expr": "osfu:media_quality_egress_jitter_average_5m{instance=~\"$instance\"}",
+          "refId": "A",
+          "legendFormat": "{{instance}} rtp timestamp units"
         }
       ],
-      "title": "Route Control Outcomes",
-      "type": "timeseries"
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "id": 40,
+      "title": "Peer RTT observations / 5m",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Number of observations underlying this five-minute quality view. Zero means no observations. Unavailable means current scrape evidence is unavailable.",
+      "targets": [
+        {
+          "expr": "osfu:media_quality_peer_rtt_observations_5m{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}}",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "No observations",
+                  "color": "gray"
+                }
+              }
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "id": 41,
+      "title": "Media RTT observations / 5m",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Number of observations underlying this five-minute quality view. Zero means no observations. Unavailable means current scrape evidence is unavailable.",
+      "targets": [
+        {
+          "expr": "osfu:media_quality_media_rtt_observations_5m{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}}",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "No observations",
+                  "color": "gray"
+                }
+              }
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 15,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "id": 42,
+      "title": "Ingress loss observations / 5m",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Number of observations underlying this five-minute quality view. Zero means no observations. Unavailable means current scrape evidence is unavailable.",
+      "targets": [
+        {
+          "expr": "osfu:media_quality_ingress_loss_observations_5m{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}}",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "No observations",
+                  "color": "gray"
+                }
+              }
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 15,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "id": 43,
+      "title": "Egress loss observations / 5m",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Number of observations underlying this five-minute quality view. Zero means no observations. Unavailable means current scrape evidence is unavailable.",
+      "targets": [
+        {
+          "expr": "osfu:media_quality_egress_loss_observations_5m{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}}",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "No observations",
+                  "color": "gray"
+                }
+              }
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 15,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "id": 44,
+      "title": "BWE observations / 5m",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Number of observations underlying this five-minute quality view. Zero means no observations. Unavailable means current scrape evidence is unavailable.",
+      "targets": [
+        {
+          "expr": "osfu:media_quality_bwe_observations_5m{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}}",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "No observations",
+                  "color": "gray"
+                }
+              }
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 15,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "id": 45,
+      "title": "Jitter observations / 5m",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Number of observations underlying this five-minute quality view. Zero means no observations. Unavailable means current scrape evidence is unavailable.",
+      "targets": [
+        {
+          "expr": "osfu:media_quality_jitter_observations_5m{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}}",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "No observations",
+                  "color": "gray"
+                }
+              }
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 15,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "id": 101,
+      "title": "2. Decoder recovery and packet repair",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 27,
+      "title": "Decoder Refreshes",
+      "type": "timeseries",
+      "description": "Decoder-refresh RTP packets by source or RID scope. Aggregate counts do not identify a frozen receiver. Inspect its selected encoding and packet timestamps in User Diagnostics.",
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "osfu:rtp_decoder_refresh_rate_5m{instance=~\"$instance\"}",
+          "refId": "A",
+          "legendFormat": "{{instance}} {{scope}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "id": 28,
+      "title": "Keyframe Recovery Outcomes",
+      "type": "timeseries",
+      "description": "Keyframe tracker forwards, coalesced requests, retries and requests cleared by decoder refreshes. These event rates do not form a per-request success ratio.",
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "(sum by (instance, outcome) (rate(osfu_rtc_keyframe_requests_total{instance=~\"$instance\"}[$__rate_interval]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} {{outcome}}",
+          "refId": "A",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "id": 30,
+      "title": "Generic NACK Feedback",
+      "description": "Generic NACK events sent to publishers or received from subscribers. Events can request multiple packets and are not a packet-loss percentage.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "(sum by (instance, direction) (rate(osfu_rtc_nacks_total{instance=~\"$instance\"}[$__rate_interval]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} {{direction}}",
+          "refId": "A",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 27,
+        "w": 12,
+        "h": 7
+      }
+    },
+    {
+      "id": 31,
+      "title": "Publisher RTX Received",
+      "description": "Authenticated repair packets accepted from publishers after de-RTX. No subscriber retransmission count or repair success ratio is inferred.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "(sum by (instance) (rate(osfu_rtc_rtx_packets_total{instance=~\"$instance\",direction=\"received_from_publisher\"}[$__rate_interval]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} publisher repair packets",
+          "refId": "A",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "pps",
+          "min": 0,
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 27,
+        "w": 12,
+        "h": 7
+      }
+    },
+    {
+      "id": 102,
+      "title": "3. Transport protection",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 34,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 34,
+      "title": "RTCP Ingress Budget Drops",
+      "description": "Candidate RTCP datagrams rejected by the per-session ingress byte budget. This is a server protection event, not a measured network-loss rate.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "osfu:rtcp_ingress_budget_drops_rate_5m{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} RTCP datagrams",
+          "refId": "A",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "pps",
+          "min": 0,
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 8,
+        "h": 7
+      }
+    },
+    {
+      "id": 35,
+      "title": "Output Budget Exhaustions",
+      "description": "RTC session drains that exceeded a packet or payload-byte budget. Exhaustion rolls back the drain and closes that session.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum by (instance, limit) (rate(osfu_rtc_output_budget_exhaustions_total{instance=~\"$instance\"}[$__rate_interval])) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} {{limit}}",
+          "refId": "A",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 35,
+        "w": 8,
+        "h": 7
+      }
+    },
+    {
+      "id": 36,
+      "title": "Sessions Closed by Output Budget",
+      "description": "RTC sessions closed because an output drain exceeded its budget. Correlate with transport disconnects and session logs.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "osfu:output_budget_session_closes_rate_5m{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} closed sessions",
+          "refId": "A",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "red"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 35,
+        "w": 8,
+        "h": 7
+      }
+    },
+    {
+      "id": 103,
+      "title": "4. Receiver adaptation",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 42,
+        "w": 24,
+        "h": 1
+      }
     },
     {
       "datasource": "Prometheus",
@@ -178,29 +1284,41 @@
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
-          "mappings": [],
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "blue",
                 "value": null
-              },
-              {
-                "color": "green",
-                "value": 0.01
               }
             ]
           },
-          "decimals": 2
+          "decimals": 2,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "noValue": "Unavailable"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
-        "w": 8,
         "x": 0,
-        "y": 24
+        "y": 43,
+        "w": 8,
+        "h": 4
       },
       "id": 7,
       "options": {
@@ -219,8 +1337,9 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(osfu_budget_solver_outcomes_total[$__rate_interval]))",
-          "refId": "A"
+          "expr": "(sum by (instance) (rate(osfu_budget_solver_outcomes_total{instance=~\"$instance\"}[$__rate_interval]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "refId": "A",
+          "legendFormat": "{{instance}}"
         }
       ],
       "title": "Video Route Transitions/s",
@@ -232,33 +1351,41 @@
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
-          "mappings": [],
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "blue",
                 "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0.05
-              },
-              {
-                "color": "red",
-                "value": 0.2
               }
             ]
           },
-          "decimals": 2
+          "decimals": 2,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "noValue": "Unavailable"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
-        "w": 8,
         "x": 8,
-        "y": 24
+        "y": 43,
+        "w": 8,
+        "h": 4
       },
       "id": 8,
       "options": {
@@ -277,8 +1404,9 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(osfu_budget_solver_outcomes_total{outcome=\"paused\"}[$__rate_interval]))",
-          "refId": "A"
+          "expr": "(sum by (instance) (rate(osfu_budget_solver_outcomes_total{instance=~\"$instance\",outcome=\"paused\"}[$__rate_interval]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "refId": "A",
+          "legendFormat": "{{instance}}"
         }
       ],
       "title": "Policy Pauses/s",
@@ -290,29 +1418,41 @@
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
-          "mappings": [],
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "blue",
                 "value": null
-              },
-              {
-                "color": "green",
-                "value": 0.01
               }
             ]
           },
-          "decimals": 2
+          "decimals": 2,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "noValue": "Unavailable"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
-        "w": 8,
         "x": 16,
-        "y": 24
+        "y": 43,
+        "w": 8,
+        "h": 4
       },
       "id": 9,
       "options": {
@@ -331,8 +1471,9 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(osfu_budget_solver_outcomes_total{outcome=\"resumed\"}[$__rate_interval]))",
-          "refId": "A"
+          "expr": "(sum by (instance) (rate(osfu_budget_solver_outcomes_total{instance=~\"$instance\",outcome=\"resumed\"}[$__rate_interval]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "refId": "A",
+          "legendFormat": "{{instance}}"
         }
       ],
       "title": "Policy Resumes/s",
@@ -343,33 +1484,41 @@
       "description": "Average rate of committed receiver video route transitions by outcome over the selected time range.",
       "fieldConfig": {
         "defaults": {
-          "mappings": [],
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "blue",
                 "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0.05
-              },
-              {
-                "color": "red",
-                "value": 0.2
               }
             ]
           },
-          "unit": "ops"
+          "unit": "ops",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "noValue": "Unavailable"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 10,
         "x": 0,
-        "y": 29
+        "y": 47,
+        "w": 10,
+        "h": 7
       },
       "id": 11,
       "options": {
@@ -389,8 +1538,8 @@
       },
       "targets": [
         {
-          "expr": "sum by (outcome) (rate(osfu_budget_solver_outcomes_total[$__rate_interval]))",
-          "legendFormat": "{{outcome}}",
+          "expr": "(sum by (instance, outcome) (rate(osfu_budget_solver_outcomes_total{instance=~\"$instance\"}[$__rate_interval]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} {{outcome}}",
           "refId": "A"
         }
       ],
@@ -398,7 +1547,10 @@
       "type": "bargauge"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "description": "Rate of committed receiver video route degradation, pause and resume transitions over time.",
       "fieldConfig": {
         "defaults": {
@@ -411,24 +1563,42 @@
                 "value": null
               }
             ]
+          },
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
           }
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 14,
         "x": 10,
-        "y": 29
+        "y": 47,
+        "w": 14,
+        "h": 7
       },
       "id": 12,
       "options": {
         "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "showLegend": true,
           "displayMode": "table",
-          "placement": "bottom"
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
         },
         "tooltip": {
           "mode": "multi",
@@ -437,8 +1607,8 @@
       },
       "targets": [
         {
-          "expr": "sum by (outcome) (rate(osfu_budget_solver_outcomes_total[$__rate_interval]))",
-          "legendFormat": "{{outcome}}",
+          "expr": "(sum by (instance, outcome) (rate(osfu_budget_solver_outcomes_total{instance=~\"$instance\"}[$__rate_interval]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} {{outcome}}",
           "refId": "A"
         }
       ],
@@ -446,7 +1616,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "description": "Compares accepted encoding-selector updates with committed receiver video route transitions and policy pauses.",
       "fieldConfig": {
         "defaults": {
@@ -459,24 +1632,42 @@
                 "value": null
               }
             ]
+          },
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
           }
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
         "x": 0,
-        "y": 37
+        "y": 54,
+        "w": 12,
+        "h": 6
       },
       "id": 13,
       "options": {
         "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "showLegend": true,
           "displayMode": "table",
-          "placement": "bottom"
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
         },
         "tooltip": {
           "mode": "multi",
@@ -485,18 +1676,18 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(osfu_source_selection_updates_total{selector=\"encoding\"}[$__rate_interval]))",
-          "legendFormat": "encoding selector updates",
+          "expr": "(sum by (instance) (rate(osfu_source_selection_updates_total{instance=~\"$instance\",selector=\"encoding\"}[$__rate_interval]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} encoding selector updates",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(osfu_budget_solver_outcomes_total[$__rate_interval]))",
-          "legendFormat": "route transitions",
+          "expr": "(sum by (instance) (rate(osfu_budget_solver_outcomes_total{instance=~\"$instance\"}[$__rate_interval]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} route transitions",
           "refId": "B"
         },
         {
-          "expr": "sum(rate(osfu_budget_solver_outcomes_total{outcome=\"paused\"}[$__rate_interval]))",
-          "legendFormat": "policy pauses",
+          "expr": "(sum by (instance) (rate(osfu_budget_solver_outcomes_total{instance=~\"$instance\",outcome=\"paused\"}[$__rate_interval]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} policy pauses",
           "refId": "C"
         }
       ],
@@ -505,18 +1696,414 @@
     },
     {
       "gridPos": {
-        "h": 8,
-        "w": 12,
         "x": 12,
-        "y": 37
+        "y": 54,
+        "w": 12,
+        "h": 6
       },
       "id": 14,
       "options": {
-        "content": "### Receiver video route transitions\n\n- **degraded** means an unpaused route switched to an encoding with a lower estimated bitrate.\n- **paused** means a route entered a room-policy pause, including budget pressure, layout restrictions or unavailable layers.\n- **resumed** means a route cleared an existing policy pause.\n\nThese rates count committed transitions. Open **Room Graph** or **User Diagnostics** to inspect receiver BWE, selected budget, route state and pause reason. **User Diagnostics** also shows the receiver soft-pause timer and pending upgrade target with its remaining hold time.",
+        "content": "- **degraded**: an unpaused route switched to a lower estimated bitrate.\n- **paused**: a route entered a policy pause for budget, layout, unavailable layers or a receiver limit.\n- **resumed**: a route cleared its policy pause.\n\nThese are committed transition rates. Zero transitions does not prove that routes are delivering. Open **User Diagnostics** for the selected encoding, pause reason, pending upgrade and packet timestamps.",
         "mode": "markdown"
       },
       "title": "How to Read Receiver Budget Policy",
       "type": "text"
+    },
+    {
+      "id": 104,
+      "title": "5. Media flow and ingress routing",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 60,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "The volume of actual audio/video data entering (ingress) and leaving (egress) the server. Egress is usually much higher as one person broadcasting is sent to many viewers.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 61,
+        "w": 12,
+        "h": 7
+      },
+      "id": 1,
+      "targets": [
+        {
+          "expr": "(sum by (instance) (rate(osfu_rtp_payload_bytes_total{instance=~\"$instance\",direction=\"ingress\"}[1m])) * 8) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} ingress",
+          "refId": "A"
+        },
+        {
+          "expr": "(sum by (instance) (rate(osfu_rtp_payload_bytes_total{instance=~\"$instance\",direction=\"egress\"}[1m])) * 8) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} egress",
+          "refId": "B"
+        }
+      ],
+      "title": "RTP Payload Bitrate",
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "RTP fan-out operations to local RTC consumers, intra-node relay workers or packet sinks. Destination labels identify delivery paths rather than physical network interfaces.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "pps",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 61,
+        "w": 12,
+        "h": 7
+      },
+      "id": 2,
+      "targets": [
+        {
+          "expr": "(sum by (instance, destination) (rate(osfu_rtp_forwarded_packets_total{instance=~\"$instance\"}[1m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} {{destination}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Forwarded Packets by Destination",
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Shows which internal logic paths are being used to move data. This helps developers verify that the 'fast path' is being used for media instead of slower 'fallback' paths.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 68,
+        "w": 12,
+        "h": 7
+      },
+      "id": 3,
+      "targets": [
+        {
+          "expr": "(sum by (instance, path) (rate(osfu_rtc_datagram_routes_total{instance=~\"$instance\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} {{path}}",
+          "refId": "A"
+        }
+      ],
+      "title": "RTC Datagram Routing Paths",
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "RTC UDP datagrams rejected before session delivery, by no_user, malformed, source_rate_limited or recent_miss_cache. These counters do not measure receiver packet loss or network congestion.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 68,
+        "w": 12,
+        "h": 7
+      },
+      "id": 4,
+      "targets": [
+        {
+          "expr": "(sum by (instance, reason) (rate(osfu_rtc_datagram_drops_total{instance=~\"$instance\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} {{reason}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Ingress Routing Rejections",
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Measures how hard the server is working to find valid recipients for incoming media. Sudden spikes here can indicate high CPU usage and potential lag.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 75,
+        "w": 12,
+        "h": 7
+      },
+      "id": 5,
+      "targets": [
+        {
+          "expr": "(sum by (instance) (rate(osfu_rtc_datagram_fallback_scans_total{instance=~\"$instance\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} fallback scans/s",
+          "refId": "A"
+        },
+        {
+          "expr": "(sum by (instance) (rate(osfu_rtc_datagram_scan_users_total{instance=~\"$instance\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} scanned users/s",
+          "refId": "B"
+        }
+      ],
+      "title": "Routing Pressure",
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Transport route-control outcomes. Layer filtering and route-gated relay drops are distinct from forwarded or coalesced keyframe requests.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 75,
+        "w": 12,
+        "h": 7
+      },
+      "id": 6,
+      "targets": [
+        {
+          "expr": "(sum by (instance, outcome) (rate(osfu_rtc_route_control_total{instance=~\"$instance\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} {{outcome}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Route Control Outcomes",
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 105,
+      "title": "6. Relay pressure and control convergence",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 82,
+        "w": 24,
+        "h": 1
+      }
     },
     {
       "datasource": "Prometheus",
@@ -529,28 +2116,37 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "blue",
                 "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0.01
-              },
-              {
-                "color": "red",
-                "value": 0.1
               }
             ]
           },
-          "unit": "ops"
+          "unit": "ops",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
-        "w": 18,
         "x": 0,
-        "y": 45
+        "y": 83,
+        "w": 18,
+        "h": 6
       },
       "id": 15,
       "options": {
@@ -570,33 +2166,33 @@
       },
       "targets": [
         {
-          "expr": "osfu:relay_overload_rate_5m",
+          "expr": "osfu:relay_overload_rate_5m{instance=~\"$instance\"}",
           "instant": true,
-          "legendFormat": "overloaded",
+          "legendFormat": "{{instance}} overloaded",
           "refId": "A"
         },
         {
-          "expr": "osfu:relay_closed_target_rate_5m",
+          "expr": "osfu:relay_closed_target_rate_5m{instance=~\"$instance\"}",
           "instant": true,
-          "legendFormat": "closed targets",
+          "legendFormat": "{{instance}} closed targets",
           "refId": "B"
         },
         {
-          "expr": "osfu:relay_drain_cap_hit_rate_5m",
+          "expr": "osfu:relay_drain_cap_hit_rate_5m{instance=~\"$instance\"}",
           "instant": true,
-          "legendFormat": "drain cap hits",
+          "legendFormat": "{{instance}} drain cap hits",
           "refId": "C"
         },
         {
-          "expr": "sum(osfu:remote_control_drop_rate_5m)",
+          "expr": "sum by (instance) (osfu:remote_control_drop_rate_5m{instance=~\"$instance\"})",
           "instant": true,
-          "legendFormat": "control drops",
+          "legendFormat": "{{instance}} control drops",
           "refId": "D"
         },
         {
-          "expr": "osfu:remote_packet_gate_retry_rate_5m",
+          "expr": "osfu:remote_packet_gate_retry_rate_5m{instance=~\"$instance\"}",
           "instant": true,
-          "legendFormat": "gate retries",
+          "legendFormat": "{{instance}} gate retries",
           "refId": "E"
         }
       ],
@@ -610,15 +2206,41 @@
         "defaults": {
           "decimals": 1,
           "min": 0,
-          "unit": "short"
+          "unit": "short",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
-        "w": 6,
         "x": 18,
-        "y": 45
+        "y": 83,
+        "w": 6,
+        "h": 6
       },
       "id": 16,
       "options": {
@@ -635,16 +2257,20 @@
       },
       "targets": [
         {
-          "expr": "osfu:relay_mailbox_depth_average_5m",
+          "expr": "osfu:relay_mailbox_depth_average_5m{instance=~\"$instance\"}",
           "instant": true,
-          "refId": "A"
+          "refId": "A",
+          "legendFormat": "{{instance}}"
         }
       ],
       "title": "Relay Mailbox Depth",
       "type": "gauge"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "description": "shows accepted plus overloaded plus closed relay enqueue outcomes split by target loop",
       "fieldConfig": {
         "defaults": {
@@ -657,24 +2283,42 @@
               }
             ]
           },
-          "unit": "ops"
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          }
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
         "x": 0,
-        "y": 51
+        "y": 89,
+        "w": 12,
+        "h": 7
       },
       "id": 19,
       "options": {
         "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "showLegend": true,
           "displayMode": "table",
-          "placement": "bottom"
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
         },
         "tooltip": {
           "mode": "multi",
@@ -683,8 +2327,8 @@
       },
       "targets": [
         {
-          "expr": "osfu:relay_enqueue_rate_5m",
-          "legendFormat": "{{target}} {{outcome}}",
+          "expr": "osfu:relay_enqueue_rate_5m{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{target}} {{outcome}}",
           "refId": "A"
         }
       ],
@@ -692,7 +2336,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "description": "compares relay drain throughput with cap hits to show when loops leave queued packets for a later turn",
       "fieldConfig": {
         "defaults": {
@@ -705,24 +2352,42 @@
               }
             ]
           },
-          "unit": "ops"
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          }
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
         "x": 12,
-        "y": 51
+        "y": 89,
+        "w": 12,
+        "h": 7
       },
       "id": 20,
       "options": {
         "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "showLegend": true,
           "displayMode": "table",
-          "placement": "bottom"
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
         },
         "tooltip": {
           "mode": "multi",
@@ -731,18 +2396,18 @@
       },
       "targets": [
         {
-          "expr": "osfu:relay_drained_packet_rate_5m",
-          "legendFormat": "drained packets",
+          "expr": "osfu:relay_drained_packet_rate_5m{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} drained packets",
           "refId": "A"
         },
         {
-          "expr": "osfu:relay_drain_batch_rate_5m",
-          "legendFormat": "drain batches",
+          "expr": "osfu:relay_drain_batch_rate_5m{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} drain batches",
           "refId": "B"
         },
         {
-          "expr": "osfu:relay_drain_cap_hit_rate_5m",
-          "legendFormat": "drain cap hits",
+          "expr": "osfu:relay_drain_cap_hit_rate_5m{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} drain cap hits",
           "refId": "C"
         }
       ],
@@ -750,8 +2415,11 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
-      "description": "breaks down remote-control drops by reason so stale source state is not confused with queue pressure",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Remote-source control commands dropped before enqueue, split into keyframe and packet_gate commands. This metric does not identify the drop reason.",
       "fieldConfig": {
         "defaults": {
           "thresholds": {
@@ -763,24 +2431,42 @@
               }
             ]
           },
-          "unit": "ops"
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          }
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
         "x": 0,
-        "y": 59
+        "y": 96,
+        "w": 12,
+        "h": 7
       },
       "id": 21,
       "options": {
         "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "showLegend": true,
           "displayMode": "table",
-          "placement": "bottom"
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
         },
         "tooltip": {
           "mode": "multi",
@@ -789,16 +2475,19 @@
       },
       "targets": [
         {
-          "expr": "osfu:remote_control_drop_rate_5m",
-          "legendFormat": "{{kind}}",
+          "expr": "osfu:remote_control_drop_rate_5m{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{kind}}",
           "refId": "A"
         }
       ],
-      "title": "Remote Control Drops",
+      "title": "Remote Control Drops by Command",
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "description": "tracks packet-gate convergence after remote source layer changes",
       "fieldConfig": {
         "defaults": {
@@ -811,24 +2500,42 @@
               }
             ]
           },
-          "unit": "ops"
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          }
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
         "x": 12,
-        "y": 59
+        "y": 96,
+        "w": 12,
+        "h": 7
       },
       "id": 22,
       "options": {
         "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "showLegend": true,
           "displayMode": "table",
-          "placement": "bottom"
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
         },
         "tooltip": {
           "mode": "multi",
@@ -837,358 +2544,13 @@
       },
       "targets": [
         {
-          "expr": "osfu:remote_packet_gate_convergence_rate_5m",
-          "legendFormat": "{{outcome}}",
+          "expr": "osfu:remote_packet_gate_convergence_rate_5m{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{outcome}}",
           "refId": "A"
         }
       ],
       "title": "Packet Gate Convergence",
       "type": "timeseries"
-    },
-    {
-      "description": "95th percentile round-trip time sampled across active sessions. Compares transport-layer STUN/ICE peer round-trip latency against media-layer RTCP round-trip latency.",
-      "id": 23,
-      "title": "Sampled RTT p95",
-      "type": "timeseries",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 67
-      },
-      "targets": [
-        {
-          "expr": "osfu:media_quality_peer_rtt_p95_5m",
-          "refId": "A",
-          "legendFormat": "peer"
-        },
-        {
-          "expr": "osfu:media_quality_media_rtt_p95_5m",
-          "refId": "B",
-          "legendFormat": "media"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "showPoints": "never",
-            "spanNulls": false
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      }
-    },
-    {
-      "description": "Sampled packet loss fraction entering (ingress from publishers) and leaving (egress to receivers) the SFU. Highlights publisher upload path degradation versus receiver downlink congestion.",
-      "id": 24,
-      "title": "Sampled Loss Fraction",
-      "type": "timeseries",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 67
-      },
-      "targets": [
-        {
-          "expr": "osfu:media_quality_ingress_loss_ppm_average_5m / 1000000",
-          "refId": "A",
-          "legendFormat": "ingress"
-        },
-        {
-          "expr": "osfu:media_quality_egress_loss_ppm_average_5m / 1000000",
-          "refId": "B",
-          "legendFormat": "egress"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "showPoints": "never",
-            "spanNulls": false
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      }
-    },
-    {
-      "description": "Average receiver bandwidth estimation calculated by congestion control across active sessions. Indicates downstream network capacity trends used by the budget solver.",
-      "id": 25,
-      "title": "Sampled BWE Average",
-      "type": "timeseries",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 75
-      },
-      "targets": [
-        {
-          "expr": "osfu:media_quality_bwe_bps_average_5m",
-          "refId": "A",
-          "legendFormat": "peer bwe"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "showPoints": "never",
-            "spanNulls": false
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "bps"
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      }
-    },
-    {
-      "description": "Average inter-arrival packet jitter reported by remote receivers in RTCP Receiver Reports. Expressed in raw RTP timestamp units to track timing variance across downstream network paths without inferring codec clock rates.",
-      "id": 26,
-      "title": "Sampled Egress Jitter",
-      "type": "timeseries",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 75
-      },
-      "targets": [
-        {
-          "expr": "osfu:media_quality_egress_jitter_average_5m",
-          "refId": "A",
-          "legendFormat": "rtp timestamp units"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "showPoints": "never",
-            "spanNulls": false
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      }
-    },
-    {
-      "id": 27,
-      "title": "Decoder Refreshes",
-      "type": "timeseries",
-      "description": "Rate of RTP packets that can refresh a decoder. RID-scoped refreshes are the signal to inspect when selected simulcast layers freeze while RTP is still flowing.",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 83
-      },
-      "targets": [
-        {
-          "expr": "osfu:rtp_decoder_refresh_rate_5m",
-          "refId": "A",
-          "legendFormat": "{{scope}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "showPoints": "never",
-            "spanNulls": false
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "ops"
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      }
-    },
-    {
-      "id": 28,
-      "title": "Keyframe Requests",
-      "type": "timeseries",
-      "description": "Rate of route-control keyframe requests that escape or are absorbed by coalescing. Use it beside decoder refreshes to see whether frozen viewers and internal RID refreshes are asking for recovery frames.",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 83
-      },
-      "targets": [
-        {
-          "expr": "osfu:rtc_keyframe_requests_forwarded_rate_5m",
-          "refId": "A",
-          "legendFormat": "forwarded"
-        },
-        {
-          "expr": "osfu:rtc_keyframe_requests_absorbed_rate_5m",
-          "refId": "B",
-          "legendFormat": "absorbed"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "showPoints": "never",
-            "spanNulls": false
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "ops"
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      }
     }
   ],
   "refresh": "15s",
@@ -1199,7 +2561,33 @@
     "phase-2"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "name": "instance",
+        "label": "SFU instance",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "label_values(up{job=\"o-sfu\"}, instance)",
+          "refId": "instance"
+        },
+        "definition": "label_values(up{job=\"o-sfu\"}, instance)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": []
+      }
+    ]
   },
   "time": {
     "from": "now-6h",
@@ -1209,5 +2597,18 @@
   "title": "o-sfu Media Path",
   "uid": "osfu-media-path",
   "version": 1,
-  "weekStart": ""
+  "weekStart": "",
+  "links": [
+    {
+      "title": "Investigate",
+      "type": "dashboards",
+      "tags": [
+        "o-sfu"
+      ],
+      "asDropdown": true,
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
+    }
+  ]
 }

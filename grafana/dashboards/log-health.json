@@ -7,17 +7,807 @@
   "graphTooltip": 0,
   "links": [
     {
+      "title": "Investigate",
+      "type": "dashboards",
+      "tags": [
+        "o-sfu"
+      ],
+      "asDropdown": true,
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
+    },
+    {
       "title": "Operations",
       "type": "link",
       "url": "/d/osfu-operations/o-sfu-operations?orgId=1&from=${__from}&to=${__to}"
     },
     {
-      "title": "Explore Logs",
+      "title": "Logs",
       "type": "link",
-      "url": "/explore?orgId=1&left=%7B%22datasource%22:%22loki%22,%22queries%22:%5B%7B%22expr%22:%22%7Bservice_name%3D%5C%22o-sfu%5C%22%7D%20%7C%20json%20%7C%20level%3D~%5C%22WARN%7CERROR%5C%22%22,%22queryType%22:%22range%22,%22refId%22:%22A%22%7D%5D,%22range%22:%7B%22from%22:%22${__from}%22,%22to%22:%22${__to}%22%7D%7D"
+      "url": "/d/osfu-logs/o-sfu-logs?orgId=1&from=${__from}&to=${__to}&var-level=${level:percentencode}"
     }
   ],
   "panels": [
+    {
+      "id": 10,
+      "title": "Prometheus readiness",
+      "description": "Requires a fresh successful metrics scrape and readiness probe. This verifies endpoint availability, not end-to-end delivery.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Unavailable",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Ready",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(min(up{job=\"prometheus\"} * (time() - timestamp(up{job=\"prometheus\"}) < bool 60)) or vector(0)) * (min(probe_success{job=\"telemetry-readiness\",component=\"prometheus\"} * (time() - timestamp(probe_success{job=\"telemetry-readiness\",component=\"prometheus\"}) < bool 60)) or vector(0)) * (min(up{job=\"telemetry-readiness\",component=\"prometheus\"}) or vector(0))",
+          "legendFormat": "Prometheus",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 11,
+      "title": "Collector readiness",
+      "description": "Requires a fresh successful metrics scrape and readiness probe. This verifies endpoint availability, not end-to-end delivery.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Unavailable",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Ready",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(min(up{job=\"otel-collector\"} * (time() - timestamp(up{job=\"otel-collector\"}) < bool 60)) or vector(0)) * (min(probe_success{job=\"telemetry-readiness\",component=\"otel-collector\"} * (time() - timestamp(probe_success{job=\"telemetry-readiness\",component=\"otel-collector\"}) < bool 60)) or vector(0)) * (min(up{job=\"telemetry-readiness\",component=\"otel-collector\"}) or vector(0))",
+          "legendFormat": "Collector",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 12,
+      "title": "Loki readiness",
+      "description": "Requires a fresh successful metrics scrape and readiness probe. This verifies endpoint availability, not end-to-end delivery.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Unavailable",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Ready",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(min(up{job=\"loki\"} * (time() - timestamp(up{job=\"loki\"}) < bool 60)) or vector(0)) * (min(probe_success{job=\"telemetry-readiness\",component=\"loki\"} * (time() - timestamp(probe_success{job=\"telemetry-readiness\",component=\"loki\"}) < bool 60)) or vector(0)) * (min(up{job=\"telemetry-readiness\",component=\"loki\"}) or vector(0))",
+          "legendFormat": "Loki",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 13,
+      "title": "Tempo readiness",
+      "description": "Requires a fresh successful metrics scrape and readiness probe. This verifies endpoint availability, not end-to-end delivery.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Unavailable",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Ready",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(min(up{job=\"tempo\"} * (time() - timestamp(up{job=\"tempo\"}) < bool 60)) or vector(0)) * (min(probe_success{job=\"telemetry-readiness\",component=\"tempo\"} * (time() - timestamp(probe_success{job=\"telemetry-readiness\",component=\"tempo\"}) < bool 60)) or vector(0)) * (min(up{job=\"telemetry-readiness\",component=\"tempo\"}) or vector(0))",
+          "legendFormat": "Tempo",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 14,
+      "title": "Log intake and delivery",
+      "description": "Accepted and successfully exported records per second. Export counts can lag intake while batching or retrying. Zero activity alone does not prove application logging is healthy.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (receiver) (rate(otelcol_receiver_accepted_log_records{job=\"otel-collector\"}[5m]))",
+          "legendFormat": "accepted {{receiver}}",
+          "instant": false,
+          "range": true
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (exporter) (rate(otelcol_exporter_sent_log_records{job=\"otel-collector\"}[5m]))",
+          "legendFormat": "sent {{exporter}}",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "title": "Trace intake and delivery",
+      "description": "Accepted and successfully exported spans per second. No spans may mean sampling or no traced activity. A retained trace is required for a log-to-trace link.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (receiver) (rate(otelcol_receiver_accepted_spans{job=\"otel-collector\"}[5m]))",
+          "legendFormat": "accepted {{receiver}}",
+          "instant": false,
+          "range": true
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (exporter) (rate(otelcol_exporter_sent_spans{job=\"otel-collector\"}[5m]))",
+          "legendFormat": "sent {{exporter}}",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "title": "Refused and failed telemetry",
+      "description": "Receiver refusals and enqueue failures may lose telemetry. Send failures can be retried. Compare queue growth with successful exports before interpreting application log silence.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (receiver) (rate(otelcol_receiver_refused_log_records{job=\"otel-collector\"}[5m]))",
+          "legendFormat": "refused log_records {{receiver}}",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (receiver) (rate(otelcol_receiver_refused_spans{job=\"otel-collector\"}[5m]))",
+          "legendFormat": "refused spans {{receiver}}",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (exporter) (rate(otelcol_exporter_send_failed_log_records{job=\"otel-collector\"}[5m]))",
+          "legendFormat": "send_failed log_records {{exporter}}",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (exporter) (rate(otelcol_exporter_send_failed_spans{job=\"otel-collector\"}[5m]))",
+          "legendFormat": "send_failed spans {{exporter}}",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "E",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (exporter) (rate(otelcol_exporter_enqueue_failed_log_records{job=\"otel-collector\"}[5m]))",
+          "legendFormat": "enqueue_failed log_records {{exporter}}",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "F",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (exporter) (rate(otelcol_exporter_enqueue_failed_spans{job=\"otel-collector\"}[5m]))",
+          "legendFormat": "enqueue_failed spans {{exporter}}",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "title": "Exporter queue occupancy",
+      "description": "Fraction of the configured sending queue in use. Missing series mean the queue is not observed. Queues do not measure free disk space.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 13,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "min": 0,
+          "custom": {
+            "axisSoftMax": 1
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "otelcol_exporter_queue_size{job=\"otel-collector\"} / (otelcol_exporter_queue_capacity{job=\"otel-collector\"} > 0)",
+          "legendFormat": "{{exporter}} {{data_type}}",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 18,
+      "title": "Telemetry process memory",
+      "description": "Resident process memory by service. This is memory consumption, not filesystem capacity.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 21,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "process_resident_memory_bytes{job=~\"prometheus|loki|tempo\"}",
+          "legendFormat": "{{job}}",
+          "instant": false,
+          "range": true
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "otelcol_process_memory_rss{job=\"otel-collector\"}",
+          "legendFormat": "collector",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 19,
+      "title": "Storage capacity when host metrics are enabled",
+      "description": "Free-space fraction by writable host filesystem. Requires the optional Linux node-exporter scrape. No data means host storage is not instrumented. Match the mountpoint backing data/ before interpreting capacity.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 21,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "node_filesystem_avail_bytes{job=\"node\",fstype!~\"tmpfs|overlay|squashfs\",mountpoint!~\"/proc.*|/sys.*\"} / (node_filesystem_size_bytes{job=\"node\",fstype!~\"tmpfs|overlay|squashfs\",mountpoint!~\"/proc.*|/sys.*\"} > 0)",
+          "legendFormat": "{{instance}} {{mountpoint}}",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 20,
+      "title": "All retained application log activity",
+      "description": "Counts all log levels over five minutes independently of the warning filter below. Empty results may mean quiet applications, a broken log source or retention. Check intake, export and readiness above.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 29,
+        "w": 12,
+        "h": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum(count_over_time({service_name=\"o-sfu\"}[5m]))",
+          "legendFormat": "logs / 5m",
+          "instant": false,
+          "range": true,
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 21,
+      "title": "Scrape age",
+      "description": "Age of the latest metrics scrape sample for each telemetry service. This is scrape freshness, not the age of the last application log or quality sample.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 29,
+        "w": 12,
+        "h": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "time() - timestamp(up{job=~\"prometheus|otel-collector|loki|tempo\"})",
+          "legendFormat": "{{job}}",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      }
+    },
     {
       "datasource": {
         "type": "loki",
@@ -34,7 +824,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "blue",
                 "value": null
               },
               {
@@ -47,7 +837,8 @@
               }
             ]
           },
-          "unit": "none"
+          "unit": "none",
+          "noValue": "No matching logs"
         },
         "overrides": []
       },
@@ -55,7 +846,7 @@
         "h": 7,
         "w": 6,
         "x": 0,
-        "y": 0
+        "y": 35
       },
       "id": 1,
       "options": {
@@ -81,7 +872,7 @@
           },
           "expr": "sum(count_over_time({service_name=\"o-sfu\"} | json | level=~\"$level\" [$__range]))",
           "instant": true,
-          "queryType": "range",
+          "queryType": "instant",
           "refId": "A"
         }
       ],
@@ -122,7 +913,7 @@
         "h": 7,
         "w": 18,
         "x": 6,
-        "y": 0
+        "y": 35
       },
       "id": 2,
       "options": {
@@ -171,7 +962,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "blue",
                 "value": null
               },
               {
@@ -184,7 +975,8 @@
               }
             ]
           },
-          "unit": "none"
+          "unit": "none",
+          "noValue": "No matching logs"
         },
         "overrides": []
       },
@@ -192,7 +984,7 @@
         "h": 8,
         "w": 10,
         "x": 0,
-        "y": 7
+        "y": 42
       },
       "id": 3,
       "options": {
@@ -221,7 +1013,7 @@
           "expr": "topk(15, sum by (level, event) (count_over_time({service_name=\"o-sfu\"} | json | level=~\"$level\" [$__range])))",
           "instant": true,
           "legendFormat": "{{level}} {{event}}",
-          "queryType": "range",
+          "queryType": "instant",
           "refId": "A"
         }
       ],
@@ -238,7 +1030,7 @@
         "h": 16,
         "w": 14,
         "x": 10,
-        "y": 7
+        "y": 42
       },
       "id": 4,
       "options": {
@@ -299,7 +1091,7 @@
         "h": 8,
         "w": 10,
         "x": 0,
-        "y": 15
+        "y": 50
       },
       "id": 5,
       "options": {
@@ -381,8 +1173,9 @@
     "to": "now"
   },
   "timezone": "",
-  "title": "o-sfu Log Health",
+  "title": "o-sfu Telemetry and Log Health",
   "uid": "osfu-log-health",
   "version": 1,
-  "weekStart": ""
+  "weekStart": "",
+  "description": "Check the metrics, logs and trace pipeline before interpreting quiet application logs. Current readiness is separate from activity in the selected history."
 }

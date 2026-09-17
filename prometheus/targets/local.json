@@ -1,0 +1,10 @@
+[
+  {
+    "targets": [
+      "host.docker.internal:8070"
+    ],
+    "labels": {
+      "deployment_role": "baseline"
+    }
+  }
+]

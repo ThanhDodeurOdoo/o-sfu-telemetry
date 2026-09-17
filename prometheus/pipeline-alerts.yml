@@ -1,0 +1,43 @@
+groups:
+  - name: telemetry-pipeline
+    rules:
+      - alert: TelemetryMetricsUnavailable
+        expr: up{job=~"prometheus|otel-collector|loki|tempo"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Telemetry metrics are unavailable
+          description: Prometheus cannot scrape {{ $labels.job }}. Application silence is inconclusive while telemetry is unavailable.
+      - alert: TelemetryReadinessFailed
+        expr: probe_success{job="telemetry-readiness"} == 0 or up{job="telemetry-readiness"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Telemetry readiness probe failed
+          description: The {{ $labels.component }} readiness endpoint or its blackbox scrape is unavailable.
+      - alert: TelemetryExportFailures
+        expr: sum by (exporter) (rate(otelcol_exporter_send_failed_log_records{job="otel-collector"}[5m])) > 0 or sum by (exporter) (rate(otelcol_exporter_send_failed_spans{job="otel-collector"}[5m])) > 0 or sum by (exporter) (rate(otelcol_exporter_enqueue_failed_log_records{job="otel-collector"}[5m])) > 0 or sum by (exporter) (rate(otelcol_exporter_enqueue_failed_spans{job="otel-collector"}[5m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Telemetry export failures are recurring
+          description: The {{ $labels.exporter }} exporter is failing to send or enqueue telemetry. Send failures may retry, while enqueue failures can discard data.
+      - alert: TelemetryReceiverRefusals
+        expr: sum by (receiver) (rate(otelcol_receiver_refused_log_records{job="otel-collector"}[5m])) > 0 or sum by (receiver) (rate(otelcol_receiver_refused_spans{job="otel-collector"}[5m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Collector receivers are refusing telemetry
+          description: The {{ $labels.receiver }} receiver cannot pass telemetry into the collector pipeline.
+      - alert: TelemetryExportQueueNearCapacity
+        expr: (otelcol_exporter_queue_size{job="otel-collector"} / otelcol_exporter_queue_capacity{job="otel-collector"}) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Collector export queue is near capacity
+          description: The {{ $labels.exporter }} queue has remained above 80 percent capacity for 5 minutes.

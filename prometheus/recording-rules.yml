@@ -1,200 +1,216 @@
 groups:
-  - name: o-sfu-derived
-    rules:
-      - record: osfu:ws_join_attempts_rate_5m
-        expr: sum(rate(osfu_ws_connections_total{stage="accepted"}[5m]))
-
-      - record: osfu:ws_credentials_rate_5m
-        expr: sum(rate(osfu_ws_connections_total{stage="credentials_received"}[5m]))
-
-      - record: osfu:ws_joined_rate_5m
-        expr: sum(rate(osfu_ws_connections_total{stage="joined"}[5m]))
-
-      - record: osfu:recent_join_traffic_5m
-        expr: osfu:ws_join_attempts_rate_5m > bool 0.05
-
-      - record: osfu:ws_credentials_after_accept_ratio_5m
-        expr: clamp_max(osfu:ws_credentials_rate_5m / clamp_min(osfu:ws_join_attempts_rate_5m, 0.001), 1)
-
-      - record: osfu:ws_join_after_credentials_ratio_5m
-        expr: clamp_max(osfu:ws_joined_rate_5m / clamp_min(osfu:ws_credentials_rate_5m, 0.001), 1)
-
-      - record: osfu:ws_join_success_ratio_5m
-        expr: clamp_max(osfu:ws_joined_rate_5m / clamp_min(osfu:ws_join_attempts_rate_5m, 0.001), 1)
-
-      - record: osfu:ws_join_success_ratio_active_5m
-        expr: osfu:ws_join_success_ratio_5m and (osfu:recent_join_traffic_5m > 0)
-
-      - record: osfu:ws_handshake_rejections_rate_5m
-        expr: sum(rate(osfu_ws_handshake_rejections_total[5m]))
-
-      - record: osfu:ws_startup_failures_rate_5m
-        expr: sum(rate(osfu_ws_startup_failures_total[5m]))
-
-      - record: osfu:ws_outbound_queue_depth
-        expr: sum(osfu_ws_outbound_queued_messages)
-
-      - record: osfu:ws_outbound_queue_overflow_rate_5m
-        expr: sum(rate(osfu_ws_outbound_queue_overflows_total[5m]))
-
-      - record: osfu:transport_ice_checks_rate_5m
-        expr: sum(rate(osfu_transport_ice_state_changes_total{state="checking"}[5m]))
-
-      - record: osfu:transport_ice_completed_rate_5m
-        expr: sum(rate(osfu_transport_ice_state_changes_total{state="completed"}[5m]))
-
-      - record: osfu:transport_dtls_connected_rate_5m
-        expr: sum(rate(osfu_transport_dtls_connected_total[5m]))
-
-      - record: osfu:ice_check_after_join_ratio_5m
-        expr: clamp_max(osfu:transport_ice_checks_rate_5m / clamp_min(osfu:ws_joined_rate_5m, 0.001), 1)
-
-      - record: osfu:transport_establishment_ratio_5m
-        expr: clamp_max(osfu:transport_ice_completed_rate_5m / clamp_min(osfu:transport_ice_checks_rate_5m, 0.001), 1)
-
-      - record: osfu:transport_establishment_ratio_active_5m
-        expr: osfu:transport_establishment_ratio_5m and (osfu:transport_ice_checks_rate_5m > 0.05)
-
-      - record: osfu:dtls_after_ice_completion_ratio_5m
-        expr: clamp_max(osfu:transport_dtls_connected_rate_5m / clamp_min(osfu:transport_ice_completed_rate_5m, 0.001), 1)
-
-      - record: osfu:dtls_after_join_ratio_5m
-        expr: clamp_max(osfu:transport_dtls_connected_rate_5m / clamp_min(osfu:ws_joined_rate_5m, 0.001), 1)
-
-      - record: osfu:rtp_ingress_packets_rate_5m
-        expr: sum(rate(osfu_rtp_packets_total{direction="ingress"}[5m]))
-
-      - record: osfu:rtp_local_forward_packets_rate_5m
-        expr: sum(rate(osfu_rtp_forwarded_packets_total{destination="local_rtc"}[5m]))
-
-      - record: osfu:rtp_decoder_refresh_rate_5m
-        expr: sum by (scope) (rate(osfu_rtp_decoder_refreshes_total[5m]))
-
-      - record: osfu:rtp_decoder_refresh_rid_rate_5m
-        expr: sum(rate(osfu_rtp_decoder_refreshes_total{scope="rid"}[5m]))
-
-      - record: osfu:rtp_decoder_refresh_source_rate_5m
-        expr: sum(rate(osfu_rtp_decoder_refreshes_total{scope="source"}[5m]))
-
-      - record: osfu:publisher_media_after_dtls_ratio_5m
-        expr: clamp_max((osfu:transport_dtls_connected_rate_5m > bool 0.05) * (osfu:rtp_ingress_packets_rate_5m > bool 10), 1)
-
-      - record: osfu:transport_disconnect_churn_per_user_5m
-        expr: sum(rate(osfu_transport_health_transitions_total{from="connected",to="disconnected"}[5m])) / clamp_min(sum(osfu_transport_users_active), 1)
-
-      - record: osfu:transport_cleanup_failure_rate_5m
-        expr: sum(rate(osfu_transport_cleanup_failures_total[5m]))
-
-      - record: osfu:transport_cleanup_unrecovered_failure_rate_5m
-        expr: sum(rate(osfu_transport_cleanup_failures_total{kind="terminal"}[5m]))
-
-      - record: osfu:local_forwarding_efficiency_ratio_5m
-        expr: clamp_max(osfu:rtp_local_forward_packets_rate_5m / clamp_min(osfu:rtp_ingress_packets_rate_5m, 0.001), 1)
-
-      - record: osfu:local_forwarding_efficiency_active_5m
-        expr: osfu:local_forwarding_efficiency_ratio_5m and (osfu:rtp_ingress_packets_rate_5m > 10)
-
-      - record: osfu:media_quality_samples_rate_5m
-        expr: sum by (sample) (rate(osfu_media_quality_samples_total[5m]))
-
-      - record: osfu:media_quality_peer_rtt_p95_5m
-        expr: histogram_quantile(0.95, sum by (le) (rate(osfu_media_quality_rtt_seconds_bucket{sample="peer"}[5m])))
-
-      - record: osfu:media_quality_media_rtt_p95_5m
-        expr: histogram_quantile(0.95, sum by (le) (rate(osfu_media_quality_rtt_seconds_bucket{sample=~"media_ingress|media_egress"}[5m])))
-
-      - record: osfu:media_quality_ingress_loss_ppm_average_5m
-        expr: sum(rate(osfu_media_quality_loss_ppm_observed_total{direction="ingress"}[5m])) / clamp_min(sum(rate(osfu_media_quality_loss_observations_total{direction="ingress"}[5m])), 0.001)
-
-      - record: osfu:media_quality_egress_loss_ppm_average_5m
-        expr: sum(rate(osfu_media_quality_loss_ppm_observed_total{direction="egress"}[5m])) / clamp_min(sum(rate(osfu_media_quality_loss_observations_total{direction="egress"}[5m])), 0.001)
-
-      - record: osfu:media_quality_bwe_bps_average_5m
-        expr: sum(rate(osfu_media_quality_bwe_bps_observed_total[5m])) / clamp_min(sum(rate(osfu_media_quality_bwe_observations_total[5m])), 0.001)
-
-      - record: osfu:media_quality_egress_jitter_average_5m
-        expr: sum(rate(osfu_media_quality_jitter_rtp_timestamp_units_observed_total[5m])) / clamp_min(sum(rate(osfu_media_quality_jitter_observations_total[5m])), 0.001)
-
-      - record: osfu:budget_solver_outcomes_rate_5m
-        expr: sum by (outcome) (rate(osfu_budget_solver_outcomes_total[5m]))
-
-      - record: osfu:budget_solver_degraded_rate_5m
-        expr: sum(rate(osfu_budget_solver_outcomes_total{outcome="degraded"}[5m]))
-
-      - record: osfu:budget_solver_paused_rate_5m
-        expr: sum(rate(osfu_budget_solver_outcomes_total{outcome="paused"}[5m]))
-
-      - record: osfu:budget_solver_resumed_rate_5m
-        expr: sum(rate(osfu_budget_solver_outcomes_total{outcome="resumed"}[5m]))
-
-      - record: osfu:routing_pressure_rate_5m
-        expr: sum(rate(osfu_rtc_datagram_fallback_scans_total[5m]))
-
-      - record: osfu:no_user_drop_rate_5m
-        expr: sum(rate(osfu_rtc_datagram_drops_total{reason="no_user"}[5m]))
-
-      - record: osfu:relay_enqueue_rate_5m
-        expr: sum by (target, outcome) (rate(osfu_rtc_relay_enqueues_total[5m]))
-
-      - record: osfu:relay_overload_rate_5m
-        expr: sum(rate(osfu_rtc_relay_enqueues_total{outcome="overloaded"}[5m]))
-
-      - record: osfu:relay_closed_target_rate_5m
-        expr: sum(rate(osfu_rtc_relay_enqueues_total{outcome="closed"}[5m]))
-
-      - record: osfu:relay_drain_batch_rate_5m
-        expr: sum(rate(osfu_rtc_relay_drain_batches_total[5m]))
-
-      - record: osfu:relay_drained_packet_rate_5m
-        expr: sum(rate(osfu_rtc_relay_drained_packets_total[5m]))
-
-      - record: osfu:relay_drain_cap_hit_rate_5m
-        expr: sum(rate(osfu_rtc_relay_drain_cap_hits_total[5m]))
-
-      - record: osfu:relay_mailbox_depth_average_5m
-        expr: sum(rate(osfu_rtc_relay_mailbox_depth_observed_total[5m])) / clamp_min(sum(rate(osfu_rtc_relay_mailbox_depth_samples_total[5m])), 0.001)
-
-      - record: osfu:remote_control_drop_rate_5m
-        expr: sum by (kind) (rate(osfu_rtc_remote_control_drops_total[5m]))
-
-      - record: osfu:rtc_keyframe_requests_forwarded_rate_5m
-        expr: sum(rate(osfu_rtc_route_control_total{outcome="forwarded"}[5m]))
-
-      - record: osfu:rtc_keyframe_requests_absorbed_rate_5m
-        expr: sum(rate(osfu_rtc_route_control_total{outcome="absorbed"}[5m]))
-
-      - record: osfu:remote_packet_gate_convergence_rate_5m
-        expr: sum by (outcome) (rate(osfu_rtc_remote_packet_gate_convergence_total[5m]))
-
-      - record: osfu:remote_packet_gate_retry_rate_5m
-        expr: sum(rate(osfu_rtc_remote_packet_gate_convergence_total{outcome="retry"}[5m]))
-
-      - record: osfu:relay_pressure_signal_5m
-        expr: clamp_max((osfu:relay_overload_rate_5m > bool 0) + (osfu:relay_closed_target_rate_5m > bool 0) + (osfu:relay_drain_cap_hit_rate_5m > bool 0) + (sum(osfu:remote_control_drop_rate_5m) > bool 0), 1)
-
-      - record: osfu:joined_minus_dtls_15m
-        expr: clamp_min(sum(increase(osfu_ws_connections_total{stage="joined"}[15m])) - sum(increase(osfu_transport_dtls_connected_total[15m])), 0)
-
-      - record: osfu:operator_boundary_no_recent_traffic
-        expr: osfu:recent_join_traffic_5m == bool 0
-
-      - record: osfu:diagnostics_probe_success
-        expr: max(probe_success{job="o-sfu-diagnostics"} or vector(0))
-
-      - record: osfu:operator_boundary_admission
-        expr: clamp_max((osfu:recent_join_traffic_5m > bool 0) * ((osfu:ws_join_success_ratio_5m < bool 0.9) + (osfu:ws_startup_failures_rate_5m > bool 0.02) + (osfu:ws_handshake_rejections_rate_5m > bool 0.2)), 1)
-
-      - record: osfu:operator_boundary_ice_dtls
-        expr: clamp_max((osfu:ws_joined_rate_5m > bool 0.05) * ((osfu:transport_establishment_ratio_5m < bool 0.9) + (osfu:dtls_after_join_ratio_5m < bool 0.9)), 1)
-
-      - record: osfu:operator_boundary_publisher_media
-        expr: clamp_max((osfu:transport_dtls_connected_rate_5m > bool 0.05) * (osfu:rtp_ingress_packets_rate_5m < bool 10), 1)
-
-      - record: osfu:operator_boundary_forwarding
-        expr: clamp_max((osfu:rtp_ingress_packets_rate_5m > bool 10) * (osfu:local_forwarding_efficiency_ratio_5m < bool 0.6), 1)
-
-      - record: osfu:operator_boundary_churn
-        expr: clamp_max((osfu:transport_disconnect_churn_per_user_5m > bool 0.05) + (sum(osfu_transport_health_users{state="disconnected"}) > bool 0), 1)
-
-      - record: osfu:operator_boundary_routing
-        expr: clamp_max((osfu:routing_pressure_rate_5m > bool 0.5) + (osfu:no_user_drop_rate_5m > bool 0.2) + osfu:relay_pressure_signal_5m, 1)
+- name: o-sfu-derived
+  rules:
+  - record: osfu:metrics_available
+    expr: max by (instance) (up{job="o-sfu"} == bool 1) * on (instance) (max by (instance) (time() - timestamp(up{job="o-sfu"})) <= bool 60)
+  - record: osfu:metrics_scrape_age_seconds
+    expr: max by (instance) (time() - timestamp(up{job="o-sfu"}))
+  - record: osfu:noop_probe_success
+    expr: min by (instance) (probe_success{job="o-sfu-noop"}) and on (instance) (min by (instance) (up{job="o-sfu-noop"}) == 1) and on (instance) (max by (instance)
+      (time() - timestamp(probe_success{job="o-sfu-noop"})) <= 60)
+  - record: osfu:noop_probe_status
+    expr: osfu:noop_probe_success or on (instance) (-1 * max by (instance) (up{job="o-sfu"} >= bool 0))
+  - record: osfu:noop_probe_age_seconds
+    expr: max by (instance) (time() - timestamp(probe_success{job="o-sfu-noop"}))
+  - record: osfu:diagnostics_probe_success
+    expr: min by (instance) (probe_success{job="o-sfu-diagnostics"}) and on (instance) (min by (instance) (up{job="o-sfu-diagnostics"}) == 1) and on (instance) (max
+      by (instance) (time() - timestamp(probe_success{job="o-sfu-diagnostics"})) <= 60)
+  - record: osfu:diagnostics_probe_status
+    expr: osfu:diagnostics_probe_success or on (instance) (-1 * max by (instance) (up{job="o-sfu"} >= bool 0))
+  - record: osfu:diagnostics_probe_age_seconds
+    expr: max by (instance) (time() - timestamp(probe_success{job="o-sfu-diagnostics"}))
+  - record: osfu:media_quality_peer_rtt_observations_5m
+    expr: sum by (instance) (increase(osfu_media_quality_rtt_seconds_count{sample="peer"}[5m])) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:media_quality_media_rtt_observations_5m
+    expr: sum by (instance) (increase(osfu_media_quality_rtt_seconds_count{sample=~"media_ingress|media_egress"}[5m])) and on (instance) (osfu:metrics_available ==
+      1)
+  - record: osfu:media_quality_ingress_loss_observations_5m
+    expr: sum by (instance) (increase(osfu_media_quality_loss_observations_total{direction="ingress"}[5m])) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:media_quality_egress_loss_observations_5m
+    expr: sum by (instance) (increase(osfu_media_quality_loss_observations_total{direction="egress"}[5m])) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:media_quality_bwe_observations_5m
+    expr: sum by (instance) (increase(osfu_media_quality_bwe_observations_total[5m])) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:media_quality_jitter_observations_5m
+    expr: sum by (instance) (increase(osfu_media_quality_jitter_observations_total[5m])) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:ws_join_attempts_rate_5m
+    expr: (sum by (instance) (rate(osfu_ws_connections_total{stage="accepted"}[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:ws_credentials_rate_5m
+    expr: (sum by (instance) (rate(osfu_ws_connections_total{stage="credentials_received"}[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:ws_joined_rate_5m
+    expr: (sum by (instance) (rate(osfu_ws_connections_total{stage="joined"}[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:recent_join_traffic_5m
+    expr: (sum by (instance) (increase(osfu_ws_connections_total{stage="accepted"}[5m])) >= bool 15) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:ws_credentials_after_accept_ratio_5m
+    expr: (osfu:ws_credentials_rate_5m / (osfu:ws_join_attempts_rate_5m > 0)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:ws_join_after_credentials_ratio_5m
+    expr: (osfu:ws_joined_rate_5m / (osfu:ws_credentials_rate_5m > 0)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:ws_join_success_ratio_5m
+    expr: (osfu:ws_joined_rate_5m / (osfu:ws_join_attempts_rate_5m > 0)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:ws_join_success_ratio_active_5m
+    expr: (osfu:ws_join_success_ratio_5m and (osfu:recent_join_traffic_5m > 0)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:ws_handshake_rejections_rate_5m
+    expr: (sum by (instance) (rate(osfu_ws_handshake_rejections_total[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:ws_startup_failures_rate_5m
+    expr: (sum by (instance) (rate(osfu_ws_startup_failures_total[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:ws_outbound_queue_depth
+    expr: (sum by (instance) (osfu_ws_outbound_queued_messages)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:ws_outbound_queue_overflow_rate_5m
+    expr: (sum by (instance) (rate(osfu_ws_outbound_queue_overflows_total[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:transport_ice_checks_rate_5m
+    expr: (sum by (instance) (rate(osfu_transport_ice_state_changes_total{state="checking"}[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:transport_ice_completed_rate_5m
+    expr: (sum by (instance) (rate(osfu_transport_ice_state_changes_total{state="completed"}[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:transport_dtls_connected_rate_5m
+    expr: (sum by (instance) (rate(osfu_transport_dtls_connected_total[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:ice_check_after_join_ratio_5m
+    expr: (osfu:transport_ice_checks_rate_5m / (osfu:ws_joined_rate_5m > 0)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:transport_establishment_ratio_5m
+    expr: (osfu:transport_ice_completed_rate_5m / (osfu:transport_ice_checks_rate_5m > 0)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:transport_establishment_ratio_active_5m
+    expr: (osfu:transport_establishment_ratio_5m and (osfu:transport_ice_checks_rate_5m > 0.05)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:dtls_after_ice_completion_ratio_5m
+    expr: (osfu:transport_dtls_connected_rate_5m / (osfu:transport_ice_completed_rate_5m > 0)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:dtls_after_join_ratio_5m
+    expr: (osfu:transport_dtls_connected_rate_5m / (osfu:ws_joined_rate_5m > 0)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:rtp_ingress_packets_rate_5m
+    expr: (sum by (instance) (rate(osfu_rtp_packets_total{direction="ingress"}[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:rtp_local_forward_packets_rate_5m
+    expr: (sum by (instance) (rate(osfu_rtp_forwarded_packets_total{destination="local_rtc"}[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:rtp_decoder_refresh_rate_5m
+    expr: (sum by (instance, scope) (rate(osfu_rtp_decoder_refreshes_total[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:rtp_decoder_refresh_rid_rate_5m
+    expr: (sum by (instance) (rate(osfu_rtp_decoder_refreshes_total{scope="rid"}[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:rtp_decoder_refresh_source_rate_5m
+    expr: (sum by (instance) (rate(osfu_rtp_decoder_refreshes_total{scope="source"}[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:transport_disconnect_churn_per_user_5m
+    expr: (sum by (instance) (rate(osfu_transport_health_transitions_total{from="connected",to="disconnected"}[5m])) / clamp_min(sum by (instance) (osfu_transport_users_active),
+      1)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:transport_cleanup_failure_rate_5m
+    expr: (sum by (instance) (rate(osfu_transport_cleanup_failures_total[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:transport_cleanup_unrecovered_failure_rate_5m
+    expr: (sum by (instance) (rate(osfu_transport_cleanup_failures_total{kind="terminal"}[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:media_quality_samples_rate_5m
+    expr: (sum by (instance, sample) (rate(osfu_media_quality_samples_total[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:media_quality_peer_rtt_p95_5m
+    expr: ((histogram_quantile(0.95, sum by (instance, le) (rate(osfu_media_quality_rtt_seconds_bucket{sample="peer"}[5m])))) and on (instance) (osfu:media_quality_peer_rtt_observations_5m
+      > 0)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:media_quality_media_rtt_p95_5m
+    expr: ((histogram_quantile(0.95, sum by (instance, le) (rate(osfu_media_quality_rtt_seconds_bucket{sample=~"media_ingress|media_egress"}[5m])))) and on (instance)
+      (osfu:media_quality_media_rtt_observations_5m > 0)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:media_quality_ingress_loss_ppm_average_5m
+    expr: ((sum by (instance) (rate(osfu_media_quality_loss_ppm_observed_total{direction="ingress"}[5m])) / (sum by (instance) (rate(osfu_media_quality_loss_observations_total{direction="ingress"}[5m]))
+      > 0)) and on (instance) (osfu:media_quality_ingress_loss_observations_5m > 0)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:media_quality_egress_loss_ppm_average_5m
+    expr: ((sum by (instance) (rate(osfu_media_quality_loss_ppm_observed_total{direction="egress"}[5m])) / (sum by (instance) (rate(osfu_media_quality_loss_observations_total{direction="egress"}[5m]))
+      > 0)) and on (instance) (osfu:media_quality_egress_loss_observations_5m > 0)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:media_quality_bwe_bps_average_5m
+    expr: ((sum by (instance) (rate(osfu_media_quality_bwe_bps_observed_total[5m])) / (sum by (instance) (rate(osfu_media_quality_bwe_observations_total[5m])) > 0))
+      and on (instance) (osfu:media_quality_bwe_observations_5m > 0)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:media_quality_egress_jitter_average_5m
+    expr: ((sum by (instance) (rate(osfu_media_quality_jitter_rtp_timestamp_units_observed_total[5m])) / (sum by (instance) (rate(osfu_media_quality_jitter_observations_total[5m]))
+      > 0)) and on (instance) (osfu:media_quality_jitter_observations_5m > 0)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:budget_solver_outcomes_rate_5m
+    expr: (sum by (instance, outcome) (rate(osfu_budget_solver_outcomes_total[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:budget_solver_degraded_rate_5m
+    expr: (sum by (instance) (rate(osfu_budget_solver_outcomes_total{outcome="degraded"}[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:budget_solver_paused_rate_5m
+    expr: (sum by (instance) (rate(osfu_budget_solver_outcomes_total{outcome="paused"}[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:budget_solver_resumed_rate_5m
+    expr: (sum by (instance) (rate(osfu_budget_solver_outcomes_total{outcome="resumed"}[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:routing_pressure_rate_5m
+    expr: (sum by (instance) (rate(osfu_rtc_datagram_fallback_scans_total[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:no_user_drop_rate_5m
+    expr: (sum by (instance) (rate(osfu_rtc_datagram_drops_total{reason="no_user"}[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:relay_enqueue_rate_5m
+    expr: (sum by (instance, target, outcome) (rate(osfu_rtc_relay_enqueues_total[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:relay_overload_rate_5m
+    expr: (sum by (instance) (rate(osfu_rtc_relay_enqueues_total{outcome="overloaded"}[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:relay_closed_target_rate_5m
+    expr: (sum by (instance) (rate(osfu_rtc_relay_enqueues_total{outcome="closed"}[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:relay_drain_batch_rate_5m
+    expr: (sum by (instance) (rate(osfu_rtc_relay_drain_batches_total[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:relay_drained_packet_rate_5m
+    expr: (sum by (instance) (rate(osfu_rtc_relay_drained_packets_total[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:relay_drain_cap_hit_rate_5m
+    expr: (sum by (instance) (rate(osfu_rtc_relay_drain_cap_hits_total[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:relay_mailbox_depth_average_5m
+    expr: (sum by (instance) (rate(osfu_rtc_relay_mailbox_depth_observed_total[5m])) / (sum by (instance) (rate(osfu_rtc_relay_mailbox_depth_samples_total[5m])) >
+      0)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:remote_control_drop_rate_5m
+    expr: (sum by (instance, kind) (rate(osfu_rtc_remote_control_drops_total[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:rtc_keyframe_requests_forwarded_rate_5m
+    expr: (sum by (instance) (rate(osfu_rtc_keyframe_requests_total{outcome="forwarded"}[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:rtc_keyframe_requests_absorbed_rate_5m
+    expr: (sum by (instance) (rate(osfu_rtc_keyframe_requests_total{outcome="absorbed"}[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:remote_packet_gate_convergence_rate_5m
+    expr: (sum by (instance, outcome) (rate(osfu_rtc_remote_packet_gate_convergence_total[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:remote_packet_gate_retry_rate_5m
+    expr: (sum by (instance) (rate(osfu_rtc_remote_packet_gate_convergence_total{outcome="retry"}[5m]))) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:relay_pressure_signal_5m
+    expr: (clamp_max((osfu:relay_overload_rate_5m > bool 0) + (osfu:relay_closed_target_rate_5m > bool 0) + (osfu:relay_drain_cap_hit_rate_5m > bool 0) + (sum by
+      (instance) (osfu:remote_control_drop_rate_5m) > bool 0), 1)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:local_forwarding_fanout_ratio_5m
+    expr: osfu:rtp_local_forward_packets_rate_5m / (osfu:rtp_ingress_packets_rate_5m > 0)
+  - record: osfu:join_dtls_event_gap_15m
+    expr: (sum by (instance) (increase(osfu_ws_connections_total{stage="joined"}[15m])) - sum by (instance) (increase(osfu_transport_dtls_connected_total[15m])))
+      and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:ws_accepted_events_5m
+    expr: sum by (instance) (increase(osfu_ws_connections_total{stage="accepted"}[5m])) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:ws_credentials_received_events_5m
+    expr: sum by (instance) (increase(osfu_ws_connections_total{stage="credentials_received"}[5m])) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:ws_joined_events_5m
+    expr: sum by (instance) (increase(osfu_ws_connections_total{stage="joined"}[5m])) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:transport_closed_sessions_5m
+    expr: sum by (instance) (increase(osfu_transport_user_lifetime_seconds_count[5m])) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:transport_short_sessions_le10s_ratio_5m
+    expr: sum by (instance) (increase(osfu_transport_user_lifetime_seconds_bucket{le="10"}[5m])) / (osfu:transport_closed_sessions_5m > 0)
+  - record: osfu:transport_short_sessions_le60s_ratio_5m
+    expr: sum by (instance) (increase(osfu_transport_user_lifetime_seconds_bucket{le="60"}[5m])) / (osfu:transport_closed_sessions_5m > 0)
+  - record: osfu:rtcp_ingress_budget_drops_rate_5m
+    expr: sum by (instance) (rate(osfu_rtc_rtcp_ingress_budget_drops_total[5m])) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:output_budget_exhaustions_rate_5m
+    expr: sum by (instance) (rate(osfu_rtc_output_budget_exhaustions_total[5m])) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:output_budget_session_closes_rate_5m
+    expr: sum by (instance) (rate(osfu_rtc_output_budget_session_closes_total[5m])) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:operator_activity_status
+    expr: ((sum by (instance) (osfu_users_active) > bool 0) and on (instance) (osfu:metrics_available == 1)) or on (instance) (-1 * max by (instance) (up{job="o-sfu"}
+      >= bool 0))
+  - record: osfu:operator_alert_status
+    expr: (max by (instance) (ALERTS{alertname=~"OSFU.*",alertstate="firing",severity="page"}) * 3) or on (instance) (max by (instance) (ALERTS{alertname=~"OSFU.*",alertstate="firing",severity="warning"})
+      * 2) or on (instance) ((osfu:metrics_available == 1) and on (instance) (osfu:noop_probe_status == 1) and on (instance) (osfu:diagnostics_probe_status == 1))
+      or on (instance) (-1 * max by (instance) (up{job="o-sfu"} >= bool 0))
+  - record: osfu:operator_boundary_status
+    expr: ((1 + (osfu:ws_join_success_ratio_5m < bool 0.9)) and on (instance) ((osfu:ws_join_success_ratio_5m >= 0) and on (instance) (osfu:metrics_available == 1))
+      and on (instance) (osfu:ws_accepted_events_5m >= 15)) or on (instance) ((0 * osfu:ws_accepted_events_5m) unless on (instance) (osfu:ws_accepted_events_5m >=
+      15)) or on (instance) (-1 * max by (instance) (up{job="o-sfu"} >= bool 0))
+    labels:
+      boundary: Admission
+  - record: osfu:operator_boundary_status
+    expr: ((1 + (osfu:dtls_after_join_ratio_5m < bool 0.9)) and on (instance) ((osfu:dtls_after_join_ratio_5m >= 0) and on (instance) (osfu:metrics_available == 1))
+      and on (instance) (osfu:ws_joined_events_5m >= 15)) or on (instance) ((0 * osfu:ws_joined_events_5m) unless on (instance) (osfu:ws_joined_events_5m >= 15))
+      or on (instance) (-1 * max by (instance) (up{job="o-sfu"} >= bool 0))
+    labels:
+      boundary: ICE / DTLS events
+  - record: osfu:operator_boundary_status
+    expr: ((1 + clamp_max((osfu:transport_disconnect_churn_per_user_5m > bool 0.05) + (sum by (instance) (osfu_transport_health_users{state="disconnected"}) > bool
+      0), 1)) and on (instance) ((osfu:transport_disconnect_churn_per_user_5m >= 0) and on (instance) (osfu:metrics_available == 1)) and on (instance) (sum by (instance)
+      (osfu_transport_users_active) > 0)) or on (instance) ((0 * osfu:transport_disconnect_churn_per_user_5m) unless on (instance) (sum by (instance) (osfu_transport_users_active)
+      > 0)) or on (instance) (-1 * max by (instance) (up{job="o-sfu"} >= bool 0))
+    labels:
+      boundary: Transport churn
+  - record: osfu:operator_boundary_status
+    expr: ((1 + clamp_max((osfu:routing_pressure_rate_5m > bool 0.5) + (osfu:no_user_drop_rate_5m > bool 0.2) + osfu:relay_pressure_signal_5m, 1)) and on (instance)
+      ((osfu:routing_pressure_rate_5m >= 0) and on (instance) (osfu:metrics_available == 1))) or on (instance) (-1 * max by (instance) (up{job="o-sfu"} >= bool 0))
+    labels:
+      boundary: Routing / relay
+  - record: osfu:operator_boundary_status
+    expr: ((1 + clamp_max((osfu:rtcp_ingress_budget_drops_rate_5m > bool 0) + (osfu:output_budget_exhaustions_rate_5m > bool 0) + (osfu:output_budget_session_closes_rate_5m
+      > bool 0), 1)) and on (instance) ((osfu:output_budget_session_closes_rate_5m >= 0) and on (instance) (osfu:metrics_available == 1))) or on (instance) (-1 *
+      max by (instance) (up{job="o-sfu"} >= bool 0))
+    labels:
+      boundary: Protective limits
+  - record: osfu:operator_boundary_status
+    expr: ((1 + (osfu:transport_cleanup_unrecovered_failure_rate_5m > bool 0)) and on (instance) ((osfu:transport_cleanup_unrecovered_failure_rate_5m >= 0) and on
+      (instance) (osfu:metrics_available == 1))) or on (instance) (-1 * max by (instance) (up{job="o-sfu"} >= bool 0))
+    labels:
+      boundary: Cleanup

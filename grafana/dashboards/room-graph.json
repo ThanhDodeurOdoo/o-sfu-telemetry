@@ -8,14 +8,20 @@
       {
         "name": "room_uuid",
         "type": "textbox",
-        "current": { "text": "", "value": "" },
+        "current": {
+          "text": "",
+          "value": ""
+        },
         "query": "",
         "label": "Selected Room UUID"
       },
       {
         "name": "user_id",
         "type": "textbox",
-        "current": { "text": "", "value": "" },
+        "current": {
+          "text": "",
+          "value": ""
+        },
         "query": "",
         "label": "Selected User"
       }
@@ -23,49 +29,128 @@
   },
   "panels": [
     {
+      "id": 6,
+      "type": "text",
+      "title": "Current Topology and Retained Evidence",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 4
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "Select a room and user from the tables. Topology and tables query **current server state** and do not replay the time picker. Navigation preserves the interval for retained logs. A missing selection or expired room can return 404. Query errors and unavailable observations are not healthy results."
+      }
+    },
+    {
       "type": "table",
       "title": "Active Rooms",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"
       },
-      "description": "A searchable list of all currently active video call rooms on the server. Click 'View Room' to see detailed connection data for a specific group.",
+      "description": "Current rooms and transport counts. Click a room to inspect current topology. These rows are independent of the selected historical interval.",
       "targets": [
         {
           "type": "json",
           "source": "url",
           "url": "http://host.docker.internal:8070/internal/diagnostics/rooms",
-          "url_options": { "method": "GET", "data": "" },
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          },
           "root_selector": "",
           "columns": [
-            { "selector": "uuid", "text": "UUID", "type": "string" },
-            { "selector": "userCount", "text": "Users", "type": "number" },
-            { "selector": "sourceCount", "text": "Streams", "type": "number" },
-            { "selector": "publicationCount", "text": "Producers", "type": "number" },
-            { "selector": "subscriptionCount", "text": "Consumers", "type": "number" },
-            { "selector": "mediaWorkerId", "text": "PrimaryWorker", "type": "number" },
-            { "selector": "createDate", "text": "Created", "type": "string" }
+            {
+              "selector": "uuid",
+              "text": "UUID",
+              "type": "string"
+            },
+            {
+              "selector": "userCount",
+              "text": "Users",
+              "type": "number"
+            },
+            {
+              "selector": "sourceCount",
+              "text": "Streams",
+              "type": "number"
+            },
+            {
+              "selector": "publicationCount",
+              "text": "Producers",
+              "type": "number"
+            },
+            {
+              "selector": "subscriptionCount",
+              "text": "Consumers",
+              "type": "number"
+            },
+            {
+              "selector": "mediaWorkerId",
+              "text": "PrimaryWorker",
+              "type": "number"
+            },
+            {
+              "selector": "createDate",
+              "text": "Created",
+              "type": "string"
+            },
+            {
+              "selector": "transport.connectedUsers",
+              "text": "Connected",
+              "type": "number"
+            },
+            {
+              "selector": "transport.disconnectedUsers",
+              "text": "Disconnected",
+              "type": "number"
+            },
+            {
+              "selector": "transport.unknownUsers",
+              "text": "Unknown",
+              "type": "number"
+            }
           ],
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "links": [
-              {
-                "title": "View Room",
-                "url": "/d/room-graph/o-sfu-room-graph?var-room_uuid=${__data.fields.UUID}&var-user_id="
+          "custom": {},
+          "links": [
+            {
+              "title": "View Room",
+              "url": "/d/room-graph/o-sfu-room-graph?var-room_uuid=${__data.fields.UUID}&var-user_id=&from=${__from}&to=${__to}"
+            }
+          ],
+          "noValue": "Not observed",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Not observed",
+                  "color": "gray"
+                }
               }
-            ]
-          }
+            }
+          ]
         }
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 }
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "id": 1
     },
     {
       "type": "nodeGraph",
-      "title": "Room Topology: ${room_uuid}",
+      "title": "Current Room Topology: ${room_uuid}",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"
@@ -76,8 +161,11 @@
           "type": "json",
           "source": "url",
           "format": "node-graph-nodes",
-          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_uuid}",
-          "url_options": { "method": "GET", "data": "" },
+          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_uuid:percentencode}",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          },
           "root_selector": "nodes",
           "refId": "A"
         },
@@ -85,13 +173,25 @@
           "type": "json",
           "source": "url",
           "format": "node-graph-edges",
-          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_uuid}",
-          "url_options": { "method": "GET", "data": "" },
+          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_uuid:percentencode}",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          },
           "root_selector": "edges",
           "refId": "B"
         }
       ],
-      "gridPos": { "h": 14, "w": 14, "x": 0, "y": 8 }
+      "gridPos": {
+        "h": 14,
+        "w": 14,
+        "x": 0,
+        "y": 12
+      },
+      "id": 2,
+      "fieldConfig": {
+        "defaults": {}
+      }
     },
     {
       "type": "table",
@@ -100,49 +200,156 @@
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"
       },
-      "description": "A list of every person currently in the selected room, along with their connection health and how much data they are sending/receiving.",
+      "description": "Current users in the room. IncomingBps measures sending only. Select a user for current topology or a retained-log investigation with the same time range.",
       "targets": [
         {
           "type": "json",
           "source": "url",
-          "url": "http://host.docker.internal:8070/internal/diagnostics/rooms/${room_uuid}/users",
-          "url_options": { "method": "GET", "data": "" },
+          "url": "http://host.docker.internal:8070/internal/diagnostics/rooms/${room_uuid:percentencode}/users",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          },
           "root_selector": "",
           "columns": [
-            { "selector": "roomId", "text": "Room", "type": "string" },
-            { "selector": "userKey", "text": "UserKey", "type": "string" },
-            { "selector": "userId", "text": "User", "type": "string" },
-            { "selector": "connectionId", "text": "Connection", "type": "number" },
-            { "selector": "mediaWorkerId", "text": "Worker", "type": "number" },
-            { "selector": "health", "text": "Health", "type": "string" },
-            { "selector": "incomingBitrateBps", "text": "IncomingBps", "type": "number" },
-            { "selector": "publicationCount", "text": "Producers", "type": "number" },
-            { "selector": "subscriptionCount", "text": "Consumers", "type": "number" }
+            {
+              "selector": "roomId",
+              "text": "Room",
+              "type": "string"
+            },
+            {
+              "selector": "userKey",
+              "text": "UserKey",
+              "type": "string"
+            },
+            {
+              "selector": "userId",
+              "text": "User",
+              "type": "string"
+            },
+            {
+              "selector": "connectionId",
+              "text": "Connection",
+              "type": "number"
+            },
+            {
+              "selector": "mediaWorkerId",
+              "text": "Worker",
+              "type": "number"
+            },
+            {
+              "selector": "health",
+              "text": "Health",
+              "type": "string"
+            },
+            {
+              "selector": "incomingBitrateBps",
+              "text": "IncomingBps",
+              "type": "number"
+            },
+            {
+              "selector": "publicationCount",
+              "text": "Producers",
+              "type": "number"
+            },
+            {
+              "selector": "subscriptionCount",
+              "text": "Consumers",
+              "type": "number"
+            }
           ],
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "links": [
+          "custom": {},
+          "links": [
+            {
+              "title": "View User Path",
+              "url": "/d/room-graph/o-sfu-room-graph?var-room_uuid=${__data.fields.Room}&var-user_id=${__data.fields.UserKey}&from=${__from}&to=${__to}"
+            },
+            {
+              "title": "View User Diagnostics",
+              "url": "/d/osfu-user-diagnostics/o-sfu-user-diagnostics?orgId=1&from=${__from}&to=${__to}&var-user_id=${__data.fields.UserKey}&var-room_id=${__data.fields.Room}"
+            }
+          ],
+          "noValue": "Not observed",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Not observed",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Health"
+            },
+            "properties": [
               {
-                "title": "View User Path",
-                "url": "/d/room-graph/o-sfu-room-graph?var-room_uuid=${__data.fields.Room}&var-user_id=${__data.fields.UserKey}"
-              },
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "connected": {
+                        "text": "Connected",
+                        "color": "green"
+                      },
+                      "disconnected": {
+                        "text": "Disconnected",
+                        "color": "red"
+                      }
+                    }
+                  },
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "Not observed",
+                        "color": "gray"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "IncomingBps"
+            },
+            "properties": [
               {
-                "title": "View User Diagnostics",
-                "url": "/d/osfu-user-diagnostics/o-sfu-user-diagnostics?orgId=1&from=${__from}&to=${__to}&var-user_id=${__data.fields.UserKey}&var-room_id=${__data.fields.Room}"
+                "id": "unit",
+                "value": "bps"
               }
             ]
           }
-        }
+        ]
       },
-      "gridPos": { "h": 14, "w": 10, "x": 14, "y": 8 }
+      "gridPos": {
+        "h": 14,
+        "w": 10,
+        "x": 14,
+        "y": 12
+      },
+      "id": 3
     },
     {
       "type": "nodeGraph",
-      "title": "User Media Path: ${user_id}",
+      "title": "Current User Media Path: ${user_id}",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"
@@ -153,8 +360,11 @@
           "type": "json",
           "source": "url",
           "format": "node-graph-nodes",
-          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_uuid}/users/${user_id}",
-          "url_options": { "method": "GET", "data": "" },
+          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_uuid:percentencode}/users/${user_id:percentencode}",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          },
           "root_selector": "nodes",
           "refId": "A"
         },
@@ -162,29 +372,67 @@
           "type": "json",
           "source": "url",
           "format": "node-graph-edges",
-          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_uuid}/users/${user_id}",
-          "url_options": { "method": "GET", "data": "" },
+          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_uuid:percentencode}/users/${user_id:percentencode}",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          },
           "root_selector": "edges",
           "refId": "B"
         }
       ],
-      "gridPos": { "h": 14, "w": 18, "x": 0, "y": 22 }
+      "gridPos": {
+        "h": 14,
+        "w": 18,
+        "x": 0,
+        "y": 26
+      },
+      "id": 4,
+      "fieldConfig": {
+        "defaults": {}
+      }
     },
     {
       "type": "timeseries",
-      "title": "Source Selection Updates",
+      "title": "Server-wide Source Selection Activity",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Tracks how often the server is changing which video quality level (Low, Medium, High) it is sending to users. Frequent spikes here can indicate unstable internet connections.",
+      "description": "Server-wide counter rates in the selected interval. This metric has no room or user labels, so selecting a room does not scope this chart. Activity does not establish unstable connectivity.",
       "targets": [
         {
           "expr": "sum by (selector) (rate(osfu_source_selection_updates_total[5m]))",
           "refId": "A"
         }
       ],
-      "gridPos": { "h": 14, "w": 6, "x": 18, "y": 22 }
+      "gridPos": {
+        "h": 14,
+        "w": 6,
+        "x": 18,
+        "y": 26
+      },
+      "id": 5,
+      "fieldConfig": {
+        "defaults": {}
+      }
+    }
+  ],
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "links": [
+    {
+      "title": "Investigate",
+      "type": "dashboards",
+      "tags": [
+        "o-sfu"
+      ],
+      "asDropdown": true,
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
     }
   ]
 }

@@ -430,6 +430,29 @@ Tempo keeps traces for `48h`
 
 the source Docker `json-file` logs are bounded by the SFU compose logging block
 
+## dashboard targets and pipeline monitoring
+
+Both deployment profiles mount `prometheus/targets/` as a shared SFU inventory.
+Set `prometheus/targets/local.json` to the private SFU HTTP addresses before
+starting the stack. Prometheus discovers later inventory edits automatically.
+Each address feeds the metrics, noop and authenticated diagnostics scrape jobs.
+Keep the three jobs on the same `instance` label for per-instance health rules.
+
+For baseline/candidate comparison, adapt the example outside that directory at
+`prometheus/targets.canary.example.json` and replace the active inventory. This
+profile expects the same diagnostics token for all listed targets. Separate
+credentials require separate scrape jobs and token files.
+
+The collector exposes internal metrics at `otel-collector:8888` only inside the
+Compose network. Prometheus also scrapes Loki, Tempo and its own metrics. The
+pipeline board combines these scrapes with readiness probes. Host filesystem
+capacity requires the optional node-exporter scrape. Configure it for the
+filesystem that contains the telemetry data directories.
+
+Grafana's room/user/worker HTTP diagnostics use the configured Infinity server.
+Selecting a Prometheus instance does not change that server. For incident
+interpretation and validation commands, see the [dashboard guide](README.md#evidence-and-unavailable-states).
+
 ## validation
 
 check the compose state:
@@ -571,7 +594,9 @@ validation:
 - `o-sfu` boot logs show `trace_export_otlp_endpoint=http://otel-collector:4318`
 - Grafana login works
 - dashboards load without datasource errors
-- Prometheus, blackbox, Loki and Tempo datasources are healthy
+- Prometheus, Loki, Tempo and Infinity datasources are healthy
+- metrics and both SFU probes share the intended instance labels
+- collector intake/export and pipeline readiness panels contain current evidence
 - public stats, metrics and diagnostics remain blocked
 
 ## environment variables

@@ -7,6 +7,17 @@
   "graphTooltip": 0,
   "links": [
     {
+      "title": "Investigate",
+      "type": "dashboards",
+      "tags": [
+        "o-sfu"
+      ],
+      "asDropdown": true,
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
+    },
+    {
       "title": "Log Health",
       "type": "link",
       "url": "/d/osfu-log-health/o-sfu-log-health?orgId=1&from=${__from}&to=${__to}"
@@ -14,49 +25,76 @@
     {
       "title": "Room Graph",
       "type": "link",
-      "url": "/d/room-graph/o-sfu-room-graph?orgId=1&from=${__from}&to=${__to}&var-room_uuid=${room_id}&var-user_id=${user_id}"
+      "url": "/d/room-graph/o-sfu-room-graph?orgId=1&from=${__from}&to=${__to}&var-room_uuid=${room_id:percentencode}&var-user_id=${user_id:percentencode}"
     },
     {
-      "title": "Explore User Logs",
+      "title": "User Logs",
       "type": "link",
-      "url": "/explore?orgId=1&left=%7B%22datasource%22:%22loki%22,%22queries%22:%5B%7B%22expr%22:%22%7Bservice_name%3D%5C%22o-sfu%5C%22%7D%20%7C~%20%5C%22%5C%5C%5C%22user_id%5C%5C%5C%22%5C%5Cs*:%5C%5Cs*(%5C%5C%5C%22(Integer%5C%5C()?${user_id:regex}(%5C%5C))?%5C%5C%5C%22%7C${user_id:regex})(%5B,%7D%5D)%5C%22%20%7C%20json%20%7C%20level%3D~%5C%22$log_level%5C%22%22,%22queryType%22:%22range%22,%22refId%22:%22A%22%7D%5D,%22range%22:%7B%22from%22:%22${__from}%22,%22to%22:%22${__to}%22%7D%7D"
+      "url": "/d/osfu-logs/o-sfu-logs?orgId=1&from=${__from}&to=${__to}&var-room_id=${room_id:percentencode}&var-user_id=${user_id:percentencode}&var-level=${log_level:percentencode}"
     }
   ],
   "panels": [
+    {
+      "id": 16,
+      "type": "text",
+      "title": "Investigate a User",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 5
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "Enter a user ID, then click a room in **Find This User's Rooms**. Counts and logs below use the selected room and time interval. Discovery includes INFO events regardless of the severity filter. Warnings without room attribution are shown separately.\n\n**Current diagnostics** below query the server now. The time picker does not replay topology or quality samples. Missing selections or expired sessions can return 404. Errors and unavailable observations are not healthy results. Quality sample age is not supplied by the API."
+      }
+    },
     {
       "datasource": {
         "type": "loki",
         "uid": "loki"
       },
-      "description": "Structured log count for the selected user over the dashboard time range.",
+      "description": "Matching log records for the selected room, user, severity and interval. No matching logs does not prove a healthy session or working log ingestion.",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No matching logs",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "blue",
+                "color": "gray",
                 "value": null
               },
               {
-                "color": "green",
+                "color": "blue",
                 "value": 1
               }
             ]
           },
-          "unit": "none"
+          "unit": "none",
+          "noValue": "No matching logs"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
-        "w": 4,
         "x": 0,
-        "y": 0
+        "y": 5,
+        "w": 6,
+        "h": 5
       },
       "id": 1,
       "options": {
@@ -80,7 +118,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | level=~\"$log_level\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=${room_id:doublequote} | level=~\"$log_level\" [$__range]))",
           "instant": true,
           "queryType": "range",
           "refId": "A"
@@ -94,39 +132,47 @@
         "type": "loki",
         "uid": "loki"
       },
-      "description": "Warnings and errors for the selected user.",
+      "description": "Warning and error records attributed to the selected room and user in the selected interval.",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No matching logs",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "gray",
                 "value": null
               },
               {
                 "color": "yellow",
                 "value": 1
-              },
-              {
-                "color": "red",
-                "value": 5
               }
             ]
           },
-          "unit": "none"
+          "unit": "none",
+          "noValue": "No matching logs"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
-        "w": 4,
-        "x": 4,
-        "y": 0
+        "x": 6,
+        "y": 5,
+        "w": 6,
+        "h": 5
       },
       "id": 2,
       "options": {
@@ -150,7 +196,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | level=~\"WARN|ERROR\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=${room_id:doublequote} | level=~\"WARN|ERROR\" [$__range]))",
           "instant": true,
           "queryType": "range",
           "refId": "A"
@@ -164,18 +210,29 @@
         "type": "loki",
         "uid": "loki"
       },
-      "description": "Failed offer or answer processing linked to the selected user.",
+      "description": "Negotiation, publish and subscribe rejection events attributed to the selected room and user during the selected interval. These are event counts, not distinct failed calls. Older warnings without room context appear separately below.",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No matching logs",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "gray",
                 "value": null
               },
               {
@@ -184,15 +241,16 @@
               }
             ]
           },
-          "unit": "none"
+          "unit": "none",
+          "noValue": "No matching logs"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
-        "w": 4,
-        "x": 8,
-        "y": 0
+        "x": 12,
+        "y": 5,
+        "w": 6,
+        "h": 5
       },
       "id": 3,
       "options": {
@@ -216,13 +274,13 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | event=\"negotiation.failed\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=${room_id:doublequote} | event=~\"negotiation\\\\.failed|publish\\\\.aborted|subscribe\\\\.rejected\" [$__range]))",
           "instant": true,
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "Negotiation Failures",
+      "title": "Media Command Failures",
       "type": "stat"
     },
     {
@@ -230,39 +288,47 @@
         "type": "loki",
         "uid": "loki"
       },
-      "description": "Disconnect and close events for the selected user.",
+      "description": "Transport health changes to disconnected for the selected room and user. Successful connections and WebSocket or user cleanup events are excluded. Multiple transitions can belong to one session.",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No matching logs",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "gray",
                 "value": null
               },
               {
-                "color": "yellow",
-                "value": 1
-              },
-              {
                 "color": "red",
-                "value": 3
+                "value": 1
               }
             ]
           },
-          "unit": "none"
+          "unit": "none",
+          "noValue": "No matching logs"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
-        "w": 4,
-        "x": 12,
-        "y": 0
+        "x": 18,
+        "y": 5,
+        "w": 6,
+        "h": 5
       },
       "id": 4,
       "options": {
@@ -286,21 +352,387 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | event=~\"transport.health.changed|ws.closed|user.closed|user.disconnected\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=${room_id:doublequote} | event=\"transport.health.changed\" | to=\"disconnected\" [$__range]))",
           "instant": true,
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "Disconnect Signals",
+      "title": "Transport Loss Events",
       "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Room discovery across all retained log levels for this user in the selected interval. Click a room to scope the investigation. Missing room attribution and rooms outside retention cannot appear.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none",
+          "links": [
+            {
+              "title": "Investigate this room",
+              "url": "/d/osfu-user-diagnostics/o-sfu-user-diagnostics?orgId=1&from=${__from}&to=${__to}&var-user_id=${user_id:percentencode}&var-room_id=${__field.labels.room_id}&var-log_level=${log_level:percentencode}"
+            }
+          ],
+          "noValue": "No matching logs"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 8,
+        "h": 8
+      },
+      "id": 6,
+      "options": {
+        "displayMode": "gradient",
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "topk(10, sum by (room_id) (count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id!=\"\" [$__range])))",
+          "instant": true,
+          "legendFormat": "{{room_id}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Find This User's Rooms",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Event mix for the selected room and user in the selected interval, filtered by severity.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none",
+          "noValue": "No matching logs"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 10,
+        "w": 8,
+        "h": 8
+      },
+      "id": 7,
+      "options": {
+        "displayMode": "basic",
+        "maxVizHeight": 300,
+        "minVizHeight": 20,
+        "minVizWidth": 8,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": false,
+        "valueMode": "text"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "topk(12, sum by (event, level) (count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=${room_id:doublequote} | level=~\"$log_level\" | event!=\"\" [$__range])))",
+          "instant": true,
+          "legendFormat": "{{level}} {{event}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "User Event Mix",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Event rate for the selected room and user, filtered by severity.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 10,
+        "w": 8,
+        "h": 8
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum by (event, level) (rate({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=${room_id:doublequote} | level=~\"$log_level\" | event!=\"\" [5m]))",
+          "legendFormat": "{{level}} {{event}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "User Event Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Retained logs for the selected room and user during the selected interval. Expand trace_id to open Tempo if that trace was sampled and is still retained.",
+      "fieldConfig": null,
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 14,
+        "h": 12
+      },
+      "id": 9,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=${room_id:doublequote} | level=~\"$log_level\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Recent User Logs",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Attributed negotiation, publish and subscribe failures in the selected interval. Expand a log to inspect operation, outcome, error and any SDP details emitted by the runtime.",
+      "fieldConfig": null,
+      "gridPos": {
+        "x": 14,
+        "y": 18,
+        "w": 10,
+        "h": 12
+      },
+      "id": 10,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=${room_id:doublequote} | event=~\"negotiation\\\\.failed|publish\\\\.aborted|subscribe\\\\.rejected\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Media Command Failure Details",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Warnings and errors for this user with no room_id in the selected interval. They are not included in room-scoped totals and cannot be attributed to the selected room. This preserves older or incomplete failure evidence.",
+      "fieldConfig": null,
+      "gridPos": {
+        "x": 0,
+        "y": 30,
+        "w": 24,
+        "h": 8
+      },
+      "id": 17,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=\"\" | level=~\"WARN|ERROR\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "User Warnings Without Room Attribution",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Retained room creation, destruction and bulk-disconnect events plus lifecycle events for the selected user in that room.",
+      "fieldConfig": null,
+      "gridPos": {
+        "x": 0,
+        "y": 38,
+        "w": 24,
+        "h": 9
+      },
+      "id": 11,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{service_name=\"o-sfu\"} | json | room_id=${room_id:doublequote} | event=~\"room\\\\.created|room\\\\.destroyed|users\\\\.bulk_disconnected\"",
+          "queryType": "range",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=${room_id:doublequote} | event=~\"user\\\\.joined|user\\\\.closed|user\\\\.disconnected|publish\\\\.committed|publication\\\\.activity_changed|subscription\\\\.activity_changed|subscribe\\\\.succeeded|transport\\\\.health\\\\.changed\"",
+          "queryType": "range",
+          "refId": "B"
+        }
+      ],
+      "title": "Retained Lifecycle Events",
+      "type": "logs"
     },
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"
       },
-      "description": "Diagnostics lookup for the selected user. The panel is empty when the user is no longer indexed in a room. SoftPauseRemainingMs is blank when no receiver soft-pause deadline is recorded. Its value is rounded down to whole milliseconds and clamped to zero after expiry.",
+      "description": "Current HTTP snapshot, independent of the selected historical interval. A missing room or user returns HTTP 404. Authentication and query failures remain visible as errors. Sampled means at least one quality observation exists, not that it is fresh. The API does not expose quality sample age. Unavailable values stay blank or Not observed. Soft-pause remaining time is rounded down and clamped to zero after expiry.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -308,26 +740,148 @@
             "cellOptions": {
               "type": "auto"
             },
-            "inspect": false,
-            "links": [
+            "inspect": false
+          },
+          "noValue": "Not observed",
+          "links": [
+            {
+              "title": "Set dashboard room",
+              "url": "/d/osfu-user-diagnostics/o-sfu-user-diagnostics?orgId=1&from=${__from}&to=${__to}&var-user_id=${__data.fields.User}&var-room_id=${__data.fields.Room}&var-log_level=${log_level:percentencode}"
+            },
+            {
+              "title": "Open room graph",
+              "url": "/d/room-graph/o-sfu-room-graph?orgId=1&from=${__from}&to=${__to}&var-room_uuid=${__data.fields.Room}&var-user_id=${__data.fields.User}&var-log_level=${log_level:percentencode}"
+            }
+          ],
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Not observed",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Health"
+            },
+            "properties": [
               {
-                "title": "Set dashboard room",
-                "url": "/d/osfu-user-diagnostics/o-sfu-user-diagnostics?orgId=1&from=${__from}&to=${__to}&var-user_id=${__data.fields.User}&var-room_id=${__data.fields.Room}"
-              },
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "connected": {
+                        "text": "Connected",
+                        "color": "green"
+                      },
+                      "disconnected": {
+                        "text": "Disconnected",
+                        "color": "red"
+                      }
+                    }
+                  },
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "Not observed",
+                        "color": "gray"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "IncomingBps"
+            },
+            "properties": [
               {
-                "title": "Open room graph",
-                "url": "/d/room-graph/o-sfu-room-graph?orgId=1&from=${__from}&to=${__to}&var-room_uuid=${__data.fields.Room}&var-user_id=${__data.fields.User}"
+                "id": "unit",
+                "value": "bps"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "BweBps"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bps"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RttMs"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "SoftPauseRemainingMs"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "IngressLossPpm"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: ppm"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "EgressLossPpm"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: ppm"
               }
             ]
           }
-        },
-        "overrides": []
+        ]
       },
       "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 16,
-        "y": 0
+        "x": 0,
+        "y": 47,
+        "w": 24,
+        "h": 7
       },
       "id": 5,
       "options": {
@@ -432,328 +986,8 @@
           }
         }
       ],
-      "title": "Live User Transport Summary",
+      "title": "Current User Transport and Latest Quality Samples",
       "type": "table"
-    },
-    {
-      "datasource": {
-        "type": "loki",
-        "uid": "loki"
-      },
-      "description": "Log volume by room id for this user over the selected time range.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 6
-      },
-      "id": 6,
-      "options": {
-        "displayMode": "gradient",
-        "maxVizHeight": 300,
-        "minVizHeight": 16,
-        "minVizWidth": 8,
-        "namePlacement": "auto",
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showUnfilled": true,
-        "valueMode": "color"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "expr": "topk(10, sum by (room_id) (count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | level=~\"$log_level\" | room_id!=\"\" [$__range])))",
-          "instant": true,
-          "legendFormat": "{{room_id}}",
-          "queryType": "range",
-          "refId": "A"
-        }
-      ],
-      "title": "Rooms Seen in Logs",
-      "type": "bargauge"
-    },
-    {
-      "datasource": {
-        "type": "loki",
-        "uid": "loki"
-      },
-      "description": "Event mix for the selected user. The selected log level controls this panel.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 6
-      },
-      "id": 7,
-      "options": {
-        "displayMode": "basic",
-        "maxVizHeight": 300,
-        "minVizHeight": 20,
-        "minVizWidth": 8,
-        "namePlacement": "left",
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showUnfilled": false,
-        "valueMode": "text"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "expr": "topk(12, sum by (event, level) (count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | level=~\"$log_level\" | event!=\"\" [$__range])))",
-          "instant": true,
-          "legendFormat": "{{level}} {{event}}",
-          "queryType": "range",
-          "refId": "A"
-        }
-      ],
-      "title": "User Event Mix",
-      "type": "bargauge"
-    },
-    {
-      "datasource": {
-        "type": "loki",
-        "uid": "loki"
-      },
-      "description": "Event rate for the selected user.",
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 15,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "showPoints": "never",
-            "spanNulls": false
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "ops"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 6
-      },
-      "id": 8,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "expr": "sum by (event, level) (rate({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | level=~\"$log_level\" | event!=\"\" [5m]))",
-          "legendFormat": "{{level}} {{event}}",
-          "queryType": "range",
-          "refId": "A"
-        }
-      ],
-      "title": "User Event Rate",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "loki",
-        "uid": "loki"
-      },
-      "description": "Structured logs for the selected user. It still works after logout while Loki retention keeps the JSON logs.",
-      "fieldConfig": null,
-      "gridPos": {
-        "h": 15,
-        "w": 14,
-        "x": 0,
-        "y": 14
-      },
-      "id": 9,
-      "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "prettifyLogMessage": true,
-        "showCommonLabels": false,
-        "showLabels": false,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": true
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "expr": "{service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | level=~\"$log_level\"",
-          "queryType": "range",
-          "refId": "A"
-        }
-      ],
-      "title": "Recent User Logs",
-      "type": "logs"
-    },
-    {
-      "datasource": {
-        "type": "loki",
-        "uid": "loki"
-      },
-      "description": "Negotiation failure logs. If the runtime emitted SDP snapshot fields for a failure, expand the log details to inspect them.",
-      "fieldConfig": null,
-      "gridPos": {
-        "h": 15,
-        "w": 10,
-        "x": 14,
-        "y": 14
-      },
-      "id": 10,
-      "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "prettifyLogMessage": true,
-        "showCommonLabels": false,
-        "showLabels": false,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": true
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "expr": "{service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | event=\"negotiation.failed\"",
-          "queryType": "range",
-          "refId": "A"
-        }
-      ],
-      "title": "Negotiation Failures and SDP Fields",
-      "type": "logs"
-    },
-    {
-      "datasource": {
-        "type": "loki",
-        "uid": "loki"
-      },
-      "description": "Retained room creation, destruction and bulk-disconnect events plus lifecycle events for the selected user in that room.",
-      "fieldConfig": null,
-      "gridPos": {
-        "h": 9,
-        "w": 24,
-        "x": 0,
-        "y": 29
-      },
-      "id": 11,
-      "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "prettifyLogMessage": true,
-        "showCommonLabels": false,
-        "showLabels": false,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": true
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "expr": "{service_name=\"o-sfu\"} | json | room_id=${room_id:doublequote} | event=~\"room\\\\.created|room\\\\.destroyed|users\\\\.bulk_disconnected\"",
-          "queryType": "range",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "expr": "{service_name=\"o-sfu\"} | json | room_id=${room_id:doublequote} | user_id=${user_id:doublequote} | event=~\"user\\\\.joined|user\\\\.closed|user\\\\.disconnected|publish\\\\.committed|publication\\\\.activity_changed|subscription\\\\.activity_changed|subscribe\\\\.succeeded|transport\\\\.health\\\\.changed\"",
-          "queryType": "range",
-          "refId": "B"
-        }
-      ],
-      "title": "Retained Lifecycle Events",
-      "type": "logs"
     },
     {
       "datasource": {
@@ -769,15 +1003,28 @@
               "type": "auto"
             },
             "inspect": false
-          }
+          },
+          "noValue": "Not observed",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Not observed",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 11,
         "x": 0,
-        "y": 38
+        "y": 54,
+        "w": 24,
+        "h": 7
       },
       "id": 12,
       "options": {
@@ -845,7 +1092,7 @@
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"
       },
-      "description": "Current subscriptions and receiver-side selection state. Upgrade columns are empty when no upgrade is pending. UpgradeEncoding is only present for an encoding target. UpgradeRemainingMs is rounded down to whole milliseconds and clamped to zero after expiry.",
+      "description": "Current receiver routes, independent of the time picker. Match Source and SelectedEncoding to the source encoding table. SelectionActive and DeliveryAllowed describe control state, not proof of packet delivery. Missing RID, encoding, pause reason or upgrade values are unavailable or inapplicable. Upgrade remaining time is clamped to zero after expiry.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -854,15 +1101,105 @@
               "type": "auto"
             },
             "inspect": false
-          }
+          },
+          "noValue": "Not observed",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Not observed",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "BWE"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bps"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Budget"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bps"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "UpgradeRemainingMs"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "State"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "active": {
+                        "text": "Active",
+                        "color": "blue"
+                      },
+                      "pending": {
+                        "text": "Pending",
+                        "color": "yellow"
+                      },
+                      "inactive": {
+                        "text": "Inactive",
+                        "color": "gray"
+                      }
+                    }
+                  },
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "Not observed",
+                        "color": "gray"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 13,
-        "x": 11,
-        "y": 38
+        "x": 0,
+        "y": 61,
+        "w": 24,
+        "h": 9
       },
       "id": 13,
       "options": {
@@ -891,6 +1228,16 @@
               "type": "string"
             },
             {
+              "selector": "sourceId",
+              "text": "Source",
+              "type": "number"
+            },
+            {
+              "selector": "selection.selectedEncodingId",
+              "text": "SelectedEncoding",
+              "type": "number"
+            },
+            {
               "selector": "state",
               "text": "State",
               "type": "string"
@@ -898,6 +1245,21 @@
             {
               "selector": "layoutRole",
               "text": "Layout",
+              "type": "string"
+            },
+            {
+              "selector": "selection.active",
+              "text": "SelectionActive",
+              "type": "string"
+            },
+            {
+              "selector": "selection.policyAllowsDelivery",
+              "text": "DeliveryAllowed",
+              "type": "string"
+            },
+            {
+              "selector": "selection.selectionReason",
+              "text": "SelectionReason",
               "type": "string"
             },
             {
@@ -960,13 +1322,13 @@
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"
       },
-      "description": "Per-user media topology. Set room_id from the live summary link or from a room seen in logs.",
+      "description": "Current topology only. This graph does not reconstruct the selected historical interval. Missing rooms or users return HTTP 404. Inspect query errors before interpreting an unavailable graph.",
       "fieldConfig": null,
       "gridPos": {
-        "h": 14,
-        "w": 16,
         "x": 0,
-        "y": 46
+        "y": 70,
+        "w": 24,
+        "h": 12
       },
       "id": 14,
       "options": null,
@@ -977,7 +1339,7 @@
           "root_selector": "nodes",
           "source": "url",
           "type": "json",
-          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_id}/users/${user_id}",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_id:percentencode}/users/${user_id:percentencode}",
           "url_options": {
             "data": "",
             "method": "GET"
@@ -989,14 +1351,14 @@
           "root_selector": "edges",
           "source": "url",
           "type": "json",
-          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_id}/users/${user_id}",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_id:percentencode}/users/${user_id:percentencode}",
           "url_options": {
             "data": "",
             "method": "GET"
           }
         }
       ],
-      "title": "User Media Graph: ${room_id} / ${user_id}",
+      "title": "Current User Media Topology",
       "type": "nodeGraph"
     },
     {
@@ -1004,7 +1366,7 @@
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"
       },
-      "description": "Current source inventory for the selected room.",
+      "description": "Current sources in the selected room. Match Source to subscriptions and encodings. Packet and keyframe ages are observations at query time, not guarantees of delivery. Missing observations remain unavailable. H.264 IDR freshness is not observable in this packet path.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -1013,15 +1375,65 @@
               "type": "auto"
             },
             "inspect": false
-          }
+          },
+          "noValue": "Not observed",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Not observed",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "IncomingBps"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bps"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "LastPacketAgeMs"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "LastKeyframeAgeMs"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
-        "h": 14,
-        "w": 8,
-        "x": 16,
-        "y": 46
+        "x": 0,
+        "y": 82,
+        "w": 24,
+        "h": 9
       },
       "id": 15,
       "options": {
@@ -1039,6 +1451,11 @@
       "targets": [
         {
           "columns": [
+            {
+              "selector": "sourceId",
+              "text": "Source",
+              "type": "number"
+            },
             {
               "selector": "ownerUserId",
               "text": "Owner",
@@ -1068,20 +1485,165 @@
               "selector": "mid",
               "text": "MID",
               "type": "string"
+            },
+            {
+              "selector": "lastPacketAgeMs",
+              "text": "LastPacketAgeMs",
+              "type": "number"
+            },
+            {
+              "selector": "lastKeyframeAgeMs",
+              "text": "LastKeyframeAgeMs",
+              "type": "number"
             }
           ],
           "refId": "A",
           "root_selector": "sources",
           "source": "url",
           "type": "json",
-          "url": "http://host.docker.internal:8070/internal/diagnostics/rooms/${room_id}",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/rooms/${room_id:percentencode}",
           "url_options": {
             "data": "",
             "method": "GET"
           }
         }
       ],
-      "title": "Room Source Inventory",
+      "title": "Current Room Sources",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "description": "One row per source encoding. Match Source and Encoding to the selected receiver route above. A recent packet with an older keyframe can support VP8 decoder-recovery investigation. A keyframe age by itself does not prove a freeze. H.264 IDR observations and absent samples remain unavailable.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "noValue": "Not observed",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Not observed",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "LastPacketAgeMs"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "LastKeyframeAgeMs"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 91,
+        "w": 24,
+        "h": 9
+      },
+      "id": 18,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "sourceId",
+              "text": "Source",
+              "type": "number"
+            },
+            {
+              "selector": "ownerUserId",
+              "text": "Owner",
+              "type": "string"
+            },
+            {
+              "selector": "streamId",
+              "text": "Stream",
+              "type": "string"
+            },
+            {
+              "selector": "encodingId",
+              "text": "Encoding",
+              "type": "number"
+            },
+            {
+              "selector": "rid",
+              "text": "RID",
+              "type": "string"
+            },
+            {
+              "selector": "codec",
+              "text": "Codec",
+              "type": "string"
+            },
+            {
+              "selector": "lastPacketAgeMs",
+              "text": "LastPacketAgeMs",
+              "type": "number"
+            },
+            {
+              "selector": "lastKeyframeAgeMs",
+              "text": "LastKeyframeAgeMs",
+              "type": "number"
+            }
+          ],
+          "refId": "A",
+          "root_selector": ".sources[] as $source | $source.encodings[] | {sourceId: $source.sourceId, ownerUserId: $source.ownerUserId, streamId: $source.streamId, encodingId, rid, codec, lastPacketAgeMs, lastKeyframeAgeMs}",
+          "source": "url",
+          "type": "json",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/rooms/${room_id:percentencode}",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          },
+          "parser": "jq-backend",
+          "format": "table"
+        }
+      ],
+      "title": "Current Source Encodings",
       "type": "table"
     }
   ],

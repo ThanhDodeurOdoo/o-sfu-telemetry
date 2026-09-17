@@ -1,17 +1,43 @@
 {
   "annotations": {
-    "list": []
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "#5794F2",
+        "name": "Deployments and incidents",
+        "type": "dashboard"
+      }
+    ]
   },
   "editable": false,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "panels": [
     {
       "datasource": "Prometheus",
-      "description": "The number of users with a stable, active media connection. This is the primary metric for 'who is actually in the call'.",
+      "description": "Current RTC transports whose observed health is connected. This does not prove active media delivery.",
       "fieldConfig": {
         "defaults": {
-          "unit": "none"
+          "unit": "none",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -29,7 +55,7 @@
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -37,8 +63,9 @@
       },
       "targets": [
         {
-          "expr": "sum(osfu_transport_health_users{state=\"connected\"})",
-          "refId": "A"
+          "expr": "(sum by (instance) (osfu_transport_health_users{instance=~\"$instance\",state=\"connected\"})) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "refId": "A",
+          "instant": true
         }
       ],
       "title": "Connected Transports",
@@ -46,10 +73,23 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "The number of users whose media connection has failed or closed. A high number here relative to 'Connected' indicates network trouble.",
+      "description": "Current transports observed as disconnected. Removed sessions leave this gauge and are counted through lifecycle events.",
       "fieldConfig": {
         "defaults": {
-          "unit": "none"
+          "unit": "none",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -67,7 +107,7 @@
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -75,8 +115,9 @@
       },
       "targets": [
         {
-          "expr": "sum(osfu_transport_health_users{state=\"disconnected\"})",
-          "refId": "A"
+          "expr": "(sum by (instance) (osfu_transport_health_users{instance=~\"$instance\",state=\"disconnected\"})) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "refId": "A",
+          "instant": true
         }
       ],
       "title": "Disconnected Transports",
@@ -87,7 +128,20 @@
       "description": "The rate at which active connections are failing. Frequent transitions indicate a 'jittery' network or server-side instability.",
       "fieldConfig": {
         "defaults": {
-          "unit": "ops"
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -105,7 +159,7 @@
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -113,8 +167,9 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(osfu_transport_health_transitions_total{from=\"connected\",to=\"disconnected\"}[5m]))",
-          "refId": "A"
+          "expr": "(sum by (instance) (rate(osfu_transport_health_transitions_total{instance=~\"$instance\",from=\"connected\",to=\"disconnected\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "refId": "A",
+          "instant": true
         }
       ],
       "title": "Disconnect Transitions/s",
@@ -122,10 +177,23 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Tracks the technical progress of establishing a connection (e.g., 'Checking', 'Completed', 'Failed'). Use this to debug why users are getting stuck during the join process.",
+      "description": "ICE state-change events exported as new, checking, connected, completed and disconnected.",
       "fieldConfig": {
         "defaults": {
-          "unit": "ops"
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -138,7 +206,7 @@
       "id": 4,
       "targets": [
         {
-          "expr": "sum by (state) (rate(osfu_transport_ice_state_changes_total[5m]))",
+          "expr": "(sum by (instance, state) (rate(osfu_transport_ice_state_changes_total{instance=~\"$instance\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "{{state}}",
           "refId": "A"
         }
@@ -148,10 +216,23 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "A detailed look at how connection health moves between states like 'Stable', 'Weak', and 'Disconnected'. Helps identify subtle network degradation.",
+      "description": "Observed transport health edges between unset, connected and disconnected.",
       "fieldConfig": {
         "defaults": {
-          "unit": "ops"
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -164,7 +245,7 @@
       "id": 5,
       "targets": [
         {
-          "expr": "sum by (from, to) (rate(osfu_transport_health_transitions_total[5m]))",
+          "expr": "(sum by (instance, from, to) (rate(osfu_transport_health_transitions_total{instance=~\"$instance\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "{{from}} -> {{to}}",
           "refId": "A"
         }
@@ -174,36 +255,99 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Shows how long 95% of users stay in a call. Unexpectedly short lifetimes can indicate that users are being kicked out or experiencing crashes.",
+      "description": "Shares among closed RTC sessions in five minutes. Short sessions are a symptom to compare with exit reasons, not a failure classification. No closures means unavailable.",
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "percentunit",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
         "x": 0,
-        "y": 13
+        "y": 13,
+        "w": 12,
+        "h": 8
       },
       "id": 6,
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(osfu_transport_user_lifetime_seconds_bucket[30m])))",
-          "legendFormat": "user lifetime p95",
-          "refId": "A"
+          "refId": "A",
+          "legendFormat": "at most 10s",
+          "expr": "osfu:transport_short_sessions_le10s_ratio_5m{instance=~\"$instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "at most 60s",
+          "expr": "osfu:transport_short_sessions_le60s_ratio_5m{instance=~\"$instance\"}"
         }
       ],
-      "title": "User Lifetime p95",
-      "type": "timeseries"
+      "title": "Short closed-session share",
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
     },
     {
       "datasource": "Prometheus",
-      "description": "Compares the rate of successful secure connections (DTLS) against the rate of disconnections. This highlights if security handshakes are a bottleneck.",
+      "description": "Independent DTLS-connected events and WebSocket exits attributed to transport disconnection. They are not paired session outcomes.",
       "fieldConfig": {
         "defaults": {
-          "unit": "ops"
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -216,12 +360,12 @@
       "id": 7,
       "targets": [
         {
-          "expr": "sum(rate(osfu_transport_dtls_connected_total[5m]))",
+          "expr": "(sum by (instance) (rate(osfu_transport_dtls_connected_total{instance=~\"$instance\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "dtls connected/s",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(osfu_ws_user_loop_exits_total{reason=\"transport_disconnected\"}[5m]))",
+          "expr": "(sum by (instance) (rate(osfu_ws_user_loop_exits_total{instance=~\"$instance\",reason=\"transport_disconnected\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "ws transport exits/s",
           "refId": "B"
         }
@@ -234,26 +378,402 @@
       "description": "Rate of terminal failures while closing sessions, removing media or releasing relay routes. All current samples use kind=terminal.",
       "fieldConfig": {
         "defaults": {
-          "unit": "ops"
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 24,
         "x": 0,
-        "y": 21
+        "y": 29,
+        "w": 12,
+        "h": 8
       },
       "id": 9,
       "targets": [
         {
-          "expr": "sum by (kind) (rate(osfu_transport_cleanup_failures_total[5m]))",
+          "expr": "(sum by (instance, kind) (rate(osfu_transport_cleanup_failures_total{instance=~\"$instance\"}[5m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
           "legendFormat": "{{kind}}",
           "refId": "A"
         }
       ],
       "title": "Terminal Cleanup Failures",
       "type": "timeseries"
+    },
+    {
+      "id": 10,
+      "title": "Closed sessions · 5m",
+      "type": "stat",
+      "description": "Denominator for the short-session shares.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 21,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "",
+          "expr": "osfu:transport_closed_sessions_5m{instance=~\"$instance\"}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 11,
+      "title": "Metrics scrape",
+      "type": "stat",
+      "description": "",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 8,
+        "y": 21,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Failed or stale",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Fresh",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "",
+          "expr": "osfu:metrics_available{instance=~\"$instance\"}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 12,
+      "title": "Output protection closes/s",
+      "type": "stat",
+      "description": "RTC sessions forcibly closed after output-budget exhaustion.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 16,
+        "y": 21,
+        "w": 8,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "",
+          "expr": "osfu:output_budget_session_closes_rate_5m{instance=~\"$instance\"}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 13,
+      "title": "Session exit reasons",
+      "type": "timeseries",
+      "description": "Includes clean user closure, transport disconnects, heartbeat timeout and outbound queue protection.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 29,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "{{reason}}",
+          "expr": "(sum by (instance, reason) (rate(osfu_ws_user_loop_exits_total{instance=~\"$instance\"}[$__rate_interval]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "title": "Protective limits",
+      "type": "timeseries",
+      "description": "Protective RTCP and output limits are independent from ordinary lifecycle transitions.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 37,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "RTCP ingress drops/s",
+          "expr": "osfu:rtcp_ingress_budget_drops_rate_5m{instance=~\"$instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "output budget exhaustions/s",
+          "expr": "osfu:output_budget_exhaustions_rate_5m{instance=~\"$instance\"}"
+        },
+        {
+          "refId": "C",
+          "legendFormat": "output budget closes/s",
+          "expr": "osfu:output_budget_session_closes_rate_5m{instance=~\"$instance\"}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
     }
   ],
   "refresh": "15s",
@@ -264,7 +784,24 @@
     "phase-2"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "name": "instance",
+        "label": "SFU instance",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": {
+          "query": "label_values(up{job=\"o-sfu\"}, instance)",
+          "refId": "StandardVariableQuery"
+        },
+        "definition": "label_values(up{job=\"o-sfu\"}, instance)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": false,
+        "includeAll": false,
+        "options": []
+      }
+    ]
   },
   "time": {
     "from": "now-6h",
@@ -273,6 +810,19 @@
   "timezone": "",
   "title": "o-sfu Transport Lifecycle",
   "uid": "osfu-transport-lifecycle",
-  "version": 1,
-  "weekStart": ""
+  "version": 2,
+  "weekStart": "",
+  "links": [
+    {
+      "title": "Investigate",
+      "type": "dashboards",
+      "tags": [
+        "o-sfu"
+      ],
+      "asDropdown": true,
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
+    }
+  ]
 }

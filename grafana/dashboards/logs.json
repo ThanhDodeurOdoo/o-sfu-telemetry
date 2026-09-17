@@ -7,6 +7,17 @@
   "graphTooltip": 0,
   "links": [
     {
+      "title": "Investigate",
+      "type": "dashboards",
+      "tags": [
+        "o-sfu"
+      ],
+      "asDropdown": true,
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
+    },
+    {
       "title": "Log Health",
       "type": "link",
       "url": "/d/osfu-log-health/o-sfu-log-health?orgId=1&from=${__from}&to=${__to}"
@@ -17,9 +28,9 @@
       "url": "/d/osfu-operations/o-sfu-operations?orgId=1&from=${__from}&to=${__to}"
     },
     {
-      "title": "Explore Logs",
+      "title": "Investigate Entered IDs",
       "type": "link",
-      "url": "/explore?schemaVersion=1&panes=%7B%22logs%22%3A%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22expr%22%3A%22%7Bservice_name%3D%5C%22o-sfu%5C%22%7D%20%7C~%20%5C%22(%3Fi)${search:raw}%5C%22%20%7C%20json%20%7C%20level%3D~%5C%22${level:regex}%5C%22%20%7C%20event%3D~%5C%22${event:raw}%5C%22%20%7C%20target%3D~%5C%22${target:raw}%5C%22%22%2C%22queryType%22%3A%22range%22%2C%22datasource%22%3A%7B%22type%22%3A%22loki%22%2C%22uid%22%3A%22loki%22%7D%2C%22editorMode%22%3A%22code%22%2C%22direction%22%3A%22backward%22%2C%22maxLines%22%3A100%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%2C%22compact%22%3Afalse%7D%7D&orgId=1"
+      "url": "/d/osfu-user-diagnostics/o-sfu-user-diagnostics?orgId=1&from=${__from}&to=${__to}&var-room_id=${room_id:percentencode}&var-user_id=${user_id:percentencode}"
     }
   ],
   "panels": [
@@ -28,7 +39,7 @@
         "type": "loki",
         "uid": "loki"
       },
-      "description": "Shows the newest o-sfu logs in the selected time range. Open Explore Logs to change the 100-line limit or use arbitrary LogQL.",
+      "description": "Newest matching logs in the selected interval, limited to 100 lines. Room, user and trace filters are regular expressions with .* matching all values. Expand trace_id to open Tempo. Traces may be unsampled or outside retention. Use this panel's Explore menu action to inspect larger result sets with the current filters and interval. Enter concrete room and user IDs before opening Investigate Entered IDs.",
       "gridPos": {
         "h": 30,
         "w": 24,
@@ -54,7 +65,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=\"o-sfu\"} |~ \"(?i)${search:raw}\" | json | level=~\"${level:regex}\" | event=~\"${event:raw}\" | target=~\"${target:raw}\"",
+          "expr": "{service_name=\"o-sfu\"} |~ \"(?i)${search:raw}\" | json | level=~\"${level:pipe}\" | event=~\"${event:raw}\" | target=~\"${target:raw}\" | room_id=~\"${room_id:raw}\" | user_id=~\"(Integer\\\\()?${user_id:raw}(\\\\))?\" | trace_id=~\"${trace_id:raw}\"",
           "maxLines": 100,
           "queryType": "range",
           "refId": "A"
@@ -157,6 +168,39 @@
         "query": ".*",
         "skipUrlSync": false,
         "type": "textbox"
+      },
+      {
+        "name": "room_id",
+        "type": "textbox",
+        "label": "room regex",
+        "query": ".*",
+        "current": {
+          "text": ".*",
+          "value": ".*"
+        },
+        "skipUrlSync": false
+      },
+      {
+        "name": "user_id",
+        "type": "textbox",
+        "label": "user regex",
+        "query": ".*",
+        "current": {
+          "text": ".*",
+          "value": ".*"
+        },
+        "skipUrlSync": false
+      },
+      {
+        "name": "trace_id",
+        "type": "textbox",
+        "label": "trace ID regex",
+        "query": ".*",
+        "current": {
+          "text": ".*",
+          "value": ".*"
+        },
+        "skipUrlSync": false
       }
     ]
   },

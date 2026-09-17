@@ -7,24 +7,279 @@
   "graphTooltip": 0,
   "panels": [
     {
+      "id": 100,
+      "title": "Worker scope",
+      "type": "text",
+      "options": {
+        "mode": "markdown",
+        "content": "The current-state tables read the configured diagnostics server. The SFU instance filter applies to the historical Prometheus charts.\n\nMissing heartbeat comes first, followed by loop delay and mailbox occupancy. Queue occupancy is the larger of command and relay mailbox usage. It is not CPU utilization."
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 4
+      }
+    },
+    {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"
       },
-      "description": "Live worker assignment state from the protected diagnostics API. Worker pressure comes from the same low-cardinality transport snapshot used by load-triggered spillover.",
+      "description": "Current worker count, missing heartbeat count and the largest reported delay and mailbox occupancy. Empty diagnostics results stay unavailable.",
       "fieldConfig": {
         "defaults": {
           "custom": {
             "align": "auto"
-          }
+          },
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Largest reported delay"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Maximum queue occupancy"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
-        "h": 9,
-        "w": 24,
         "x": 0,
-        "y": 0
+        "y": 4,
+        "w": 24,
+        "h": 4
+      },
+      "id": 5,
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "workers",
+              "text": "Workers",
+              "type": "number"
+            },
+            {
+              "selector": "missingHeartbeats",
+              "text": "Missing heartbeats",
+              "type": "number"
+            },
+            {
+              "selector": "worstDelayMs",
+              "text": "Largest reported delay",
+              "type": "number"
+            },
+            {
+              "selector": "maximumQueuePct",
+              "text": "Maximum queue occupancy",
+              "type": "number"
+            }
+          ],
+          "refId": "A",
+          "root_selector": "if length == 0 then [] else [{workers: length, missingHeartbeats: ([.[] | select(.pressure.packetLoopDelayMs == null)] | length), worstDelayMs: ([.[].pressure.packetLoopDelayMs | select(type == \"number\")] | max), maximumQueuePct: ([.[].pressure.workerPressureScore | select(type == \"number\")] | max)}] end",
+          "source": "url",
+          "type": "json",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/workers",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          },
+          "parser": "jq-backend",
+          "format": "table"
+        }
+      ],
+      "title": "Configured Diagnostics Server: Worker Summary",
+      "type": "table",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "Workers": 0,
+              "Missing heartbeats": 1,
+              "Largest reported delay": 2,
+              "Maximum queue occupancy": 3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "infinity"
+      },
+      "description": "Current diagnostics only. Missing heartbeat is distinct from zero delay, including startup grace. Rows are ordered by missing heartbeat, delay then maximum command/relay queue occupancy. No historical worker pressure is exported.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Heartbeat"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "Reported": {
+                        "text": "Reported",
+                        "color": "blue"
+                      },
+                      "Missing": {
+                        "text": "Missing",
+                        "color": "gray"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Queue occupancy"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "blue",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 100
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Egress bitrate"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bps"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Loop delay"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "noValue",
+                "value": "Missing heartbeat"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 24,
+        "h": 11
       },
       "id": 1,
       "targets": [
@@ -36,8 +291,13 @@
               "type": "number"
             },
             {
+              "selector": "heartbeat",
+              "text": "Heartbeat",
+              "type": "string"
+            },
+            {
               "selector": "pressure.workerPressureScore",
-              "text": "Pressure",
+              "text": "Queue occupancy",
               "type": "number"
             },
             {
@@ -77,38 +337,76 @@
             },
             {
               "selector": "pressure.egressBitrateBps",
-              "text": "EgressBps",
+              "text": "Egress bitrate",
               "type": "number"
             },
             {
               "selector": "pressure.packetLoopDelayMs",
-              "text": "DelayMs",
+              "text": "Loop delay",
               "type": "number"
             },
             {
               "selector": "pressure.commandBacklogDepth",
-              "text": "Commands",
+              "text": "Command backlog",
               "type": "number"
             },
             {
               "selector": "pressure.relayMailboxDepth",
-              "text": "RelayMailbox",
+              "text": "Relay backlog",
               "type": "number"
             }
           ],
           "refId": "A",
-          "root_selector": "",
+          "root_selector": "map(. + {heartbeat: (if .pressure.packetLoopDelayMs == null then \"Missing\" else \"Reported\" end)}) | sort_by((if .pressure.packetLoopDelayMs == null then 0 else 1 end), -(.pressure.packetLoopDelayMs // 0), -(.pressure.workerPressureScore // 0), .mediaWorkerId)",
           "source": "url",
           "type": "json",
           "url": "http://host.docker.internal:8070/internal/diagnostics/workers",
           "url_options": {
             "data": "",
             "method": "GET"
-          }
+          },
+          "parser": "jq-backend",
+          "format": "table"
         }
       ],
-      "title": "Worker Assignment and Pressure",
-      "type": "table"
+      "title": "Configured Diagnostics Server: Workers Needing Attention",
+      "type": "table",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "Worker": 0,
+              "Heartbeat": 1,
+              "Loop delay": 2,
+              "Queue occupancy": 3,
+              "Rooms": 4,
+              "Users": 5,
+              "Connected": 6,
+              "Disconnected": 7,
+              "Unknown": 8,
+              "Producers": 9,
+              "Consumers": 10,
+              "Egress bitrate": 11,
+              "Command backlog": 12,
+              "Relay backlog": 13
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 101,
+      "title": "Historical worker traffic for the selected SFU instances",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 24,
+        "h": 1
+      }
     },
     {
       "datasource": {
@@ -118,26 +416,57 @@
       "description": "Per-worker RTP packet rate. This uses bounded media-worker labels only, so it stays safe for Prometheus cardinality.",
       "fieldConfig": {
         "defaults": {
-          "unit": "pps"
+          "unit": "pps",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          }
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
         "x": 0,
-        "y": 9
+        "y": 20,
+        "w": 12,
+        "h": 7
       },
       "id": 2,
       "targets": [
         {
-          "expr": "sum by (media_worker_id, direction) (rate(osfu_worker_rtp_packets_total[1m]))",
-          "legendFormat": "worker {{media_worker_id}} {{direction}}",
+          "expr": "(sum by (instance, media_worker_id, direction) (rate(osfu_worker_rtp_packets_total{instance=~\"$instance\"}[1m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} worker {{media_worker_id}} {{direction}}",
           "refId": "A"
         }
       ],
       "title": "RTP Packets/s by Worker",
-      "type": "timeseries"
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
     },
     {
       "datasource": {
@@ -147,26 +476,57 @@
       "description": "Per-worker RTP payload bitrate by direction. Egress should rise with fan-out and makes worker imbalance visible during spillover.",
       "fieldConfig": {
         "defaults": {
-          "unit": "bps"
+          "unit": "bps",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          }
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
         "x": 12,
-        "y": 9
+        "y": 20,
+        "w": 12,
+        "h": 7
       },
       "id": 3,
       "targets": [
         {
-          "expr": "sum by (media_worker_id, direction) (rate(osfu_worker_rtp_payload_bytes_total[1m])) * 8",
-          "legendFormat": "worker {{media_worker_id}} {{direction}}",
+          "expr": "(sum by (instance, media_worker_id, direction) (rate(osfu_worker_rtp_payload_bytes_total{instance=~\"$instance\"}[1m])) * 8) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} worker {{media_worker_id}} {{direction}}",
           "refId": "A"
         }
       ],
       "title": "RTP Payload Bitrate by Worker",
-      "type": "timeseries"
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
     },
     {
       "datasource": {
@@ -176,26 +536,126 @@
       "description": "Per-worker fan-out operations split by destination. Intra-node relay growth here confirms same-room spillover is moving media between local workers.",
       "fieldConfig": {
         "defaults": {
-          "unit": "pps"
+          "unit": "pps",
+          "noValue": "Unavailable",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          }
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 24,
         "x": 0,
-        "y": 17
+        "y": 27,
+        "w": 16,
+        "h": 8
       },
       "id": 4,
       "targets": [
         {
-          "expr": "sum by (media_worker_id, destination) (rate(osfu_worker_rtp_forwarded_packets_total[1m]))",
-          "legendFormat": "worker {{media_worker_id}} {{destination}}",
+          "expr": "(sum by (instance, media_worker_id, destination) (rate(osfu_worker_rtp_forwarded_packets_total{instance=~\"$instance\"}[1m]))) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} worker {{media_worker_id}} {{destination}}",
           "refId": "A"
         }
       ],
       "title": "Forwarded Packets/s by Worker",
-      "type": "timeseries"
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Worker Egress Concentration",
+      "description": "Largest worker egress divided by mean worker egress on the same instance. One means equal rates. No egress leaves the ratio unavailable. Room locality can legitimately concentrate traffic and this ratio is not a health score.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "(max by (instance) (sum by (instance, media_worker_id) (rate(osfu_worker_rtp_payload_bytes_total{instance=~\"$instance\",direction=\"egress\"}[$__rate_interval]))) / avg by (instance) (sum by (instance, media_worker_id) (rate(osfu_worker_rtp_payload_bytes_total{instance=~\"$instance\",direction=\"egress\"}[$__rate_interval]))) and on (instance) (avg by (instance) (sum by (instance, media_worker_id) (rate(osfu_worker_rtp_payload_bytes_total{instance=~\"$instance\",direction=\"egress\"}[$__rate_interval]))) > 0)) and on (instance) (osfu:metrics_available{instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}} max / mean",
+          "refId": "A",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "min": 0,
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 27,
+        "w": 8,
+        "h": 8
+      }
     }
   ],
   "refresh": "10s",
@@ -207,7 +667,33 @@
     "spillover"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "name": "instance",
+        "label": "SFU instance",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "label_values(up{job=\"o-sfu\"}, instance)",
+          "refId": "instance"
+        },
+        "definition": "label_values(up{job=\"o-sfu\"}, instance)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": []
+      }
+    ]
   },
   "time": {
     "from": "now-1h",
@@ -217,5 +703,18 @@
   "title": "o-sfu Worker Load",
   "uid": "worker-load",
   "version": 1,
-  "weekStart": ""
+  "weekStart": "",
+  "links": [
+    {
+      "title": "Investigate",
+      "type": "dashboards",
+      "tags": [
+        "o-sfu"
+      ],
+      "asDropdown": true,
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
+    }
+  ]
 }

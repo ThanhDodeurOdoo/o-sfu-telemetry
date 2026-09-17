@@ -1,735 +1,2360 @@
 {
   "annotations": {
-    "list": []
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "#5794F2",
+        "name": "Deployments and incidents",
+        "type": "dashboard"
+      }
+    ]
   },
   "editable": false,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "links": [
+    {
+      "title": "Investigate",
+      "type": "dashboards",
+      "tags": [
+        "o-sfu"
+      ],
+      "asDropdown": true,
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
+    },
     {
       "title": "Operations",
       "type": "link",
-      "url": "/d/osfu-operations/o-sfu-operations?orgId=1&from=${__from}&to=${__to}"
+      "url": "/d/osfu-operations/o-sfu-operations?orgId=1&from=${__from}&to=${__to}&var-instance=${candidate_instance:percentencode}"
     },
     {
       "title": "Transport Lifecycle",
       "type": "link",
-      "url": "/d/osfu-transport-lifecycle/o-sfu-transport-lifecycle?orgId=1&from=${__from}&to=${__to}"
+      "url": "/d/osfu-transport-lifecycle/o-sfu-transport-lifecycle?orgId=1&from=${__from}&to=${__to}&var-instance=${candidate_instance:percentencode}"
     },
     {
       "title": "Media Path",
       "type": "link",
-      "url": "/d/osfu-media-path/o-sfu-media-path?orgId=1&from=${__from}&to=${__to}"
+      "url": "/d/osfu-media-path/o-sfu-media-path?orgId=1&from=${__from}&to=${__to}&var-instance=${candidate_instance:percentencode}"
     }
   ],
   "panels": [
     {
-      "datasource": "Prometheus",
-      "description": "A basic heartbeat check. 1 means the canary server is responding to API requests, 0 means it is down or frozen.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bool"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 0,
-        "y": 0
-      },
       "id": 1,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        }
+      "title": "Comparison context",
+      "type": "text",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 4
       },
-      "targets": [
-        {
-          "expr": "max(probe_success{job=\"o-sfu-noop\"})",
-          "refId": "A"
-        }
-      ],
-      "title": "Noop Probe",
-      "type": "stat"
+      "options": {
+        "mode": "markdown",
+        "content": "Select different baseline and candidate instances. Compare workload and observation counts before interpreting rates or percentiles. Add a dashboard annotation at deployment or rollback time. No data and zero observations are unavailable, not a successful test."
+      }
     },
     {
-      "datasource": "Prometheus",
-      "description": "The percentage of users who successfully joined a room on the canary server. This should stay close to 100% if the new code is working correctly.",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "match": "null",
-                "result": {
-                  "text": "No recent joins"
-                }
-              },
-              "type": "special"
-            }
-          ],
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 6,
-        "y": 0
-      },
       "id": 2,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        }
-      },
-      "targets": [
-        {
-          "expr": "osfu:ws_join_success_ratio_active_5m",
-          "refId": "A"
-        }
-      ],
-      "title": "Join Success Ratio",
-      "type": "stat"
-    },
-    {
+      "title": "Metrics scrape",
+      "type": "stat",
+      "description": "",
       "datasource": "Prometheus",
-      "description": "The number of users currently in a call on this canary server. Use this to gauge how much traffic the test version is handling.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "none"
-        },
-        "overrides": []
-      },
       "gridPos": {
-        "h": 5,
+        "x": 0,
+        "y": 4,
         "w": 6,
-        "x": 12,
-        "y": 0
+        "h": 5
       },
-      "id": 3,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        }
-      },
-      "targets": [
-        {
-          "expr": "sum(osfu_transport_health_users{state=\"connected\"})",
-          "refId": "A"
-        }
-      ],
-      "title": "Connected Transports",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "Measures if media is being correctly forwarded inside the canary server. A drop below 100% means the new code might be dropping packets improperly.",
       "fieldConfig": {
         "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
           "mappings": [
             {
+              "type": "special",
               "options": {
-                "match": "null",
+                "match": "null+nan",
                 "result": {
-                  "text": "No recent ingress"
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
                 }
-              },
-              "type": "special"
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Failed or stale",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Fresh",
+                  "color": "green"
+                }
+              }
             }
-          ],
-          "unit": "percentunit"
+          ]
         },
         "overrides": []
       },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 18,
-        "y": 0
-      },
-      "id": 4,
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:metrics_available{instance=~\"$baseline_instance\"}",
+          "instant": true
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:metrics_available{instance=~\"$candidate_instance\"}",
+          "instant": true
+        }
+      ],
       "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "vertical",
+        "textMode": "auto",
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
+        "text": {
+          "titleSize": 12,
+          "valueSize": 22
         }
-      },
-      "targets": [
-        {
-          "expr": "osfu:local_forwarding_efficiency_active_5m",
-          "refId": "A"
-        }
-      ],
-      "title": "Local Forwarding Efficiency",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "Total rate of committed receiver video route degradation, pause and resume transitions during canary validation.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "blue",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 0.01
-              }
-            ]
-          },
-          "decimals": 2
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 8,
-        "x": 0,
-        "y": 5
-      },
-      "id": 11,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "expr": "sum(rate(osfu_budget_solver_outcomes_total[$__rate_interval]))",
-          "refId": "A"
-        }
-      ],
-      "title": "Video Route Transitions/s",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "Rate of committed receiver video routes entering a policy pause during canary validation. Inspect user diagnostics for budget, layout or layer availability reasons.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0.05
-              },
-              {
-                "color": "red",
-                "value": 0.2
-              }
-            ]
-          },
-          "decimals": 2
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 8,
-        "x": 8,
-        "y": 5
-      },
-      "id": 12,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "expr": "sum(rate(osfu_budget_solver_outcomes_total{outcome=\"paused\"}[$__rate_interval]))",
-          "refId": "A"
-        }
-      ],
-      "title": "Policy Pauses/s",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "Rate of committed receiver video routes clearing an existing policy pause during canary validation.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "blue",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 0.01
-              }
-            ]
-          },
-          "decimals": 2
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 8,
-        "x": 16,
-        "y": 5
-      },
-      "id": 13,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "expr": "sum(rate(osfu_budget_solver_outcomes_total{outcome=\"resumed\"}[$__rate_interval]))",
-          "refId": "A"
-        }
-      ],
-      "title": "Policy Resumes/s",
-      "type": "stat"
-    },
-    {
-      "description": "95th percentile peer round-trip time sampled during canary validation. High RTT indicates transport latency pressure on connected clients.",
-      "id": 16,
-      "title": "Peer RTT p95",
-      "type": "stat",
-      "gridPos": {
-        "h": 5,
-        "w": 8,
-        "x": 0,
-        "y": 10
-      },
-      "targets": [
-        {
-          "expr": "osfu:media_quality_peer_rtt_p95_5m",
-          "refId": "A",
-          "instant": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "decimals": 2,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "blue",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
       }
     },
     {
-      "description": "Average packet loss fraction on publisher uploads to the canary instance. Spikes point to publisher uplink issues or ingress network edge degradation.",
-      "id": 17,
-      "title": "Ingress Loss",
+      "id": 3,
+      "title": "API probe",
       "type": "stat",
-      "gridPos": {
-        "h": 5,
-        "w": 8,
-        "x": 8,
-        "y": 10
-      },
-      "targets": [
-        {
-          "expr": "osfu:media_quality_ingress_loss_ppm_average_5m / 1000000",
-          "refId": "A",
-          "instant": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percentunit",
-          "decimals": 3,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "blue",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      }
-    },
-    {
-      "description": "Average packet loss fraction on subscriber downlinks from the canary instance. Spikes indicate receiver congestion or server egress network pressure.",
-      "id": 18,
-      "title": "Egress Loss",
-      "type": "stat",
-      "gridPos": {
-        "h": 5,
-        "w": 8,
-        "x": 16,
-        "y": 10
-      },
-      "targets": [
-        {
-          "expr": "osfu:media_quality_egress_loss_ppm_average_5m / 1000000",
-          "refId": "A",
-          "instant": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percentunit",
-          "decimals": 3,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "blue",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      }
-    },
-    {
+      "description": "",
       "datasource": "Prometheus",
-      "description": "A detailed timeline of users moving through the connection process on the canary server. Helps spot if users are getting 'stuck' at a specific stage.",
+      "gridPos": {
+        "x": 6,
+        "y": 4,
+        "w": 6,
+        "h": 5
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps"
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                },
+                "0": {
+                  "text": "Fail",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Pass",
+                  "color": "green"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:noop_probe_status{instance=~\"$baseline_instance\"}",
+          "instant": true
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:noop_probe_status{instance=~\"$candidate_instance\"}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "vertical",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 12,
+          "valueSize": 22
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Diagnostics probe",
+      "type": "stat",
+      "description": "",
+      "datasource": "Prometheus",
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 15
+        "x": 12,
+        "y": 4,
+        "w": 6,
+        "h": 5
       },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                },
+                "0": {
+                  "text": "Fail",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Pass",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:diagnostics_probe_status{instance=~\"$baseline_instance\"}",
+          "instant": true
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:diagnostics_probe_status{instance=~\"$candidate_instance\"}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "vertical",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 12,
+          "valueSize": 22
+        }
+      }
+    },
+    {
       "id": 5,
-      "targets": [
-        {
-          "expr": "sum by (stage) (rate(osfu_ws_connections_total[5m]))",
-          "legendFormat": "{{stage}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Join Stages",
-      "type": "timeseries"
-    },
-    {
+      "title": "Room activity",
+      "type": "stat",
+      "description": "",
       "datasource": "Prometheus",
-      "description": "Tracks rejections and startup errors on the canary server. Any sudden increase here means the new code is blocking users from joining.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps"
-        },
-        "overrides": []
-      },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 15
+        "x": 18,
+        "y": 4,
+        "w": 6,
+        "h": 5
       },
-      "id": 6,
-      "targets": [
-        {
-          "expr": "sum(rate(osfu_ws_startup_failures_total[5m]))",
-          "legendFormat": "startup failures/s",
-          "refId": "A"
-        },
-        {
-          "expr": "sum(rate(osfu_ws_handshake_rejections_total[5m]))",
-          "legendFormat": "handshake rejections/s",
-          "refId": "B"
-        }
-      ],
-      "title": "Admission Failures",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "Measures how often users are losing their media connection on the canary. High churn means the new code might be less stable than the current version.",
       "fieldConfig": {
         "defaults": {
-          "unit": "ops"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 23
-      },
-      "id": 7,
-      "targets": [
-        {
-          "expr": "osfu:transport_disconnect_churn_per_user_5m",
-          "legendFormat": "disconnects per active user",
-          "refId": "A"
-        },
-        {
-          "expr": "sum(osfu_transport_health_users{state=\"disconnected\"})",
-          "legendFormat": "disconnected transports",
-          "refId": "B"
-        }
-      ],
-      "title": "Transport Churn",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "Compares media coming into the canary versus media being processed. They should move in sync; if Ingress stays high while Forwarding drops, the canary is failing.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "pps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 23
-      },
-      "id": 8,
-      "targets": [
-        {
-          "expr": "sum(rate(osfu_rtp_packets_total{direction=\"ingress\"}[1m]))",
-          "legendFormat": "ingress",
-          "refId": "A"
-        },
-        {
-          "expr": "sum(rate(osfu_rtp_forwarded_packets_total{destination=\"local_rtc\"}[1m]))",
-          "legendFormat": "local_rtc",
-          "refId": "B"
-        }
-      ],
-      "title": "Ingress Versus Local Forwarding",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "Measures the CPU load for media routing on the canary. If this is higher than the stable server for the same number of users, the new code is less efficient.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 31
-      },
-      "id": 9,
-      "targets": [
-        {
-          "expr": "sum(rate(osfu_rtc_datagram_fallback_scans_total[5m]))",
-          "legendFormat": "fallback scans/s",
-          "refId": "A"
-        },
-        {
-          "expr": "sum(rate(osfu_rtc_datagram_scan_users_total[5m]))",
-          "legendFormat": "scanned users/s",
-          "refId": "B"
-        }
-      ],
-      "title": "Routing Pressure",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "description": "Compares committed receiver video route transitions by outcome with accepted encoding-selector updates during canary validation.",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "thresholds"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "blue",
                 "value": null
               }
             ]
-          }
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                },
+                "0": {
+                  "text": "Idle",
+                  "color": "#8E8E8E"
+                },
+                "1": {
+                  "text": "Users present",
+                  "color": "blue"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:operator_activity_status{instance=~\"$baseline_instance\"}",
+          "instant": true
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:operator_activity_status{instance=~\"$candidate_instance\"}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "vertical",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 12,
+          "valueSize": 22
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Current room users",
+      "type": "timeseries",
+      "description": "Match concurrent workload before comparing version behavior.",
+      "datasource": "Prometheus",
       "gridPos": {
-        "h": 8,
-        "w": 24,
         "x": 0,
-        "y": 39
+        "y": 9,
+        "w": 8,
+        "h": 7
       },
-      "id": 15,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^baseline:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^candidate:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "light-blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "(sum by (instance) (osfu_users_active{instance=~\"$baseline_instance\"})) and on (instance) (osfu:metrics_available{instance=~\"$baseline_instance\"} == 1)"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "(sum by (instance) (osfu_users_active{instance=~\"$candidate_instance\"})) and on (instance) (osfu:metrics_available{instance=~\"$candidate_instance\"} == 1)"
+        }
+      ],
       "options": {
         "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
           "calcs": [
             "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "bottom"
+          ]
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Accepted joins · 5m",
+      "type": "timeseries",
+      "description": "Rolling accepted connection-event counts. Sparse traffic limits the meaning of event ratios.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 8,
+        "y": 9,
+        "w": 8,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^baseline:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^candidate:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "light-blue"
+                }
+              }
+            ]
+          }
+        ]
       },
       "targets": [
         {
-          "expr": "sum by (outcome) (rate(osfu_budget_solver_outcomes_total[$__rate_interval]))",
-          "legendFormat": "transition: {{outcome}}",
-          "refId": "A"
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:ws_accepted_events_5m{instance=~\"$baseline_instance\"}"
         },
         {
-          "expr": "sum by (selector) (rate(osfu_source_selection_updates_total{selector=\"encoding\"}[$__rate_interval]))",
-          "legendFormat": "encoding updates",
-          "refId": "B"
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:ws_accepted_events_5m{instance=~\"$candidate_instance\"}"
         }
       ],
-      "title": "Video Route Transitions During Canary",
-      "type": "timeseries"
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
     },
     {
+      "id": 8,
+      "title": "RTP ingress",
+      "type": "timeseries",
+      "description": "Compare publisher media workload. Receive-only calls may have no ingress.",
+      "datasource": "Prometheus",
       "gridPos": {
-        "h": 4,
-        "w": 24,
-        "x": 0,
-        "y": 47
+        "x": 16,
+        "y": 9,
+        "w": 8,
+        "h": 7
       },
-      "id": 10,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "pps",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^baseline:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^candidate:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "light-blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:rtp_ingress_packets_rate_5m{instance=~\"$baseline_instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:rtp_ingress_packets_rate_5m{instance=~\"$candidate_instance\"}"
+        }
+      ],
       "options": {
-        "content": "[Open o-sfu Operations](/d/osfu-operations/o-sfu-operations?orgId=1&from=${__from}&to=${__to}) | [Control Plane](/d/osfu-control-plane/o-sfu-control-plane?orgId=1&from=${__from}&to=${__to}) | [Transport Lifecycle](/d/osfu-transport-lifecycle/o-sfu-transport-lifecycle?orgId=1&from=${__from}&to=${__to}) | [Media Path](/d/osfu-media-path/o-sfu-media-path?orgId=1&from=${__from}&to=${__to}) | [User Diagnostics](/d/osfu-user-diagnostics/o-sfu-user-diagnostics?orgId=1&from=${__from}&to=${__to})",
-        "mode": "markdown"
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Joined / accepted event ratio",
+      "type": "timeseries",
+      "description": "Rolling event-rate ratio with at least 15 accepted events in five minutes. Events are not matched session cohorts and a ratio may exceed 100% across window boundaries.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 8,
+        "h": 8
       },
-      "title": "Navigation",
-      "type": "text"
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^baseline:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^candidate:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "light-blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:ws_join_success_ratio_active_5m{instance=~\"$baseline_instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:ws_join_success_ratio_active_5m{instance=~\"$candidate_instance\"}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Peer RTT p95",
+      "type": "timeseries",
+      "description": "A sample-gated percentile. Compare observation counts below before interpreting differences.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 8,
+        "y": 16,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^baseline:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^candidate:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "light-blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:media_quality_peer_rtt_p95_5m{instance=~\"$baseline_instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:media_quality_peer_rtt_p95_5m{instance=~\"$candidate_instance\"}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Egress loss observations",
+      "type": "timeseries",
+      "description": "Average sampled loss fraction. Missing observations remain unavailable.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 16,
+        "y": 16,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^baseline:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^candidate:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "light-blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:media_quality_egress_loss_ppm_average_5m{instance=~\"$baseline_instance\"} / 1000000"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:media_quality_egress_loss_ppm_average_5m{instance=~\"$candidate_instance\"} / 1000000"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "title": "Peer RTT observation count · 5m",
+      "type": "timeseries",
+      "description": "",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 8,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^baseline:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^candidate:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "light-blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:media_quality_peer_rtt_observations_5m{instance=~\"$baseline_instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:media_quality_peer_rtt_observations_5m{instance=~\"$candidate_instance\"}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "title": "Ingress loss observation count · 5m",
+      "type": "timeseries",
+      "description": "",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 8,
+        "y": 24,
+        "w": 8,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^baseline:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^candidate:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "light-blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:media_quality_ingress_loss_observations_5m{instance=~\"$baseline_instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:media_quality_ingress_loss_observations_5m{instance=~\"$candidate_instance\"}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "title": "Egress loss observation count · 5m",
+      "type": "timeseries",
+      "description": "",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 16,
+        "y": 24,
+        "w": 8,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^baseline:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^candidate:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "light-blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:media_quality_egress_loss_observations_5m{instance=~\"$baseline_instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:media_quality_egress_loss_observations_5m{instance=~\"$candidate_instance\"}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "title": "Ingress loss observations",
+      "type": "timeseries",
+      "description": "Sampled publisher loss fraction, unavailable without observations.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^baseline:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^candidate:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "light-blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:media_quality_ingress_loss_ppm_average_5m{instance=~\"$baseline_instance\"} / 1000000"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:media_quality_ingress_loss_ppm_average_5m{instance=~\"$candidate_instance\"} / 1000000"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "title": "Disconnects per active transport per second",
+      "type": "timeseries",
+      "description": "Current active transport count normalizes disconnect-event rate. It is not a per-session failure probability.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 8,
+        "y": 31,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: /s",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^baseline:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^candidate:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "light-blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:transport_disconnect_churn_per_user_5m{instance=~\"$baseline_instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:transport_disconnect_churn_per_user_5m{instance=~\"$candidate_instance\"}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "title": "Short closed-session share · at most 10s",
+      "type": "timeseries",
+      "description": "Short-session symptom. Compare closure counts and session exit reasons.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 16,
+        "y": 31,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^baseline:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^candidate:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "light-blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:transport_short_sessions_le10s_ratio_5m{instance=~\"$baseline_instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:transport_short_sessions_le10s_ratio_5m{instance=~\"$candidate_instance\"}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 18,
+      "title": "Closed sessions · 5m",
+      "type": "timeseries",
+      "description": "",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 8,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^baseline:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^candidate:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "light-blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:transport_closed_sessions_5m{instance=~\"$baseline_instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:transport_closed_sessions_5m{instance=~\"$candidate_instance\"}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 19,
+      "title": "Local forwards per ingress packet",
+      "type": "timeseries",
+      "description": "Fanout multiplicity. It can exceed one and is not packet-delivery efficiency.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 8,
+        "y": 39,
+        "w": 8,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:x",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^baseline:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^candidate:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "light-blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:local_forwarding_fanout_ratio_5m{instance=~\"$baseline_instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:local_forwarding_fanout_ratio_5m{instance=~\"$candidate_instance\"}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 20,
+      "title": "Output protection closes",
+      "type": "timeseries",
+      "description": "Session closures caused by the RTC output budget.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 16,
+        "y": 39,
+        "w": 8,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^baseline:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^candidate:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "light-blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:output_budget_session_closes_rate_5m{instance=~\"$baseline_instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:output_budget_session_closes_rate_5m{instance=~\"$candidate_instance\"}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 21,
+      "title": "Committed video policy pauses",
+      "type": "timeseries",
+      "description": "Committed policy pause transitions. Compare workload and user policy context.",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 46,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^baseline:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^candidate:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "light-blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:budget_solver_paused_rate_5m{instance=~\"$baseline_instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:budget_solver_paused_rate_5m{instance=~\"$candidate_instance\"}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 22,
+      "title": "RTCP ingress protection drops",
+      "type": "timeseries",
+      "description": "",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 8,
+        "y": 46,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^baseline:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^candidate:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "light-blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:rtcp_ingress_budget_drops_rate_5m{instance=~\"$baseline_instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:rtcp_ingress_budget_drops_rate_5m{instance=~\"$candidate_instance\"}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 23,
+      "title": "Relay overload",
+      "type": "timeseries",
+      "description": "",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 16,
+        "y": 46,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "noValue": "Unavailable",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null+nan",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "#8E8E8E"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "axisCenteredZero": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^baseline:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^candidate:"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "light-blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Baseline",
+          "expr": "osfu:relay_overload_rate_5m{instance=~\"$baseline_instance\"}"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Candidate",
+          "expr": "osfu:relay_overload_rate_5m{instance=~\"$candidate_instance\"}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
     }
   ],
   "refresh": "15s",
@@ -740,15 +2365,49 @@
     "phase-6"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "name": "baseline_instance",
+        "label": "Baseline instance",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": {
+          "query": "label_values(up{job=\"o-sfu\"}, instance)",
+          "refId": "StandardVariableQuery"
+        },
+        "definition": "label_values(up{job=\"o-sfu\"}, instance)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": false,
+        "includeAll": false,
+        "options": []
+      },
+      {
+        "name": "candidate_instance",
+        "label": "Candidate instance",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": {
+          "query": "label_values(up{job=\"o-sfu\"}, instance)",
+          "refId": "StandardVariableQuery"
+        },
+        "definition": "label_values(up{job=\"o-sfu\"}, instance)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": false,
+        "includeAll": false,
+        "options": []
+      }
+    ]
   },
   "time": {
     "from": "now-6h",
     "to": "now"
   },
   "timezone": "",
-  "title": "o-sfu Staging Canary",
+  "title": "o-sfu Canary Comparison",
   "uid": "osfu-staging-canary",
-  "version": 1,
-  "weekStart": ""
+  "version": 2,
+  "weekStart": "",
+  "description": "Compare two independently selected SFU instances over the same time range. Traffic and observation counts must be comparable before attributing differences to a deployment."
 }
