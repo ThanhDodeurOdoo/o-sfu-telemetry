@@ -937,7 +937,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=\"o-sfu\"} | json | event=~\"http\\\\..*|ws\\\\..*\"",
+          "expr": "{service_name=\"o-sfu\"} | event=~\"http\\\\..*|ws\\\\..*\"",
           "maxLines": 100,
           "queryType": "range",
           "refId": "A"

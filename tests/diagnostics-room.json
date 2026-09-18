@@ -1,0 +1,294 @@
+{
+  "summary": {
+    "uuid": "fixture-room",
+    "createDate": "2026-09-17T00:00:00Z",
+    "mediaWorkerId": 0,
+    "publicationCount": 4,
+    "recordingState": {
+      "recording": false
+    },
+    "remoteAddress": "fixture",
+    "sourceCount": 4,
+    "userCount": 4,
+    "subscriptionCount": 5,
+    "transport": {
+      "connectedUsers": 2,
+      "disconnectedUsers": 1,
+      "unknownUsers": 1,
+      "totalUsers": 4
+    },
+    "webRtcEnabled": true
+  },
+  "users": [
+    {
+      "userId": 7,
+      "userInfo": {},
+      "transport": {
+        "connectionId": 1000,
+        "mediaWorkerId": 0,
+        "qualitySummary": {
+          "currentIncomingBitrate": {
+            "byStreamBps": {
+              "camera": 250000
+            },
+            "totalBps": 250000
+          },
+          "sampledMetricsAvailable": false,
+          "sampleCount": 0
+        },
+        "health": "connected"
+      },
+      "publications": [
+        {
+          "sourceId": 101,
+          "streamId": "camera",
+          "active": true,
+          "encodingIds": [
+            1101
+          ],
+          "mediaKind": "video"
+        }
+      ],
+      "subscriptions": [
+        {
+          "sourceId": 102,
+          "producerUserId": "guest",
+          "streamId": "camera",
+          "state": "active",
+          "selection": {
+            "active": true,
+            "activeVideoRouteCount": 1,
+            "policyAllowsDelivery": true,
+            "selectionReason": "receiver_adaptation",
+            "selector": "encoding",
+            "selectedVideoBitrateBps": 250000,
+            "selectedRid": "h",
+            "selectedEncodingId": 1102
+          },
+          "sourceTransportMediaId": 2102,
+          "consumerTransportMediaId": 3102
+        },
+        {
+          "sourceId": 999,
+          "producerUserId": "missing-owner",
+          "streamId": "camera",
+          "state": "pending",
+          "selection": {
+            "active": false,
+            "activeVideoRouteCount": 1,
+            "policyAllowsDelivery": false,
+            "selectionReason": "receiver_adaptation",
+            "selector": "encoding",
+            "selectedVideoBitrateBps": 250000
+          },
+          "sourceTransportMediaId": 2999,
+          "consumerTransportMediaId": 3999
+        }
+      ]
+    },
+    {
+      "userId": "guest",
+      "userInfo": {},
+      "transport": {
+        "connectionId": 1001,
+        "mediaWorkerId": 1,
+        "qualitySummary": {
+          "currentIncomingBitrate": {
+            "byStreamBps": {
+              "camera": 250000
+            },
+            "totalBps": 250000
+          },
+          "sampledMetricsAvailable": false,
+          "sampleCount": 0
+        },
+        "health": "disconnected"
+      },
+      "publications": [
+        {
+          "sourceId": 102,
+          "streamId": "camera",
+          "active": true,
+          "encodingIds": [
+            1102
+          ],
+          "mediaKind": "video"
+        }
+      ],
+      "subscriptions": [
+        {
+          "sourceId": 101,
+          "producerUserId": 7,
+          "streamId": "camera",
+          "state": "inactive",
+          "selection": {
+            "active": false,
+            "activeVideoRouteCount": 1,
+            "policyAllowsDelivery": false,
+            "selectionReason": "receiver_adaptation",
+            "selector": "encoding",
+            "selectedVideoBitrateBps": 250000
+          },
+          "sourceTransportMediaId": 2101,
+          "consumerTransportMediaId": 3101
+        },
+        {
+          "sourceId": 999,
+          "producerUserId": "missing-owner",
+          "streamId": "camera",
+          "state": "inactive",
+          "selection": {
+            "active": false,
+            "activeVideoRouteCount": 1,
+            "policyAllowsDelivery": false,
+            "selectionReason": "receiver_adaptation",
+            "selector": "encoding",
+            "selectedVideoBitrateBps": 250000
+          },
+          "sourceTransportMediaId": 2999,
+          "consumerTransportMediaId": 3999
+        }
+      ]
+    },
+    {
+      "userId": "007",
+      "userInfo": {},
+      "transport": {
+        "connectionId": 1000,
+        "mediaWorkerId": 0,
+        "qualitySummary": {
+          "currentIncomingBitrate": {
+            "byStreamBps": {
+              "camera": 250000
+            },
+            "totalBps": 250000
+          },
+          "sampledMetricsAvailable": false,
+          "sampleCount": 0
+        }
+      },
+      "publications": [],
+      "subscriptions": [
+        {
+          "sourceId": 101,
+          "producerUserId": 7,
+          "streamId": "camera",
+          "state": "active",
+          "selection": {
+            "active": true,
+            "activeVideoRouteCount": 1,
+            "policyAllowsDelivery": true,
+            "selectionReason": "receiver_adaptation",
+            "selector": "encoding",
+            "selectedVideoBitrateBps": 250000,
+            "selectedRid": "h",
+            "selectedEncodingId": 1101
+          },
+          "sourceTransportMediaId": 2101,
+          "consumerTransportMediaId": 3101
+        }
+      ]
+    },
+    {
+      "userId": 99,
+      "userInfo": {},
+      "transport": {
+        "connectionId": 1002,
+        "mediaWorkerId": 2,
+        "qualitySummary": {
+          "currentIncomingBitrate": {
+            "byStreamBps": {
+              "camera": 250000
+            },
+            "totalBps": 250000
+          },
+          "sampledMetricsAvailable": false,
+          "sampleCount": 0
+        },
+        "health": "connected"
+      },
+      "publications": [
+        {
+          "sourceId": 104,
+          "streamId": "camera",
+          "active": true,
+          "encodingIds": [
+            1104
+          ],
+          "mediaKind": "video"
+        }
+      ],
+      "subscriptions": []
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": 101,
+      "ownerUserId": 7,
+      "streamId": "camera",
+      "active": true,
+      "currentIncomingBitrateBps": 250000,
+      "mediaKind": "video",
+      "encodings": [
+        {
+          "encodingId": 1101,
+          "rid": "h",
+          "primarySsrc": 4101
+        }
+      ],
+      "transportMediaId": 2101,
+      "mid": "video"
+    },
+    {
+      "sourceId": 102,
+      "ownerUserId": "guest",
+      "streamId": "camera",
+      "active": false,
+      "currentIncomingBitrateBps": 0,
+      "mediaKind": "video",
+      "encodings": [
+        {
+          "encodingId": 1102,
+          "rid": "h",
+          "primarySsrc": 4102
+        }
+      ],
+      "transportMediaId": 2102,
+      "mid": "video"
+    },
+    {
+      "sourceId": 103,
+      "ownerUserId": "missing-owner",
+      "streamId": "camera",
+      "active": true,
+      "currentIncomingBitrateBps": 250000,
+      "mediaKind": "video",
+      "encodings": [
+        {
+          "encodingId": 1103,
+          "rid": "h",
+          "primarySsrc": 4103
+        }
+      ],
+      "transportMediaId": 2103,
+      "mid": "video"
+    },
+    {
+      "sourceId": 104,
+      "ownerUserId": 99,
+      "streamId": "camera",
+      "active": true,
+      "currentIncomingBitrateBps": 250000,
+      "mediaKind": "video",
+      "encodings": [
+        {
+          "encodingId": 1104,
+          "rid": "h",
+          "primarySsrc": 4104
+        }
+      ],
+      "transportMediaId": 2104,
+      "mid": "video"
+    }
+  ]
+}

@@ -65,7 +65,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=\"o-sfu\"} |~ \"(?i)${search:raw}\" | json | level=~\"${level:pipe}\" | event=~\"${event:raw}\" | target=~\"${target:raw}\" | room_id=~\"${room_id:raw}\" | user_id=~\"(Integer\\\\()?${user_id:raw}(\\\\))?\" | trace_id=~\"${trace_id:raw}\"",
+          "expr": "{service_name=\"o-sfu\"} |~ \"(?i)${search:raw}\" | level=~\"${level:pipe}\" | event=~\"${event:raw}\" | target=~\"${target:raw}\" | room_id=~\"${room_id:raw}\" | user_id=~\"(Integer\\\\()?${user_id:raw}(\\\\))?\" | trace_id=~\"${trace_id:raw}\"",
           "maxLines": 100,
           "queryType": "range",
           "refId": "A"

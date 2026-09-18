@@ -138,6 +138,14 @@ records with `com.odoo.sfu.component=server`, then parses the inner `o-sfu`
 JSON log body. It stores file offsets in `data/otelcol` so collector restarts do not
 replay the same logs.
 
+The original JSON line remains intact in Loki. The Collector resolves parent
+span fields from root to leaf, applies event fields and preserves authoritative
+envelope metadata. Dashboards filter the resulting structured metadata directly.
+Trace links use the resolved `trace_id` metadata.
+
+Numeric metadata outside signed 64-bit range is omitted because the Collector's
+JSON parser cannot preserve it exactly. The original body retains those digits.
+
 The local `data/logs` directory remains available for manual replay, but it is
 not the production retention mechanism.
 
@@ -230,6 +238,13 @@ Grafana provisions four datasources out of the box:
 - `Tempo`
 - `Infinity` for the configured SFU diagnostics endpoints
 
+Graph panels fetch `/internal/diagnostics/rooms/{uuid}` and build nodes and edges
+with Infinity's JQ backend. Their shared expressions live in `grafana/graphs/`.
+Run `python3 scripts/check_graph_queries.py --write` after editing an expression
+to refresh its dashboard targets. Infinity decodes numbers as floating point,
+so graph queries reject numeric identities outside the exact integer range
+`-(2^53-1)` through `2^53-1`. String identities retain their exact representation.
+
 ## Validation flow
 
 1. Confirm `GET /v1/noop` succeeds on the host-run `o-sfu`.
@@ -307,10 +322,12 @@ failures, receiver refusals and queues above 80 percent capacity for five minute
 
 ## Repository checks
 
-Run `scripts/check-telemetry.sh` with Docker and Python 3. It validates all Compose
-profiles, all dashboard layouts and PromQL expressions, the three Prometheus
-configurations and `tests/prometheus-rules.test.yml` using the pinned Prometheus
-image. The same command runs in the Compose CI workflow.
+Run `scripts/check-telemetry.sh` with Docker, Python 3 and jq. It validates all
+Compose profiles, dashboard layouts, PromQL expressions, graph relationships,
+Collector log normalization and the three Prometheus configurations. Collector
+fixtures run against the pinned image through both JSONL and Docker receivers.
+Prometheus rule fixtures use the pinned Prometheus image. The same command runs
+in the Compose CI workflow.
 
 The rule fixtures cover independent SFU instances, stale or failed scrapes,
 missing probes, idle traffic, fanout above one, zero observations, simultaneous

@@ -870,7 +870,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({service_name=\"o-sfu\"} | json | level=~\"$level\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"o-sfu\"} | level=~\"$level\" [$__range]))",
           "instant": true,
           "queryType": "instant",
           "refId": "A"
@@ -937,7 +937,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum by (level) (rate({service_name=\"o-sfu\"} | json | level=~\"$level\" [5m]))",
+          "expr": "sum by (level) (rate({service_name=\"o-sfu\"} | level=~\"$level\" [5m]))",
           "legendFormat": "{{level}}",
           "queryType": "range",
           "refId": "A"
@@ -1010,7 +1010,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "topk(15, sum by (level, event) (count_over_time({service_name=\"o-sfu\"} | json | level=~\"$level\" [$__range])))",
+          "expr": "topk(15, sum by (level, event) (count_over_time({service_name=\"o-sfu\"} | level=~\"$level\" [$__range])))",
           "instant": true,
           "legendFormat": "{{level}} {{event}}",
           "queryType": "instant",
@@ -1049,7 +1049,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{service_name=\"o-sfu\"} | json | level=~\"$level\"",
+          "expr": "{service_name=\"o-sfu\"} | level=~\"$level\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -1114,7 +1114,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum by (event) (rate({service_name=\"o-sfu\"} | json | level=~\"$level\" | event!=\"\" [5m]))",
+          "expr": "sum by (event) (rate({service_name=\"o-sfu\"} | level=~\"$level\" | event!=\"\" [5m]))",
           "legendFormat": "{{event}}",
           "queryType": "range",
           "refId": "A"

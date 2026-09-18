@@ -19,7 +19,48 @@ receivers:
         expr: 'attributes.attrs == nil || attributes.attrs["com.odoo.sfu.component"] != "server"'
       - type: remove
         field: attributes.attrs
-      - type: json_parser
+      - &parse_sfu_json
+        type: json_parser
+        id: parse_sfu_json
+        if: 'body matches "^\\s*\\{"'
+        parse_to: attributes.sfu_event
+        parse_ints: true
+      # Keep raw bodies exact and resolve root-to-leaf spans into query metadata.
+      - &resolve_sfu_fields
+        type: add
+        id: resolve_sfu_fields
+        if: 'type(attributes.sfu_event) == "map" && type(attributes.sfu_event.fields) == "map" && type(attributes.sfu_event.spans) == "array"'
+        field: attributes.sfu_fields
+        # Signed overflow is omitted from metadata because the parser rounds it.
+        value: >-
+          EXPR(let metadata = ["timestamp", "level", "target", "service.name", "service.version", "service.instance.id", "deployment.environment", "trace_id"];
+          let event = attributes.sfu_event;
+          let pairs = concat(
+            [["event", "runtime.log"]],
+            filter(concat(
+              reduce(event.spans, concat(#acc, toPairs(#.fields)), []),
+              toPairs(event.fields)
+            ), { !(#[0] in metadata) && !(#[0] in ["fields", "spans"]) }),
+            filter(toPairs(event), { #[0] in metadata })
+          );
+          "{" + join(map(filter(toPairs(fromPairs(pairs)), {
+            type(#[1]) != "float" || (#[1] > -9223372036854775808.0 && #[1] < 9223372036854775808.0)
+          }), { toJSON(#[0]) + ":" + toJSON(#[1]) }), ",") + "}")
+      - &parse_sfu_fields
+        type: json_parser
+        id: parse_sfu_fields
+        if: 'attributes.sfu_fields != nil'
+        parse_from: attributes.sfu_fields
+        parse_to: attributes
+        parse_ints: true
+      - &remove_sfu_fields
+        type: remove
+        if: 'attributes.sfu_fields != nil'
+        field: attributes.sfu_fields
+      - &remove_sfu_event
+        type: remove
+        if: 'attributes.sfu_event != nil'
+        field: attributes.sfu_event
 
   filelog/jsonl:
     include:
@@ -28,7 +69,11 @@ receivers:
     storage: file_storage
     include_file_path: true
     operators:
-      - type: json_parser
+      - *parse_sfu_json
+      - *resolve_sfu_fields
+      - *parse_sfu_fields
+      - *remove_sfu_fields
+      - *remove_sfu_event
 
 extensions:
   file_storage:

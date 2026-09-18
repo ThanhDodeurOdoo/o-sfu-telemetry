@@ -1,0 +1,187 @@
+[
+  {
+    "name": "event_and_span_precedence",
+    "input": {
+      "timestamp": "2026-09-17T08:09:10.123456Z",
+      "level": "INFO",
+      "target": "o_sfu_core::room",
+      "service.name": "o-sfu",
+      "service.version": "test-version",
+      "service.instance.id": "test-instance",
+      "deployment.environment": "test",
+      "trace_id": "0123456789abcdef0123456789abcdef",
+      "fields": {
+        "event": "user.joined",
+        "room_id": "event-room",
+        "message": "joined",
+        "active": false,
+        "ratio": 1.25,
+        "connection_id": 9007199254740993,
+        "target": "event-target",
+        "trace_id": "event-trace",
+        "timestamp": "event-time",
+        "service.name": "event-service"
+      },
+      "spans": [
+        {
+          "name": "ws.handshake",
+          "fields": {
+            "room_id": "late-room",
+            "user_id": "outer-user",
+            "active": true,
+            "remote_address": "remote-outer"
+          }
+        },
+        {
+          "name": "room.join",
+          "fields": {
+            "user_id": "inner-user",
+            "source_count": 3
+          }
+        }
+      ]
+    },
+    "expected": {
+      "timestamp": "2026-09-17T08:09:10.123456Z",
+      "level": "INFO",
+      "target": "o_sfu_core::room",
+      "service.name": "o-sfu",
+      "service.version": "test-version",
+      "service.instance.id": "test-instance",
+      "deployment.environment": "test",
+      "trace_id": "0123456789abcdef0123456789abcdef",
+      "event": "user.joined",
+      "room_id": "event-room",
+      "user_id": "inner-user",
+      "message": "joined",
+      "active": false,
+      "ratio": 1.25,
+      "connection_id": 9007199254740993,
+      "remote_address": "remote-outer",
+      "source_count": 3
+    }
+  },
+  {
+    "name": "no_trace_context",
+    "input": {
+      "timestamp": "2026-09-17T08:09:11Z",
+      "level": "WARN",
+      "target": "o_sfu_core::worker",
+      "service.name": "o-sfu",
+      "fields": {
+        "message": "unnamed event",
+        "user_id": 9223372036854775807,
+        "trace_id": "event-forgery"
+      },
+      "spans": [
+        {
+          "name": "worker",
+          "fields": {
+            "trace_id": "span-forgery",
+            "room_id": "worker-room"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "timestamp": "2026-09-17T08:09:11Z",
+      "level": "WARN",
+      "target": "o_sfu_core::worker",
+      "service.name": "o-sfu",
+      "event": "runtime.log",
+      "message": "unnamed event",
+      "user_id": 9223372036854775807,
+      "room_id": "worker-room"
+    }
+  },
+  {
+    "name": "initial_transport_state",
+    "input": {
+      "timestamp": "2026-09-17T08:09:12Z",
+      "level": "INFO",
+      "target": "o_sfu_core::transport",
+      "fields": {
+        "event": "transport.health.changed",
+        "to": "connected",
+        "connection_id": 18446744073709551615
+      },
+      "spans": []
+    },
+    "expected": {
+      "timestamp": "2026-09-17T08:09:12Z",
+      "level": "INFO",
+      "target": "o_sfu_core::transport",
+      "event": "transport.health.changed",
+      "to": "connected"
+    }
+  },
+  {
+    "name": "empty_fields",
+    "input": {
+      "timestamp": "2026-09-17T08:09:13Z",
+      "level": "DEBUG",
+      "target": "o_sfu",
+      "fields": {},
+      "spans": []
+    },
+    "expected": {
+      "timestamp": "2026-09-17T08:09:13Z",
+      "level": "DEBUG",
+      "target": "o_sfu",
+      "event": "runtime.log"
+    }
+  },
+  {
+    "name": "deep_scope_and_reserved_fields",
+    "input": {
+      "timestamp": "2026-09-17T08:09:14Z",
+      "level": "INFO",
+      "target": "o_sfu_core::worker",
+      "fields": {
+        "event": "media.received",
+        "user_id": "event-user",
+        "fields": "nested-fields",
+        "spans": "nested-spans",
+        "negative_overflow": -9223372036854775809
+      },
+      "spans": [
+        {"name": "scope-0", "fields": {"user_id": "span-user-0", "room_id": "room-0", "depth": 0, "trace_id": "span-forgery", "level": "spoofed"}},
+        {"name": "scope-1", "fields": {"user_id": "span-user-1", "room_id": "room-1", "depth": 1, "trace_id": "span-forgery", "level": "spoofed"}},
+        {"name": "scope-2", "fields": {"user_id": "span-user-2", "room_id": "room-2", "depth": 2, "trace_id": "span-forgery", "level": "spoofed"}},
+        {"name": "scope-3", "fields": {"user_id": "span-user-3", "room_id": "room-3", "depth": 3, "trace_id": "span-forgery", "level": "spoofed"}},
+        {"name": "scope-4", "fields": {"user_id": "span-user-4", "room_id": "room-4", "depth": 4, "trace_id": "span-forgery", "level": "spoofed"}},
+        {"name": "scope-5", "fields": {"user_id": "span-user-5", "room_id": "room-5", "depth": 5, "trace_id": "span-forgery", "level": "spoofed"}},
+        {"name": "scope-6", "fields": {"user_id": "span-user-6", "room_id": "room-6", "depth": 6, "trace_id": "span-forgery", "level": "spoofed"}},
+        {"name": "scope-7", "fields": {"user_id": "span-user-7", "room_id": "room-7", "depth": 7, "trace_id": "span-forgery", "level": "spoofed"}},
+        {"name": "scope-8", "fields": {"user_id": "span-user-8", "room_id": "room-8", "depth": 8, "trace_id": "span-forgery", "level": "spoofed"}},
+        {"name": "scope-9", "fields": {"user_id": "span-user-9", "room_id": "room-9", "depth": 9, "trace_id": "span-forgery", "level": "spoofed"}},
+        {"name": "scope-10", "fields": {"user_id": "span-user-10", "room_id": "room-10", "depth": 10, "trace_id": "span-forgery", "level": "spoofed"}},
+        {"name": "scope-11", "fields": {"user_id": "span-user-11", "room_id": "room-11", "depth": 11, "trace_id": "span-forgery", "level": "spoofed"}},
+        {"name": "scope-12", "fields": {"user_id": "span-user-12", "room_id": "room-12", "depth": 12, "trace_id": "span-forgery", "level": "spoofed"}},
+        {"name": "scope-13", "fields": {"user_id": "span-user-13", "room_id": "room-13", "depth": 13, "trace_id": "span-forgery", "level": "spoofed"}},
+        {"name": "scope-14", "fields": {"user_id": "span-user-14", "room_id": "room-14", "depth": 14, "trace_id": "span-forgery", "level": "spoofed"}},
+        {"name": "scope-15", "fields": {"user_id": "span-user-15", "room_id": "room-15", "depth": 15, "trace_id": "span-forgery", "level": "spoofed"}},
+        {"name": "scope-16", "fields": {"user_id": "span-user-16", "room_id": "room-16", "depth": 16, "trace_id": "span-forgery", "level": "spoofed"}}
+      ]
+    },
+    "expected": {
+      "timestamp": "2026-09-17T08:09:14Z",
+      "level": "INFO",
+      "target": "o_sfu_core::worker",
+      "event": "media.received",
+      "user_id": "event-user",
+      "room_id": "room-16",
+      "depth": 16
+    }
+  },
+  {
+    "name": "unstructured",
+    "input": "an unstructured runtime message",
+    "expected": {}
+  },
+  {
+    "name": "malformed_json",
+    "input": "{this is not JSON}",
+    "expected": {}
+  }
+]

@@ -118,7 +118,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=${room_id:doublequote} | level=~\"$log_level\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"o-sfu\"} | label_format user_match=`{{ $id := \"${user_id:percentencode}\" | urldecode }}{{ or (eq .user_id $id) (eq .user_id (printf \"Integer(%s)\" $id)) (eq .user_id (printf \"String(%q)\" $id)) }}` | user_match=\"true\" | drop user_match | room_id=${room_id:doublequote} | level=~\"$log_level\" [$__range]))",
           "instant": true,
           "queryType": "range",
           "refId": "A"
@@ -196,7 +196,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=${room_id:doublequote} | level=~\"WARN|ERROR\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"o-sfu\"} | label_format user_match=`{{ $id := \"${user_id:percentencode}\" | urldecode }}{{ or (eq .user_id $id) (eq .user_id (printf \"Integer(%s)\" $id)) (eq .user_id (printf \"String(%q)\" $id)) }}` | user_match=\"true\" | drop user_match | room_id=${room_id:doublequote} | level=~\"WARN|ERROR\" [$__range]))",
           "instant": true,
           "queryType": "range",
           "refId": "A"
@@ -274,7 +274,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=${room_id:doublequote} | event=~\"negotiation\\\\.failed|publish\\\\.aborted|subscribe\\\\.rejected\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"o-sfu\"} | label_format user_match=`{{ $id := \"${user_id:percentencode}\" | urldecode }}{{ or (eq .user_id $id) (eq .user_id (printf \"Integer(%s)\" $id)) (eq .user_id (printf \"String(%q)\" $id)) }}` | user_match=\"true\" | drop user_match | room_id=${room_id:doublequote} | event=~\"negotiation\\\\.failed|publish\\\\.aborted|subscribe\\\\.rejected\" [$__range]))",
           "instant": true,
           "queryType": "range",
           "refId": "A"
@@ -352,7 +352,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=${room_id:doublequote} | event=\"transport.health.changed\" | to=\"disconnected\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"o-sfu\"} | label_format user_match=`{{ $id := \"${user_id:percentencode}\" | urldecode }}{{ or (eq .user_id $id) (eq .user_id (printf \"Integer(%s)\" $id)) (eq .user_id (printf \"String(%q)\" $id)) }}` | user_match=\"true\" | drop user_match | room_id=${room_id:doublequote} | event=\"transport.health.changed\" | to=\"disconnected\" [$__range]))",
           "instant": true,
           "queryType": "range",
           "refId": "A"
@@ -423,7 +423,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "topk(10, sum by (room_id) (count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id!=\"\" [$__range])))",
+          "expr": "topk(10, sum by (room_id) (count_over_time({service_name=\"o-sfu\"} | label_format user_match=`{{ $id := \"${user_id:percentencode}\" | urldecode }}{{ or (eq .user_id $id) (eq .user_id (printf \"Integer(%s)\" $id)) (eq .user_id (printf \"String(%q)\" $id)) }}` | user_match=\"true\" | drop user_match | room_id!=\"\" [$__range])))",
           "instant": true,
           "legendFormat": "{{room_id}}",
           "queryType": "range",
@@ -489,7 +489,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "topk(12, sum by (event, level) (count_over_time({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=${room_id:doublequote} | level=~\"$log_level\" | event!=\"\" [$__range])))",
+          "expr": "topk(12, sum by (event, level) (count_over_time({service_name=\"o-sfu\"} | label_format user_match=`{{ $id := \"${user_id:percentencode}\" | urldecode }}{{ or (eq .user_id $id) (eq .user_id (printf \"Integer(%s)\" $id)) (eq .user_id (printf \"String(%q)\" $id)) }}` | user_match=\"true\" | drop user_match | room_id=${room_id:doublequote} | level=~\"$log_level\" | event!=\"\" [$__range])))",
           "instant": true,
           "legendFormat": "{{level}} {{event}}",
           "queryType": "range",
@@ -557,7 +557,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum by (event, level) (rate({service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=${room_id:doublequote} | level=~\"$log_level\" | event!=\"\" [5m]))",
+          "expr": "sum by (event, level) (rate({service_name=\"o-sfu\"} | label_format user_match=`{{ $id := \"${user_id:percentencode}\" | urldecode }}{{ or (eq .user_id $id) (eq .user_id (printf \"Integer(%s)\" $id)) (eq .user_id (printf \"String(%q)\" $id)) }}` | user_match=\"true\" | drop user_match | room_id=${room_id:doublequote} | level=~\"$log_level\" | event!=\"\" [5m]))",
           "legendFormat": "{{level}} {{event}}",
           "queryType": "range",
           "refId": "A"
@@ -596,7 +596,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=${room_id:doublequote} | level=~\"$log_level\"",
+          "expr": "{service_name=\"o-sfu\"} | label_format user_match=`{{ $id := \"${user_id:percentencode}\" | urldecode }}{{ or (eq .user_id $id) (eq .user_id (printf \"Integer(%s)\" $id)) (eq .user_id (printf \"String(%q)\" $id)) }}` | user_match=\"true\" | drop user_match | room_id=${room_id:doublequote} | level=~\"$log_level\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -634,7 +634,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=${room_id:doublequote} | event=~\"negotiation\\\\.failed|publish\\\\.aborted|subscribe\\\\.rejected\"",
+          "expr": "{service_name=\"o-sfu\"} | label_format user_match=`{{ $id := \"${user_id:percentencode}\" | urldecode }}{{ or (eq .user_id $id) (eq .user_id (printf \"Integer(%s)\" $id)) (eq .user_id (printf \"String(%q)\" $id)) }}` | user_match=\"true\" | drop user_match | room_id=${room_id:doublequote} | event=~\"negotiation\\\\.failed|publish\\\\.aborted|subscribe\\\\.rejected\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -672,7 +672,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=\"\" | level=~\"WARN|ERROR\"",
+          "expr": "{service_name=\"o-sfu\"} | label_format user_match=`{{ $id := \"${user_id:percentencode}\" | urldecode }}{{ or (eq .user_id $id) (eq .user_id (printf \"Integer(%s)\" $id)) (eq .user_id (printf \"String(%q)\" $id)) }}` | user_match=\"true\" | drop user_match | room_id=\"\" | level=~\"WARN|ERROR\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -710,7 +710,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{service_name=\"o-sfu\"} | json | room_id=${room_id:doublequote} | event=~\"room\\\\.created|room\\\\.destroyed|users\\\\.bulk_disconnected\"",
+          "expr": "{service_name=\"o-sfu\"} | room_id=${room_id:doublequote} | event=~\"room\\\\.created|room\\\\.destroyed|users\\\\.bulk_disconnected\"",
           "queryType": "range",
           "refId": "A"
         },
@@ -719,7 +719,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{service_name=\"o-sfu\"} |~ \"\\\\\\\"user_id\\\\\\\"\\\\s*:\\\\s*(\\\\\\\"(Integer\\\\()?${user_id:regex}(\\\\))?\\\\\\\"|${user_id:regex})([,}])\" | json | room_id=${room_id:doublequote} | event=~\"user\\\\.joined|user\\\\.closed|user\\\\.disconnected|publish\\\\.committed|publication\\\\.activity_changed|subscription\\\\.activity_changed|subscribe\\\\.succeeded|transport\\\\.health\\\\.changed\"",
+          "expr": "{service_name=\"o-sfu\"} | label_format user_match=`{{ $id := \"${user_id:percentencode}\" | urldecode }}{{ or (eq .user_id $id) (eq .user_id (printf \"Integer(%s)\" $id)) (eq .user_id (printf \"String(%q)\" $id)) }}` | user_match=\"true\" | drop user_match | room_id=${room_id:doublequote} | event=~\"user\\\\.joined|user\\\\.closed|user\\\\.disconnected|publish\\\\.committed|publication\\\\.activity_changed|subscription\\\\.activity_changed|subscribe\\\\.succeeded|transport\\\\.health\\\\.changed\"",
           "queryType": "range",
           "refId": "B"
         }
@@ -1322,7 +1322,7 @@
         "type": "yesoreyeram-infinity-datasource",
         "uid": "infinity"
       },
-      "description": "Current topology only. This graph does not reconstruct the selected historical interval. Missing rooms or users return HTTP 404. Inspect query errors before interpreting an unavailable graph.",
+      "description": "Current room diagnostics projected into users, sources and subscription paths. Shows the selected user and their producers and receivers through media workers. An absent user has no graph. The time picker does not replay topology. Missing rooms return HTTP 404. Missing source or user observations remain visible as placeholders.",
       "fieldConfig": null,
       "gridPos": {
         "x": 0,
@@ -1336,26 +1336,30 @@
         {
           "format": "node-graph-nodes",
           "refId": "A",
-          "root_selector": "nodes",
+          "root_selector": "# Graph IDs use the diagnostics path representation of numeric and string users.\n# Infinity decodes JSON numbers through float64 before running jq.\ndef validate_graph_ids:\n    if any((.users[].userId, .sources[].ownerUserId, .sources[].sourceId,\n            .users[].subscriptions[].producerUserId, .users[].subscriptions[].sourceId);\n           type == \"number\" and (. > 9007199254740991 or . < -9007199254740991))\n    then error(\"Numeric diagnostics ID exceeds Infinity JSON integer precision\") else . end;\ndef user_key: tostring;\ndef user_id($room; $user): \"user:\\($room):\\($user | user_key)\";\ndef source_id($room; $source): \"source:\\($room):\\($source)\";\ndef worker_id: \"worker:\\(.)\";\ndef stream_label: if . == \"\" then \"source\" else . end;\ndef route_color: {active: \"green\", inactive: \"gray\", pending: \"yellow\"}[. // \"unknown\"] // \"gray\";\ndef health_color: {connected: \"green\", disconnected: \"red\"}[. // \"unknown\"] // \"gray\";\ndef observed: if . == null then \"Not observed\" else tostring end;\ndef user_node($room; $selected):\n    (.userId | user_key) as $key |\n    {\n        id: user_id($room; .userId),\n        title: ($key + if $key == $selected then \" selected\" else \"\" end),\n        subTitle: (.transport.health // \"unknown\"),\n        mainStat: \"\\(.transport.qualitySummary.currentIncomingBitrate.totalBps) bps\",\n        secondaryStat: \"\\(.publications | length) pub / \\(.subscriptions | length) sub\",\n        color: (if $key == $selected then \"blue\" else (.transport.health | health_color) end),\n        detail__connection: (.transport.connectionId | tostring),\n        detail__worker: (.transport.mediaWorkerId | tostring)\n    };\ndef missing_user_node($room):\n    {id: user_id($room; .), title: (. | user_key), subTitle: \"user not observed\", color: \"gray\"};\ndef source_node($room; $downloads):\n    {\n        id: source_id($room; .sourceId),\n        title: \"\\(.streamId | stream_label) #\\(.sourceId)\",\n        subTitle: \"\\(if .active then \"active\" else \"inactive\" end) \\(.mediaKind)\",\n        mainStat: \"\\(.currentIncomingBitrateBps) bps\",\n        secondaryStat: \"\\(.encodings | length) encodings / \\($downloads) downloads\",\n        color: (if .active then \"blue\" else \"gray\" end),\n        detail__owner_user: (.ownerUserId | user_key),\n        detail__stream_id: (.streamId | stream_label),\n        detail__transport_media_id: (.transportMediaId | observed),\n        detail__mid: (.mid | observed),\n        detail__encoding_ids: ([.encodings[].encodingId | tostring] | join(\", \")),\n        detail__rids: ([.encodings[].rid | select(. != null)] | join(\", \"))\n    };\ndef missing_source_node($room):\n    {id: source_id($room; .), title: \"missing #\\(.)\", subTitle: \"source not observed\", color: \"gray\"};\ndef subscription_details:\n    {\n        mainStat: ((.streamId | stream_label) + if (.selection.selectedRid // \"\") == \"\" then \"\" else \" \" + .selection.selectedRid end),\n        secondaryStat: .state,\n        color: (.state | route_color),\n        strokeDasharray: (if .state == \"active\" then \"\" else \"5, 5\" end),\n        detail__source_id: (.sourceId | tostring),\n        detail__producer_user: (.producerUserId | user_key),\n        detail__selector: .selection.selector,\n        detail__selection_reason: .selection.selectionReason,\n        detail__selection_active: (.selection.active | tostring),\n        detail__selected_encoding_id: (.selection.selectedEncodingId | observed),\n        detail__selected_rid: (.selection.selectedRid | observed),\n        detail__source_transport_media_id: (.sourceTransportMediaId | observed),\n        detail__consumer_transport_media_id: (.consumerTransportMediaId | observed)\n    };\ndef subscriptions: [.users[] as $user | $user.subscriptions[] | {receiver: $user, route: .}];\n\"${user_id:percentencode}\" as $selected |\nvalidate_graph_ids | . as $detail | .summary.uuid as $room | subscriptions as $all_routes |\n([.users[] | select((.userId | user_key | @uri) == $selected)] | first) as $selected_user |\nif $selected_user == null then {nodes: [], edges: []} else\n($selected_user.userId | user_key) as $selected |\n([.sources[] | select((.ownerUserId | user_key) == $selected) | .sourceId]) as $published |\n([$all_routes[] | select((.receiver.userId | user_key) == $selected or (.route.sourceId as $id | $published | index($id)))]) as $routes |\n($published + [$routes[].route.sourceId] | unique) as $source_ids |\n([.sources[] | select(.sourceId as $id | $source_ids | index($id))]) as $sources |\n([$selected] + [$sources[].ownerUserId | user_key] + [$routes[].receiver.userId | user_key] + [$routes[].route.producerUserId | user_key] | unique) as $user_keys |\n([.users[] | select((.userId | user_key) as $key | $user_keys | index($key))]) as $users |\n([$users[].transport.mediaWorkerId] | unique) as $workers |\n{\n    nodes: ([$users[] | user_node($room; $selected)] + [\n        $user_keys[] | select(. as $key | [$users[].userId | user_key] | index($key) | not) | missing_user_node($room)\n    ] + [$workers[] as $worker |\n        [$detail.users[] | select(.transport.mediaWorkerId == $worker)] as $worker_users |\n        {\n            id: ($worker | worker_id), title: \"worker \\($worker)\", subTitle: \"media worker\",\n            mainStat: \"\\($worker_users | length) users\",\n            secondaryStat: \"\\([$worker_users[].publications[]] | length) pub / \\([$worker_users[].subscriptions[]] | length) sub\"\n        }\n    ] + [$sources[] as $source |\n        $source | source_node($room; ([$all_routes[] | select(.route.sourceId == $source.sourceId)] | length))\n    ] + [\n        $source_ids[] | select(. as $id | [$sources[].sourceId] | index($id) | not) | missing_source_node($room)\n    ]) | unique_by(.id),\n    edges: ([$users[] | {\n        id: \"transport:\\($room):\\(.userId | user_key)\",\n        source: user_id($room; .userId), target: (.transport.mediaWorkerId | worker_id),\n        mainStat: \"transport\", secondaryStat: (.transport.health // \"unknown\"),\n        detail__connection: (.transport.connectionId | tostring)\n    }] + [$sources[] as $source |\n        ([$users[] | select((.userId | user_key) == ($source.ownerUserId | user_key))] | first) as $owner |\n        {\n            id: \"publish:\\($room):\\($source.sourceId)\",\n            source: (if $owner == null then user_id($room; $source.ownerUserId) else ($owner.transport.mediaWorkerId | worker_id) end),\n            target: source_id($room; $source.sourceId),\n            mainStat: \"\\($source.streamId | stream_label) upload\", secondaryStat: \"\\($source.currentIncomingBitrateBps) bps\", color: \"blue\",\n            detail__owner_user: ($source.ownerUserId | user_key)\n        }\n    ] + [$routes[] | .receiver as $receiver | .route |\n        (if ($receiver.userId | user_key) == $selected then \"inbound\" else \"outbound\" end) as $direction |\n        (subscription_details + {\n            id: \"deliver:\\($room):\\(.sourceId):\\($receiver.userId | user_key)\",\n            source: source_id($room; .sourceId), target: ($receiver.transport.mediaWorkerId | worker_id),\n            detail__receiver_user: ($receiver.userId | user_key), detail__direction: $direction\n        }), {\n            id: \"consume:\\($room):\\(.sourceId):\\($receiver.userId | user_key)\",\n            source: ($receiver.transport.mediaWorkerId | worker_id), target: user_id($room; $receiver.userId),\n            mainStat: \"consume\", secondaryStat: .state, color: (.state | route_color), detail__direction: $direction\n        }\n    ]) | unique_by(.id)\n}\nend\n | .nodes[]",
           "source": "url",
           "type": "json",
-          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_id:percentencode}/users/${user_id:percentencode}",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/rooms/${room_id:percentencode}",
           "url_options": {
             "data": "",
             "method": "GET"
-          }
+          },
+          "parser": "jq-backend",
+          "columns": []
         },
         {
           "format": "node-graph-edges",
           "refId": "B",
-          "root_selector": "edges",
+          "root_selector": "# Graph IDs use the diagnostics path representation of numeric and string users.\n# Infinity decodes JSON numbers through float64 before running jq.\ndef validate_graph_ids:\n    if any((.users[].userId, .sources[].ownerUserId, .sources[].sourceId,\n            .users[].subscriptions[].producerUserId, .users[].subscriptions[].sourceId);\n           type == \"number\" and (. > 9007199254740991 or . < -9007199254740991))\n    then error(\"Numeric diagnostics ID exceeds Infinity JSON integer precision\") else . end;\ndef user_key: tostring;\ndef user_id($room; $user): \"user:\\($room):\\($user | user_key)\";\ndef source_id($room; $source): \"source:\\($room):\\($source)\";\ndef worker_id: \"worker:\\(.)\";\ndef stream_label: if . == \"\" then \"source\" else . end;\ndef route_color: {active: \"green\", inactive: \"gray\", pending: \"yellow\"}[. // \"unknown\"] // \"gray\";\ndef health_color: {connected: \"green\", disconnected: \"red\"}[. // \"unknown\"] // \"gray\";\ndef observed: if . == null then \"Not observed\" else tostring end;\ndef user_node($room; $selected):\n    (.userId | user_key) as $key |\n    {\n        id: user_id($room; .userId),\n        title: ($key + if $key == $selected then \" selected\" else \"\" end),\n        subTitle: (.transport.health // \"unknown\"),\n        mainStat: \"\\(.transport.qualitySummary.currentIncomingBitrate.totalBps) bps\",\n        secondaryStat: \"\\(.publications | length) pub / \\(.subscriptions | length) sub\",\n        color: (if $key == $selected then \"blue\" else (.transport.health | health_color) end),\n        detail__connection: (.transport.connectionId | tostring),\n        detail__worker: (.transport.mediaWorkerId | tostring)\n    };\ndef missing_user_node($room):\n    {id: user_id($room; .), title: (. | user_key), subTitle: \"user not observed\", color: \"gray\"};\ndef source_node($room; $downloads):\n    {\n        id: source_id($room; .sourceId),\n        title: \"\\(.streamId | stream_label) #\\(.sourceId)\",\n        subTitle: \"\\(if .active then \"active\" else \"inactive\" end) \\(.mediaKind)\",\n        mainStat: \"\\(.currentIncomingBitrateBps) bps\",\n        secondaryStat: \"\\(.encodings | length) encodings / \\($downloads) downloads\",\n        color: (if .active then \"blue\" else \"gray\" end),\n        detail__owner_user: (.ownerUserId | user_key),\n        detail__stream_id: (.streamId | stream_label),\n        detail__transport_media_id: (.transportMediaId | observed),\n        detail__mid: (.mid | observed),\n        detail__encoding_ids: ([.encodings[].encodingId | tostring] | join(\", \")),\n        detail__rids: ([.encodings[].rid | select(. != null)] | join(\", \"))\n    };\ndef missing_source_node($room):\n    {id: source_id($room; .), title: \"missing #\\(.)\", subTitle: \"source not observed\", color: \"gray\"};\ndef subscription_details:\n    {\n        mainStat: ((.streamId | stream_label) + if (.selection.selectedRid // \"\") == \"\" then \"\" else \" \" + .selection.selectedRid end),\n        secondaryStat: .state,\n        color: (.state | route_color),\n        strokeDasharray: (if .state == \"active\" then \"\" else \"5, 5\" end),\n        detail__source_id: (.sourceId | tostring),\n        detail__producer_user: (.producerUserId | user_key),\n        detail__selector: .selection.selector,\n        detail__selection_reason: .selection.selectionReason,\n        detail__selection_active: (.selection.active | tostring),\n        detail__selected_encoding_id: (.selection.selectedEncodingId | observed),\n        detail__selected_rid: (.selection.selectedRid | observed),\n        detail__source_transport_media_id: (.sourceTransportMediaId | observed),\n        detail__consumer_transport_media_id: (.consumerTransportMediaId | observed)\n    };\ndef subscriptions: [.users[] as $user | $user.subscriptions[] | {receiver: $user, route: .}];\n\"${user_id:percentencode}\" as $selected |\nvalidate_graph_ids | . as $detail | .summary.uuid as $room | subscriptions as $all_routes |\n([.users[] | select((.userId | user_key | @uri) == $selected)] | first) as $selected_user |\nif $selected_user == null then {nodes: [], edges: []} else\n($selected_user.userId | user_key) as $selected |\n([.sources[] | select((.ownerUserId | user_key) == $selected) | .sourceId]) as $published |\n([$all_routes[] | select((.receiver.userId | user_key) == $selected or (.route.sourceId as $id | $published | index($id)))]) as $routes |\n($published + [$routes[].route.sourceId] | unique) as $source_ids |\n([.sources[] | select(.sourceId as $id | $source_ids | index($id))]) as $sources |\n([$selected] + [$sources[].ownerUserId | user_key] + [$routes[].receiver.userId | user_key] + [$routes[].route.producerUserId | user_key] | unique) as $user_keys |\n([.users[] | select((.userId | user_key) as $key | $user_keys | index($key))]) as $users |\n([$users[].transport.mediaWorkerId] | unique) as $workers |\n{\n    nodes: ([$users[] | user_node($room; $selected)] + [\n        $user_keys[] | select(. as $key | [$users[].userId | user_key] | index($key) | not) | missing_user_node($room)\n    ] + [$workers[] as $worker |\n        [$detail.users[] | select(.transport.mediaWorkerId == $worker)] as $worker_users |\n        {\n            id: ($worker | worker_id), title: \"worker \\($worker)\", subTitle: \"media worker\",\n            mainStat: \"\\($worker_users | length) users\",\n            secondaryStat: \"\\([$worker_users[].publications[]] | length) pub / \\([$worker_users[].subscriptions[]] | length) sub\"\n        }\n    ] + [$sources[] as $source |\n        $source | source_node($room; ([$all_routes[] | select(.route.sourceId == $source.sourceId)] | length))\n    ] + [\n        $source_ids[] | select(. as $id | [$sources[].sourceId] | index($id) | not) | missing_source_node($room)\n    ]) | unique_by(.id),\n    edges: ([$users[] | {\n        id: \"transport:\\($room):\\(.userId | user_key)\",\n        source: user_id($room; .userId), target: (.transport.mediaWorkerId | worker_id),\n        mainStat: \"transport\", secondaryStat: (.transport.health // \"unknown\"),\n        detail__connection: (.transport.connectionId | tostring)\n    }] + [$sources[] as $source |\n        ([$users[] | select((.userId | user_key) == ($source.ownerUserId | user_key))] | first) as $owner |\n        {\n            id: \"publish:\\($room):\\($source.sourceId)\",\n            source: (if $owner == null then user_id($room; $source.ownerUserId) else ($owner.transport.mediaWorkerId | worker_id) end),\n            target: source_id($room; $source.sourceId),\n            mainStat: \"\\($source.streamId | stream_label) upload\", secondaryStat: \"\\($source.currentIncomingBitrateBps) bps\", color: \"blue\",\n            detail__owner_user: ($source.ownerUserId | user_key)\n        }\n    ] + [$routes[] | .receiver as $receiver | .route |\n        (if ($receiver.userId | user_key) == $selected then \"inbound\" else \"outbound\" end) as $direction |\n        (subscription_details + {\n            id: \"deliver:\\($room):\\(.sourceId):\\($receiver.userId | user_key)\",\n            source: source_id($room; .sourceId), target: ($receiver.transport.mediaWorkerId | worker_id),\n            detail__receiver_user: ($receiver.userId | user_key), detail__direction: $direction\n        }), {\n            id: \"consume:\\($room):\\(.sourceId):\\($receiver.userId | user_key)\",\n            source: ($receiver.transport.mediaWorkerId | worker_id), target: user_id($room; $receiver.userId),\n            mainStat: \"consume\", secondaryStat: .state, color: (.state | route_color), detail__direction: $direction\n        }\n    ]) | unique_by(.id)\n}\nend\n | .edges[]",
           "source": "url",
           "type": "json",
-          "url": "http://host.docker.internal:8070/internal/diagnostics/node-graph/rooms/${room_id:percentencode}/users/${user_id:percentencode}",
+          "url": "http://host.docker.internal:8070/internal/diagnostics/rooms/${room_id:percentencode}",
           "url_options": {
             "data": "",
             "method": "GET"
-          }
+          },
+          "parser": "jq-backend",
+          "columns": []
         }
       ],
       "title": "Current User Media Topology",

@@ -10,7 +10,10 @@ docker compose --env-file .env.example config --quiet
 docker compose --env-file .env.example --profile linux-infra config --quiet
 docker compose --env-file deploy/sfu-vps/.env.example --file deploy/sfu-vps/docker-compose.yml config --quiet
 telemetry_image="$(docker compose --env-file .env.example config --format json | python3 -c 'import json, sys; print(json.load(sys.stdin)["services"]["prometheus"]["image"])')"
+collector_image="$(docker compose --env-file .env.example config --format json | python3 -c 'import json, sys; print(json.load(sys.stdin)["services"]["otel-collector"]["image"])')"
 python3 scripts/check_dashboard_queries.py "$telemetry_scratch/dashboard-queries.json"
+python3 scripts/check_graph_queries.py --check
+python3 scripts/check_collector_logs.py "$collector_image"
 
 for telemetry_config in prometheus/prometheus.yml deploy/sfu-vps/prometheus.yml prometheus/prometheus.host-metrics.example.yml
 do
