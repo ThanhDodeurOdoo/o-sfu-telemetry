@@ -19,6 +19,14 @@ groups:
     expr: osfu:diagnostics_probe_success or on (instance) (-1 * max by (instance) (up{job="o-sfu"} >= bool 0))
   - record: osfu:diagnostics_probe_age_seconds
     expr: max by (instance) (time() - timestamp(probe_success{job="o-sfu-diagnostics"}))
+  - record: osfu:media_quality_rtt_observations_5m
+    expr: sum by (instance, sample) (increase(osfu_media_quality_rtt_seconds_count[5m])) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:media_quality_rtt_p50_5m
+    expr: (histogram_quantile(0.5, sum by (instance, sample, le) (rate(osfu_media_quality_rtt_seconds_bucket[5m]))) and on (instance, sample) (osfu:media_quality_rtt_observations_5m > 0)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:media_quality_rtt_p95_5m
+    expr: (histogram_quantile(0.95, sum by (instance, sample, le) (rate(osfu_media_quality_rtt_seconds_bucket[5m]))) and on (instance, sample) (osfu:media_quality_rtt_observations_5m > 0)) and on (instance) (osfu:metrics_available == 1)
+  - record: osfu:media_quality_rtt_p99_5m
+    expr: (histogram_quantile(0.99, sum by (instance, sample, le) (rate(osfu_media_quality_rtt_seconds_bucket[5m]))) and on (instance, sample) (osfu:media_quality_rtt_observations_5m > 0)) and on (instance) (osfu:metrics_available == 1)
   - record: osfu:media_quality_peer_rtt_observations_5m
     expr: sum by (instance) (increase(osfu_media_quality_rtt_seconds_count{sample="peer"}[5m])) and on (instance) (osfu:metrics_available == 1)
   - record: osfu:media_quality_media_rtt_observations_5m

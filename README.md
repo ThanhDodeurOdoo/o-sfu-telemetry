@@ -404,6 +404,60 @@ stays above 5 percent while sampled media traffic is present. Use those alerts
 to decide where to inspect next, then combine them with transport lifecycle,
 media-path, room graph, user diagnostics and logs.
 
+## Performance signals
+
+`o-sfu Performance Signals` (`osfu-performance-signals`) follows one selected
+SFU instance with rolling five-minute measurements. It places peer RTT
+p50/p95/p99, separate media-ingress/media-egress RTT p95 and directional loss
+observations beside workload, repair activity and saturation events. Websocket
+setup duration measures connection setup rather than media delivery latency.
+
+When updating a running stack, reload or restart Prometheus to load the four
+new RTT recording rules. Grafana discovers the board through its existing
+dashboard file provisioning.
+
+Published tracks, subscribers, packet rate, throughput and CPU are common SFU
+benchmark dimensions. Participant count alone does not describe forwarding
+work. The board therefore pairs rooms and users with ingress/egress packet
+rates, RTP payload throughput and local forwarding fanout. These counters do
+not prove receipt at subscribers. See [LiveKit's benchmarking guide](https://docs.livekit.io/transport/self-hosting/benchmark).
+
+RTT percentiles estimate the distribution of sampled transport observations,
+not users or individual packets. The current histogram has finite bounds at
+50, 100, 250 and 500 ms followed by 1, 2 and 5 seconds. It cannot resolve tails
+inside the first 50 ms bucket. Cumulative bucket shares and observation counts
+provide the measured distribution, including observations above 5 seconds
+that cannot yield an exact tail value. Quantiles depend on histogram bucket
+resolution and must be calculated after aggregating buckets, rather than by
+averaging percentiles. See [Prometheus histogram guidance](https://prometheus.io/docs/practices/histograms/).
+
+Ingress and egress loss are observation means, not packet-weighted loss
+fractions. Each direction combines the available peer and media stats reports,
+which can describe overlapping traffic. Read each mean with its own observation
+count. Missing observations remain unavailable instead of becoming zero. The
+board applies no generic good/bad thresholds to these performance values.
+
+At the checked server revision `b60da1d5`, jitter exports contain only a sum and
+count in raw RTP timestamp units across potentially different codec clocks.
+They cannot produce jitter p95 or a defensible aggregate in milliseconds.
+RTP interarrival jitter measures packet-spacing variation and is distinct from
+receiver jitter-buffer residence time. See [RFC 3550 section 6.4.1](https://www.rfc-editor.org/rfc/rfc3550.html#section-6.4.1)
+and the [WebRTC statistics definitions](https://www.w3.org/TR/webrtc-stats/).
+Per-packet SFU forwarding delay, browser playout quality and historical worker
+pressure also lack the required metrics. RTT does not substitute for these
+measurements. The optional current worker diagnostics use the configured
+Infinity server, independently of the Prometheus instance and historical time
+selectors. Worker heartbeat delay measures worker service delay.
+
+For revision comparisons, match codec, bitrate, topology, subscription fanout
+and offered packet rate. Ensure the load generator has spare capacity. Mark
+load-step boundaries and deployments with Grafana annotations, then compare
+steady portions after the five-minute window contains the new load. This
+stack does not map CPU or RSS measurements to the selected SFU process. Use
+the [o-sfu-load-testing reports](https://github.com/ThanhDodeurOdoo/o-sfu-load-testing#interactive-reports)
+for separate SFU/generator resources, worker history and receiver delivery
+results when evaluating capacity or a performance regression.
+
 ## Decoder-refresh and keyframe request signals
 
 Decoder refreshes are packet-path observations emitted when `o-sfu` sees a
@@ -480,6 +534,7 @@ Before using it outside a controlled environment:
 - `control-plane.json`: HTTP, websocket admission, startup failures and outbound queue pressure
 - `transport-lifecycle.json`: transport health, ICE/DTLS events, short sessions and cleanup failures
 - `media-path.json`: sampled quality, repair, protection events, receiver adaptation and media throughput
+- `performance-signals.json`: RTT distributions, loss observations, workload, recovery and saturation with measurement limits
 - `recording.json`: checked backend capability and handled/rejected recording controls
 - `staging-canary.json`: independent baseline/candidate measurements, workload and observation counts
 - `room-graph.json`: current room selection, room topology and user media paths
